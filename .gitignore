@@ -1,0 +1,25 @@
+# ignore all
+*
+!*/
+
+# allow any
+!*.c
+!*.cpp
+!*.h
+!*.tex
+!*.py
+!*makefile
+!*makefile.monolis
+!*makefile.bebopss
+!*Makefile
+!*Macfile
+!.gitignore
+!*plan.txt
+!*rule.txt
+!*.f90
+!solver2d/calc/cond.txt
+!solver2d/calc/mesh.txt
+!solver2d/sample.sh
+!meshgen2d/cpl.sh
+!solver2d/cpl_test.sh
+!test_cpl/cond.txt
