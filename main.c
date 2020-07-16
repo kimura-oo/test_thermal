@@ -16,9 +16,9 @@ const int NUM_NODES_IN_ELEM = 4;
  **********************************************************/
 void memory_allocation_basis(
 		FE_3D_BASIS* basis,
-		const int 		num_integ_points,
-		const int 		pol_order,
-		const int 		num_nodes_in_elem)
+		const int       num_integ_points,
+		const int       pol_order,
+		const int       num_nodes_in_elem)
 {
 	memory_allocation_integ(
 			basis, 
@@ -33,8 +33,8 @@ void memory_allocation_basis(
 
 
 void memory_allocation_integ(
-		FE_3D_BASIS* 	basis,
-		const int 		num_integ_points)
+		FE_3D_BASIS*    basis,
+		const int       num_integ_points)
 {
 	int num = num_integ_points;
 
@@ -49,10 +49,10 @@ void memory_allocation_integ(
 
 
 void memory_allocation_shapefunc(
-		FE_3D_BASIS*	basis,
-		const int 		num_nodes_in_elem,
-		const int 		pol_order,
-		const int 		num_integ_points)
+		FE_3D_BASIS*    basis,
+		const int       num_nodes_in_elem,
+		const int       pol_order,
+		const int       num_integ_points)
 {
 	int nn = num_nodes_in_elem;
 	int ni = num_integ_points;
@@ -76,7 +76,7 @@ void memory_allocation_shapefunc(
  * initializers
  **********************************************************/
 void initialize_basis(
-		FE_3D_BASIS* basis)
+		FE_3D_BASIS*  basis)
 {
 	integ_point_tet_5(
 			&(basis->num_integ_points),
@@ -102,9 +102,9 @@ void initialize_basis(
  * numerical integration
  **********************************************************/
 void integ_point_tet_5(
-		int* 		num_integ_points,
-		double**	integ_point,
-		double*		integ_weight)
+		int*        num_integ_points,
+		double**    integ_point,
+		double*     integ_weight)
 {
 	(*num_integ_points) = 5;
 	
@@ -126,8 +126,8 @@ void integ_point_tet_5(
  * shape function
  **********************************************************/
 void shapefunc_3d_tet_1st_value(
-		const double 	xi[3],
-		double* 		N)
+		const double    xi[3],
+		double*         N)
 {
 	N[0] = 1.0 - xi[0] - xi[1] - xi[2];
 	N[1] = xi[0];
@@ -137,10 +137,10 @@ void shapefunc_3d_tet_1st_value(
 
 
 void shapefunc_3d_tet_1st_der_value(
-		const double 	xi[3],
-		double* 		dN_dxi,
-		double* 		dN_det,
-		double* 		dN_dze)
+		const double    xi[3],
+		double*         dN_dxi,
+		double*         dN_det,
+		double*         dN_dze)
 {
 	dN_dxi[0] = -1.0;  dN_det[0] = -1.0;  dN_dze[0] = -1.0; 
 	dN_dxi[1] =  1.0;  dN_det[1] =  0.0;  dN_dze[1] =  0.0; 

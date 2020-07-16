@@ -51,47 +51,47 @@ typedef struct
  * memory allocation
  **********************************************************/
 void memory_allocation_basis(
-		FE_3D_BASIS* 	basis,
-		const int 		num_integ_points,
-		const int 		pol_order,
-		const int 		num_nodes_in_elem);
+		FE_3D_BASIS*    basis,
+		const int       num_integ_points,
+		const int       pol_order,
+		const int       num_nodes_in_elem);
 
 void memory_allocation_integ(
-		FE_3D_BASIS* 	basis,
-		const int 		num_integ_points);
+		FE_3D_BASIS*    basis,
+		const int       num_integ_points);
 
 void memory_allocation_shapefunc(
-		FE_3D_BASIS* 	basis,
-		const int 		num_nodes_in_elem,
-		const int 		pol_order,
-		const int 		num_integ_points);
+		FE_3D_BASIS*    basis,
+		const int       num_nodes_in_elem,
+		const int       pol_order,
+		const int       num_integ_points);
 
 
 /**********************************************************
  * initializers
  **********************************************************/
 void initialize_basis(
-		FE_3D_BASIS* basis);
+		FE_3D_BASIS*  basis);
 
 
 /**********************************************************
  * numerical integration
  **********************************************************/
 void integ_point_tet_5(
-		int* 		num_integ_points,
-		double**	integ_point,
-		double*		integ_weight);
+		int*        num_integ_points,
+		double**    integ_point,
+		double*     integ_weight);
 
 
 /**********************************************************
  * shape function
  **********************************************************/
 void shapefunc_3d_tet_1st_value(
-		const double 	xi[3],
-		double* 		N);
+		const double    xi[3],
+		double*         N);
 
 void shapefunc_3d_tet_1st_der_value(
-		const double 	xi[3],
-		double* 		dN_dxi,
-		double* 		dN_det,
-		double* 		dN_dze);
+		const double    xi[3],
+		double*         dN_dxi,
+		double*         dN_det,
+		double*         dN_dze);
