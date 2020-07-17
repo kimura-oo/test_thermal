@@ -28,7 +28,7 @@ typedef struct
 	int   total_num_elems;
 	int   local_num_nodes;
 	int** conn;
-} FE_3D_DATA;
+} FE_DATA;
 
 
 typedef struct
@@ -41,7 +41,7 @@ typedef struct
 typedef struct
 {
 	FE_3D_BASIS  basis;
-	FE_3D_DATA   fe;
+	FE_DATA   fe;
 	NODAL_VALUES vals;
 
 } FE_SYSTEM;
