@@ -11,7 +11,7 @@
 static const int MAX_NUM_CONNECRED_ELEMS = 15;
 
 
-int index_CSR_mat(
+int MatrixCSR_get_index(
 		int index_num,
 		int num_dofs_on_node,
 		int submat_i,
@@ -238,7 +238,7 @@ static void free_monolis_matrix(
 #endif
 
 
-void init_dataset_CSR(
+void MatrixCSR_initialize(
 		Dataset_CSR* csr,
 		const int total_num_nodes,
 		const int total_num_elems,
@@ -284,7 +284,7 @@ void init_dataset_CSR(
 }
 
 
-void free_dataset_CSR(
+void MatrixCSR_free(
 		Dataset_CSR* csr)
 {
 	free(csr->index);
@@ -300,7 +300,7 @@ void free_dataset_CSR(
 }
 
 
-void copy_dataset_CSR(
+void MatrixCSR_copy_dataset(
 		Dataset_CSR* csr1,
 		Dataset_CSR* csr2)
 {
@@ -344,12 +344,12 @@ void copy_dataset_CSR(
 			csr1->index,
 			csr1->item);
 
-	set_CSR_matrix_value_to_monolis(csr1);
+	MatrixCSR_set_matrix_to_monolis(csr1);
 #endif
 }
 
 
-void copy_CSR_matrix(
+void MatrixCSR_copy_matrix(
 		Dataset_CSR* csr1,
 		Dataset_CSR* csr2)
 {
@@ -362,12 +362,12 @@ void copy_CSR_matrix(
 	}
 
 #ifdef WITH_MONOLIS
-	set_CSR_matrix_value_to_monolis(csr1);
+	MatrixCSR_set_matrix_to_monolis(csr1);
 #endif
 }
 
 
-void set_nonzero_value_to_CSR_matrix(
+void MatrixCSR_set_nonzero_value(
 		Dataset_CSR* csr,
 		double val,      // block_length x block_length submatrix
 		int g_node_num_i,
@@ -390,7 +390,7 @@ void set_nonzero_value_to_CSR_matrix(
 		return;	
 	}
 
-	int n = index_CSR_mat(
+	int n = MatrixCSR_get_index(
 			csr_num,
 			csr->num_dofs_on_node,
 			submat_i,
@@ -401,7 +401,7 @@ void set_nonzero_value_to_CSR_matrix(
 }
 
 
-void add_nonzero_value_to_CSR_matrix(
+void MatrixCSR_add_nonzero_value(
 		Dataset_CSR* csr,
 		double val,      // block_length x block_length submatrix
 		int g_node_num_i,
@@ -424,7 +424,7 @@ void add_nonzero_value_to_CSR_matrix(
 		return;	
 	}
 
-	int n = index_CSR_mat(
+	int n = MatrixCSR_get_index(
 			csr_num,
 			csr->num_dofs_on_node,
 			submat_i,
@@ -435,7 +435,7 @@ void add_nonzero_value_to_CSR_matrix(
 }
 
 
-double get_nonzero_value_from_CSR_matrix(
+double MatrixCSR_get_nonzero_value(
 		Dataset_CSR* csr,
 		int g_node_num_i,
 		int g_node_num_j,
@@ -457,7 +457,7 @@ double get_nonzero_value_from_CSR_matrix(
 		return 0.0;	
 	}
 
-	int n = index_CSR_mat(
+	int n = MatrixCSR_get_index(
 			csr_num,
 			csr->num_dofs_on_node,
 			submat_i,
@@ -468,7 +468,7 @@ double get_nonzero_value_from_CSR_matrix(
 }
 
 
-void mat_vec_multiplication_CSR(
+void MatrixCSR_mat_vec_multiplication(
 		const Dataset_CSR* csr,
 		const double* vec,
 		double* ans)
@@ -487,7 +487,7 @@ void mat_vec_multiplication_CSR(
 
 				for(int l=0; l<ndof; l++) {
 					ans[ndof*i + k] += 
-						csr->mat[ index_CSR_mat(j, ndof, k, l) ] * vec[ ndof*(csr->item[j]) + l ];
+						csr->mat[ MatrixCSR_get_index(j, ndof, k, l) ] * vec[ ndof*(csr->item[j]) + l ];
 				}
 			}
 		}
@@ -495,7 +495,7 @@ void mat_vec_multiplication_CSR(
 }
 
 
-int solve_mat_CG_CSR(
+int MatrixCSR_solver_CG(
 		Dataset_CSR* csr,
 		double* b,
 		double* x,
@@ -511,7 +511,7 @@ int solve_mat_CG_CSR(
 	double* ap; ap = (double*)calloc(n, sizeof(double));
 	double alpha, beta;
 
-	mat_vec_multiplication_CSR(csr, x, ap);
+	MatrixCSR_mat_vec_multiplication(csr, x, ap);
 
 	double norm0 = 0.0;
 	for(int i=0; i<n; i++) {
@@ -525,7 +525,7 @@ int solve_mat_CG_CSR(
 	for(k=0; k<max_iters; k++) {
 
 		//calc alpha
-		mat_vec_multiplication_CSR(csr, p, ap);
+		MatrixCSR_mat_vec_multiplication(csr, p, ap);
 
 		double pap = 0.0;  double rr_p = 0.0;
 		for(int i=0; i<n; i++) {
@@ -568,7 +568,7 @@ int solve_mat_CG_CSR(
 
 
 #ifdef WITH_MONOLIS
-void set_CSR_matrix_value_to_monolis(
+void MatrixCSR_set_matrix_to_monolis(
 		Dataset_CSR* csr)
 {
 
@@ -598,7 +598,7 @@ void set_CSR_matrix_value_to_monolis(
 }
 
 
-void solve_CSR_matrix_by_monolis(
+void Matrix_CSR_solver_monolis(
 		Dataset_CSR* csr,
 		double* rhs,
 		int method_num,

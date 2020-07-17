@@ -25,14 +25,14 @@ typedef struct {
 } Dataset_CSR;
 
 
-int index_CSR_mat(
+int MatrixCSR_get_index(
 		int index_num,
 		int num_dofs_on_node,
 		int submat_i,
 		int submat_j);
 
 
-void init_dataset_CSR(
+void MatrixCSR_initialize(
 		Dataset_CSR* csr,
 		const int total_num_nodes,
 		const int total_num_elems,
@@ -41,23 +41,23 @@ void init_dataset_CSR(
 		int** conn);
 
 
-void free_dataset_CSR(
+void MatrixCSR_free(
 		Dataset_CSR* csr);
 
 
 // copy csr2 to csr1
-void copy_dataset_CSR(
+void MatrixCSR_copy_dataset(
 		Dataset_CSR* csr1,
 		Dataset_CSR* csr2);
 
 
 // copy csr2 to csr1 (matrix data only)
-void copy_CSR_matrix(
+void MatrixCSR_copy_matrix(
 		Dataset_CSR* csr1,
 		Dataset_CSR* csr2);
 
 
-void set_nonzero_value_to_CSR_matrix(
+void MatrixCSR_set_nonzero_value(
 		Dataset_CSR* csr,
 		double val,      
 		int g_node_num_i,
@@ -67,7 +67,7 @@ void set_nonzero_value_to_CSR_matrix(
 
 
 
-void add_nonzero_value_to_CSR_matrix(
+void MatrixCSR_add_nonzero_value(
 		Dataset_CSR* csr,
 		double val,      
 		int g_node_num_i,
@@ -76,7 +76,7 @@ void add_nonzero_value_to_CSR_matrix(
 		int submat_j); 
 
 
-double get_nonzero_value_from_CSR_matrix(
+double MatrixCSR_get_nonzero_value(
 		Dataset_CSR* csr,
 		int g_node_num_i,
 		int g_node_num_j,
@@ -84,13 +84,13 @@ double get_nonzero_value_from_CSR_matrix(
 		int submat_j); 
 
 
-void mat_vec_multiplication_CSR(
+void MatrixCSR_mat_vec_multiplication(
 		const Dataset_CSR* csr,
 		const double* vec,
 		double* ans);
 
 
-int solve_mat_CG_CSR(
+int MatrixCSR_solver_CG(
 		Dataset_CSR* csr,
 		double* b,
 		double* x,
@@ -100,11 +100,11 @@ int solve_mat_CG_CSR(
 
 
 #ifdef WITH_MONOLIS
-void set_CSR_matrix_value_to_monolis(
+void MatrixCSR_set_matrix_to_monolis(
 		Dataset_CSR* csr);
 
 
-void solve_CSR_matrix_by_monolis(
+void Matrix_CSR_solver_monolis(
 		Dataset_CSR* csr,
 		double* rhs,
 		int method_num,
