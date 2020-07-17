@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
 
 
 const int DIM = 3;
@@ -10,12 +12,14 @@ const int NUM_INTEG_POINTS  = 5;
 const int POL_ORDER         = 1;
 const int NUM_NODES_IN_ELEM = 4;
 
+const char* CODENAME = "test_thermal >";
+
 
 /**********************************************************
  * memory allocation
  **********************************************************/
 void memory_allocation_basis(
-		FE_3D_BASIS* basis,
+		FE_3D_BASIS*    basis,
 		const int       num_integ_points,
 		const int       pol_order,
 		const int       num_nodes_in_elem)
@@ -99,6 +103,77 @@ void initialize_basis(
 
 
 /**********************************************************
+ * input
+ **********************************************************/
+bool BEBOPS_IO_scan_line(
+		FILE** fp,
+		const int buffer_size,
+		const char* format,
+		...)
+{
+	char buf[buffer_size];
+	if( fgets(buf, sizeof(buf), *fp) == NULL )
+	{
+		return false;
+	}
+
+	va_list va;
+	va_start(va, format);
+	vsscanf(buf, format, va);
+	va_end(va);
+
+	return true;
+}
+
+
+bool BEBOPS_IO_read_file_return_char(
+		char* ret_char,
+		const char* filename,
+		const char* identifier,
+		const int buffer_size)
+{
+	int identical = 0;
+
+	FILE* fp;
+	fp = fopen(filename, "r");
+	if(fp == NULL) {
+		ret_char = NULL;
+		return false;
+	}
+
+	char buf[ buffer_size];
+	char buf2[buffer_size];
+	char buf3[buffer_size];
+	while(1) {
+		if( fgets(buf, sizeof(buf), fp) == NULL) {
+			break;
+		}
+		strcpy(buf2, buf);
+		if( strstr(buf2, identifier) != NULL ) {
+			sscanf(buf, "%s %s", buf3, ret_char);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+void input_FE_data(
+		FE_DATA* fe,
+		char* filename)
+{
+	FILE* fp;
+	
+	fp = fopen(filename, "r");
+	if( fp == NULL ) {
+		printf("");
+	}
+}
+
+
+/**********************************************************
  * numerical integration
  **********************************************************/
 void integ_point_tet_5(
@@ -154,7 +229,7 @@ int main (
 		char* argv[])
 {
  
-	printf("\n Test Thermal \n");
+	printf("\n");
 	
 	FE_SYSTEM sys;
 
