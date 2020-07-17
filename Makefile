@@ -5,7 +5,7 @@ INCLUDES = -I/usr/local/include
 LIBS = -L/usr/local/lib -lm 
 
 TARGET = thermal
-OBJS = main.o
+OBJS = main.o solve_mat.o
 
 .SUFFIXES: .c .cpp .o
 

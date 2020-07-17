@@ -1,4 +1,3 @@
-
 #pragma once
 
 
@@ -6,15 +5,7 @@
 #include <monolis.h>
 #endif
 
-typedef struct
-{
-	int      total_num_nodes;
-	double** x;
-	
-	int   total_num_elems;
-	int   local_num_nodes;
-	int** conn;
-} FE_DATA;
+#include "main.h"
 
 
 typedef struct {
