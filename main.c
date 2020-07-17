@@ -13,6 +13,7 @@ const int POL_ORDER         = 1;
 const int NUM_NODES_IN_ELEM = 4;
 
 const char* CODENAME = "test_thermal >";
+const int BUFFER_SIZE = 1000;
 
 
 /**********************************************************
@@ -168,8 +169,37 @@ void input_FE_data(
 	
 	fp = fopen(filename, "r");
 	if( fp == NULL ) {
-		printf("");
+		printf("%s ERROR: File \"%s\" is not opened.\n", 
+				CODENAME, filename);
 	}
+
+	BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, "%d", &(fe->total_num_nodes));
+	printf("%s Num. nodes: %d\n", CODENAME, fe->total_num_nodes);
+
+	fe->x = (double**)calloc(fe->total_num_nodes, sizeof(double*));
+
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		fe->x[i] = (double*)calloc(3, sizeof(double));
+
+		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
+				"%lf %lf %lf", &(fe->x[i][0]), &(fe->x[i][1]), &(fe->x[i][2]));
+	}
+
+	BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, "%d %d",
+			&(fe->total_num_elems), &(fe->local_num_nodes));
+	printf("%s Num. elements: %d\n", CODENAME, fe->total_num_elems);
+
+	fe->conn = (int**)calloc(fe->total_num_elems, sizeof(int*));
+	
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		fe->conn[e] = (int*)calloc(fe->local_num_nodes, sizeof(int));
+		if(fe->local_num_nodes == 4) {
+			BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, "%d %d %d %d", 
+					&(fe->conn[e][0]), &(fe->conn[e][1]), &(fe->conn[e][2]), (&fe->conn[e][3]));
+		}
+	}
+
+	fclose(fp);
 }
 
 
@@ -238,6 +268,8 @@ int main (
 			NUM_INTEG_POINTS,
 			POL_ORDER,
 			NUM_NODES_IN_ELEM);
+
+	input_FE_data(&(sys.fe), "./util/meshgen/mesh.txt");
 
 	initialize_basis(
 			&(sys.basis));
