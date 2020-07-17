@@ -1,4 +1,5 @@
 #include "main.h"
+#include "define_cell_type_vtk.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -203,6 +204,55 @@ void input_FE_data(
 }
 
 
+
+/**********************************************************
+ * output
+ **********************************************************/
+void write_vtk_shape(
+		FE_DATA* fe,
+		char* filename)
+{
+	FILE* fp;
+	fp = fopen(filename, "w");
+	if( fp == NULL ) {
+		printf("%s ERROR: File \"%s\" is not opened.\n", 
+				CODENAME, filename);
+	}
+
+	fprintf(fp, "# vtk DataFile Version 3.0\n");
+	fprintf(fp, "vtk output\n");
+	fprintf(fp, "ASCII\n");
+	fprintf(fp, "DATASET UNSTRUCTURED_GRID\n");
+
+	fprintf(fp, "POINTS %d float\n", fe->total_num_nodes);
+
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		fprintf(fp, "%e %e %e\n", fe->x[i][0], fe->x[i][1], fe->x[i][2]);
+	}
+
+	int num_nodes_in_cell = 1;
+	fprintf(fp, "CELLS %d %d\n", 
+			fe->total_num_elems, fe->total_num_elems*(fe->local_num_nodes + 1));
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		fprintf(fp, "%d ", fe->local_num_nodes);
+		
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			fprintf(fp, "%d ", fe->conn[e][i]);
+		}
+		fprintf(fp, "\n");
+	}
+
+	fprintf(fp, "CELL_TYPES %d\n", fe->total_num_elems);
+	int elem_type = TYPE_VTK_TETRA ;
+	
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		fprintf(fp, "%d\n", elem_type);
+	}
+
+	fclose(fp);
+}
+
+
 /**********************************************************
  * numerical integration
  **********************************************************/
@@ -273,6 +323,8 @@ int main (
 
 	initialize_basis(
 			&(sys.basis));
+
+	write_vtk_shape(&(sys.fe), "mesh.vtk");
 	
 	printf("\n");
 

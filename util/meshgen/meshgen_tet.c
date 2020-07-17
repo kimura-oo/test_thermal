@@ -218,7 +218,6 @@ void output_data(
 
 	fprintf(fp, "%d %d\n", fe->total_num_elems, fe->local_num_nodes);
 	for(int i=0; i<fe->total_num_elems; i++) {
-		fprintf(fp, "%d: ", i);
 		for(int j=0; j<fe->local_num_nodes; j++) {
 			fprintf(fp, "%d ", fe->conn[i][j]);
 		}
