@@ -240,20 +240,23 @@ static void free_monolis_matrix(
 
 void init_dataset_CSR(
 		Dataset_CSR* csr,
-		FE_DATA* fe,
-		int num_dofs_on_node)
+		const int total_num_nodes,
+		const int total_num_elems,
+		const int local_num_nodes,
+		const int num_dofs_on_node,
+		int** conn) 
 {
 
-	csr->num_nodes        = fe->total_num_nodes;
+	csr->num_nodes        = total_num_nodes;
 	csr->num_dofs_on_node = num_dofs_on_node;
 	csr->vec_length       = csr->num_nodes * csr->num_dofs_on_node;
 
 	set_csr_index_and_item(
 			csr,
-			fe->total_num_nodes,
-			fe->total_num_elems,
-			fe->local_num_nodes,
-			fe->conn);
+			total_num_nodes,
+			total_num_elems,
+			local_num_nodes,
+			conn);
 
 	int nn   = csr->num_nodes;
 	int ndof = csr->num_dofs_on_node;
@@ -264,10 +267,10 @@ void init_dataset_CSR(
 
 	set_csr_index_and_item(
 			csr, 
-			fe->total_num_nodes,
-			fe->total_num_elems,
-			fe->local_num_nodes,
-			fe->conn);
+			total_num_nodes,
+			total_num_elems,
+			local_num_nodes,
+			conn);
 
 #ifdef WITH_MONOLIS
 	init_monolis_matrix(

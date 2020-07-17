@@ -5,8 +5,6 @@
 #include <monolis.h>
 #endif
 
-#include "main.h"
-
 
 typedef struct {
 	int num_nodes;
@@ -36,8 +34,11 @@ int index_CSR_mat(
 
 void init_dataset_CSR(
 		Dataset_CSR* csr,
-		FE_DATA* fe,
-		int num_dofs_on_node);
+		const int total_num_nodes,
+		const int total_num_elems,
+		const int local_num_nodes,
+		const int num_dofs_on_node,
+		int** conn);
 
 
 void free_dataset_CSR(
