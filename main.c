@@ -22,8 +22,13 @@ const int NUM_INTEG_POINTS  = 5;
 const int POL_ORDER         = 1;
 const int NUM_NODES_IN_ELEM = 4;
 
+const double MAT_EPSILON  = 1.0e-10;
+const double MAT_MAX_ITER = 100000;
+
 const char* CODENAME = "test_thermal >";
 const int BUFFER_SIZE = 1000;
+
+const char* OUTPUT_FILENAME = "result.vtk";
 
 
 /**********************************************************
@@ -54,7 +59,7 @@ void memory_allocation_integ(
 	int num = num_integ_points;
 
 	basis->num_integ_points = num;
-	
+
 	basis->integ_point  = (double**)calloc(num, sizeof(double*));
 	basis->integ_weight = (double* )calloc(num, sizeof(double ));
 	for(int i=0; i<num; i++) {
@@ -87,6 +92,15 @@ void memory_allocation_shapefunc(
 	}
 }
 
+
+void memory_allocation_nodal_values(
+		NODAL_VALUES*   vals,
+		const int       total_num_nodes)
+{
+	vals->T = (double*)calloc(total_num_nodes, sizeof(double));
+}
+
+
 /**********************************************************
  * initializers
  **********************************************************/
@@ -109,11 +123,6 @@ void initialize_basis(
 				basis->dN_dxi[i],
 				basis->dN_det[i],
 				basis->dN_dze[i]);
-	
-		for(int j=0; j<(basis->num_nodes); j++) {
-			printf("%e, ", basis->N[i][j]);
-		}
-		printf("\n");
 	}
 
 }
@@ -177,12 +186,13 @@ static bool BEBOPS_IO_read_file_return_char(
 }
 
 
-void input_FE_data(
-		FE_DATA* fe,
-		char* filename)
+void read_and_memory_allocation_FE_data(
+		FE_DATA*  fe,
+		char*     filename, 
+		int       num_integ_points)
 {
 	FILE* fp;
-	
+
 	fp = fopen(filename, "r");
 	if( fp == NULL ) {
 		printf("%s ERROR: File \"%s\" is not opened.\n", 
@@ -206,10 +216,20 @@ void input_FE_data(
 	printf("%s Num. elements: %d\n", CODENAME, fe->total_num_elems);
 
 	fe->conn = (int**)calloc(fe->total_num_elems, sizeof(int*));
-	fe->geo  = (FE_3D_GEO*)calloc(fe->total_num_elems, sizeof(FE_3D_GEO));
-	
+	fe->geo  = (FE_3D_GEO**)calloc(fe->total_num_elems, sizeof(FE_3D_GEO*));
+
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		fe->conn[e] = (int*)calloc(fe->local_num_nodes, sizeof(int));
+		fe->geo[e]  = (FE_3D_GEO*)calloc(num_integ_points, sizeof(FE_3D_GEO));
+		
+		for(int p=0; p<num_integ_points; p++) {
+			fe->geo[e][p].grad_N = (double**)calloc(fe->local_num_nodes, sizeof(double*));
+
+			for(int i=0; i<(fe->local_num_nodes); i++) {
+				fe->geo[e][p].grad_N[i] = (double*)calloc(3, sizeof(double));
+			}
+		}
+
 		if(fe->local_num_nodes == 4) {
 			BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, "%d %d %d %d", 
 					&(fe->conn[e][0]), &(fe->conn[e][1]), &(fe->conn[e][2]), (&fe->conn[e][3]));
@@ -225,16 +245,9 @@ void input_FE_data(
  * output
  **********************************************************/
 void write_vtk_shape(
-		FE_DATA* fe,
-		char* filename)
+		FE_DATA*  fe,
+		FILE*     fp)
 {
-	FILE* fp;
-	fp = fopen(filename, "w");
-	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" is not opened.\n", 
-				CODENAME, filename);
-	}
-
 	fprintf(fp, "# vtk DataFile Version 3.0\n");
 	fprintf(fp, "vtk output\n");
 	fprintf(fp, "ASCII\n");
@@ -251,7 +264,7 @@ void write_vtk_shape(
 			fe->total_num_elems, fe->total_num_elems*(fe->local_num_nodes + 1));
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		fprintf(fp, "%d ", fe->local_num_nodes);
-		
+
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			fprintf(fp, "%d ", fe->conn[e][i]);
 		}
@@ -260,12 +273,46 @@ void write_vtk_shape(
 
 	fprintf(fp, "CELL_TYPES %d\n", fe->total_num_elems);
 	int elem_type = TYPE_VTK_TETRA ;
-	
+
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		fprintf(fp, "%d\n", elem_type);
 	}
 
+}
+
+void write_nodal_value_scalar(
+		FE_DATA*     fe,
+		FILE*        fp,
+		double*      val,
+		const char*  label)
+{
+	fprintf(fp, "SCALARS %s float\n", label);
+	fprintf(fp, "LOOKUP_TABLE default\n");
+	
+	for(int i=0; i<(fe->total_num_nodes); i++) {	
+		fprintf(fp, "%e\n", val[i]);
+	}
+
+}
+
+
+void output_result_file_vtk(
+		FE_DATA*       fe,
+		NODAL_VALUES*  vals,
+		const char*    filename)
+{
+	FILE* fp;
+	fp = fopen(filename, "w");
+	if( fp == NULL ) {
+		printf("%s ERROR: File \"%s\" is not opened.\n", 
+				CODENAME, filename);
+	}
+	write_vtk_shape(fe, fp);
+	fprintf(fp, "POINT_DATA %d\n", fe->total_num_nodes);
+	write_nodal_value_scalar(fe, fp, vals->T, "temperature");
+
 	fclose(fp);
+
 }
 
 
@@ -278,7 +325,7 @@ void integ_point_tet_5(
 		double*     integ_weight)
 {
 	(*num_integ_points) = 5;
-	
+
 	integ_point[0][0] = 1.0/4.0;  integ_point[0][1] = 1.0/4.0;  integ_point[0][2] = 1.0/4.0;
 	integ_point[1][0] = 1.0/6.0;  integ_point[1][1] = 1.0/6.0;  integ_point[1][2] = 1.0/6.0;
 	integ_point[2][0] = 1.0/6.0;  integ_point[2][1] = 1.0/6.0;  integ_point[2][2] = 1.0/2.0;
@@ -294,10 +341,10 @@ void integ_point_tet_5(
 
 
 double calc_integ(
-		const int num_integ_points,
-		const double* value,
-		const double* weight,
-		const double* Jacobian)
+		const int      num_integ_points,
+		const double*  value,
+		const double*  weight,
+		const double*  Jacobian)
 {
 	double val = 0.0;
 
@@ -370,12 +417,12 @@ static void inverseMatrix_3x3(
 
 
 void calc_3d_Jacobi_matrix(
-		double J[3][3],
-		const int local_num_nodes,
-		double**  local_x,
-		double*   local_dN_dxi,
-		double*   local_dN_det,
-		double*   local_dN_dze)
+		double     J[3][3],
+		const int  local_num_nodes,
+		double**   local_x,
+		double*    local_dN_dxi,
+		double*    local_dN_det,
+		double*    local_dN_dze)
 {
 	for(int i=0; i<3; i++) {
 		for(int j=0; j<3; j++) {
@@ -394,9 +441,76 @@ void calc_3d_Jacobi_matrix(
 
 
 /**********************************************************
- * element matrix
+ * boundary condition
  **********************************************************/
 
+void set_Dirichlet_bc_CSR_mat(
+		Dataset_CSR*   csr,
+		const bool*    node_is_Dirichlet_bc, //[num_nodes*num_dof_on_node]
+		const double*  imposed_val)          //[num_nodes*num_dof_on_node]
+{
+	int n = csr->num_nodes;
+	int s = csr->num_dofs_on_node;
+
+	for(int i=0; i<n; i++) {
+		for(int k=0; k<s; k++) {
+			if( node_is_Dirichlet_bc[ s*i+k ] ) {
+
+				for(int j=0; j<n; j++) {
+					for(int l=0; l<s; l++) {
+						MatrixCSR_set_nonzero_value(csr, 0.0, i, j, k, l);
+						MatrixCSR_set_nonzero_value(csr, 0.0, j, i, l, k);
+					}
+				}
+
+				MatrixCSR_set_nonzero_value(csr, 1.0, i, i, k, k);
+			}
+		}
+	}
+}
+
+
+void set_Dirichlet_bc_CSR_vec(
+		Dataset_CSR* csr,
+		const bool* node_is_Dirichlet_bc,
+		double* imposed_val,
+		double*  g_rhs)
+{
+	int n = csr->num_nodes;
+	int s = csr->num_dofs_on_node;
+
+	for(int i=0; i<n; i++) {
+		for(int k=0; k<s; k++) {
+			if( !node_is_Dirichlet_bc[ s*i+k ] ) {
+				imposed_val[ s*i+k ] = 0.0;
+			}
+		}
+	}
+
+	double* bc_vec;
+	bc_vec = (double*)calloc(n*s, sizeof(double));
+
+	MatrixCSR_mat_vec_multiplication(
+			csr, imposed_val, bc_vec);
+
+	for(int i=0; i<n; i++) {
+		for(int k=0; k<s; k++) {
+			g_rhs[ s*i+k ] -= bc_vec[ s*i+k ];
+
+			if( node_is_Dirichlet_bc[ s*i+k ] ) {
+				g_rhs[ s*i+k ] = imposed_val[ s*i+k ];
+			}
+		}
+	}
+
+	free(bc_vec);
+}
+
+
+
+/**********************************************************
+ * element matrix
+ **********************************************************/
 void set_Jacobi_matrix(
 		FE_DATA*     fe,
 		FE_3D_BASIS* basis)
@@ -417,15 +531,15 @@ void set_Jacobi_matrix(
 
 		for(int p=0; p<(basis->num_integ_points); p++) {
 			calc_3d_Jacobi_matrix(
-					fe->geo[e].J,
+					fe->geo[e][p].J,
 					fe->local_num_nodes,
 					local_x,
 					basis->dN_dxi[p],
 					basis->dN_det[p],
 					basis->dN_dze[p]);
 
-			fe->geo[e].Jacobian = matrixDeterminant_3x3(
-					fe->geo[e].J);
+			fe->geo[e][p].Jacobian = matrixDeterminant_3x3(
+					fe->geo[e][p].J);
 		}
 	}
 
@@ -437,13 +551,37 @@ void set_Jacobi_matrix(
 
 
 void get_Jacobian_array(
-		double* Jacobian_ip,
-		const int num_integ_points,
-		const int elem_num,
-		FE_DATA* fe)
+		double*    Jacobian_ip,
+		const int  num_integ_points,
+		const int  elem_num,
+		FE_DATA*   fe)
 {
 	for(int p=0; p<num_integ_points; p++) {
-		Jacobian_ip[p] = fe->geo[ elem_num ].Jacobian;
+		Jacobian_ip[p] = fe->geo[ elem_num ][p].Jacobian;
+	}
+}
+
+
+void set_shapefunc_derivative(
+		FE_DATA*      fe,
+		FE_3D_BASIS*  basis)
+{
+	double J_inv[3][3];
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		for(int p=0; p<(basis->num_integ_points); p++) {
+			inverseMatrix_3x3(
+					fe->geo[e][p].J, fe->geo[e][p].Jacobian, J_inv);
+
+			for(int i=0; i<(fe->local_num_nodes); i++) {
+				for(int d=0; d<3; d++) {
+					fe->geo[e][p].grad_N[i][d] = 
+						J_inv[d][0] * basis->dN_dxi[p][i] +
+						J_inv[d][1] * basis->dN_det[p][i] +
+						J_inv[d][2] * basis->dN_dze[p][i];
+				}
+			}
+		}
 	}
 }
 
@@ -455,25 +593,25 @@ void set_element_matrix(
 {
 	double* val_ip;
 	double* Jacobian_ip;
-	val_ip      = (double*)calloc(fe->local_num_nodes, sizeof(double));
+	val_ip      = (double*)calloc(basis->num_integ_points, sizeof(double));
 	Jacobian_ip = (double*)calloc(basis->num_integ_points, sizeof(double));
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			for(int j=0; j<(fe->local_num_nodes); j++) {
-				
-				for(int p=0; p<(basis->num_integ_points); p++) {
-					val_ip[p] = 
-						basis->dN_dxi[p][i] * basis->dN_dxi[p][j] +
-						basis->dN_det[p][i] * basis->dN_det[p][j] +
-						basis->dN_dze[p][i] * basis->dN_dze[p][j];
-				}
-				
+
 				get_Jacobian_array(
 						Jacobian_ip, 
 						basis->num_integ_points,
 						e,
 						fe);
+
+				for(int p=0; p<(basis->num_integ_points); p++) {
+					val_ip[p] = 
+						fe->geo[e][p].grad_N[i][0] * fe->geo[e][p].grad_N[j][0] +
+						fe->geo[e][p].grad_N[i][1] * fe->geo[e][p].grad_N[j][1] +
+						fe->geo[e][p].grad_N[i][2] * fe->geo[e][p].grad_N[j][2];
+				}
 
 				double integ_val = calc_integ(
 						basis->num_integ_points,
@@ -484,13 +622,10 @@ void set_element_matrix(
 				MatrixCSR_add_nonzero_value(
 						csr,
 						integ_val,
-						i, j, 1, 1);
+						fe->conn[e][i], fe->conn[e][j], 0, 0);
 
-				printf("%e ", e, i, j, integ_val);
 			}
-			printf("\n");
 		}
-		printf("\n");
 	}
 
 	free(val_ip);
@@ -506,9 +641,9 @@ int main (
 		int argc, 
 		char* argv[])
 {
- 
+
 	printf("\n");
-	
+
 	FE_SYSTEM sys;
 
 	memory_allocation_basis(
@@ -517,10 +652,17 @@ int main (
 			POL_ORDER,
 			NUM_NODES_IN_ELEM);
 
-	input_FE_data(&(sys.fe), "./util/meshgen/mesh.txt");
+	read_and_memory_allocation_FE_data(
+			&(sys.fe), 
+			"./util/meshgen/mesh.txt",
+			sys.basis.num_integ_points);
+
+	memory_allocation_nodal_values(
+			&(sys.vals),
+			sys.fe.total_num_nodes);
 
 	initialize_basis(&(sys.basis));
-	
+
 	MatrixCSR_initialize(&sys.csr, 
 			sys.fe.total_num_nodes,
 			sys.fe.total_num_elems,
@@ -528,15 +670,48 @@ int main (
 			1,
 			sys.fe.conn);
 
-	set_Jacobi_matrix(&(sys.fe), &(sys.basis));
+	set_Jacobi_matrix(
+			&(sys.fe), 
+			&(sys.basis));
+	set_shapefunc_derivative(
+			&(sys.fe), 
+			&(sys.basis));
+	set_element_matrix(
+			&(sys.fe), 
+			&(sys.basis), 
+			&(sys.csr));
 
-	set_element_matrix(&(sys.fe), &(sys.basis), &(sys.csr));
+	/* test code for B.C. (tentative) */
+	bool* node_is_Dirichlet_bc;  double* imposed_val;
+	node_is_Dirichlet_bc = (bool*)calloc(sys.fe.total_num_nodes, sizeof(bool));
+	imposed_val = (double*)calloc(sys.fe.total_num_nodes, sizeof(double));
+	for(int i=0; i<sys.fe.total_num_nodes; i++) {
+		node_is_Dirichlet_bc[i] = false;
+		imposed_val[i] = 0.0;
+	}
+	int last = sys.fe.total_num_nodes - 1;
+	node_is_Dirichlet_bc[0]    = true;  imposed_val[0]    = 0.0;
+	node_is_Dirichlet_bc[last] = true;  imposed_val[last] = 1.0;
 
-	write_vtk_shape(&(sys.fe), "mesh.vtk");
+	set_Dirichlet_bc_CSR_vec(&(sys.csr), node_is_Dirichlet_bc, imposed_val, sys.csr.rhs);
+	set_Dirichlet_bc_CSR_mat(&(sys.csr), node_is_Dirichlet_bc, imposed_val);
+	free(node_is_Dirichlet_bc);  free(imposed_val);
+	/************************************/
+
+	MatrixCSR_solver_CG(
+			&(sys.csr), 
+			sys.csr.rhs, 
+			sys.vals.T, 
+			MAT_EPSILON, 
+			MAT_MAX_ITER, 
+			true);
 	
+	output_result_file_vtk(
+			&(sys.fe),
+			&(sys.vals),
+			OUTPUT_FILENAME);
+
 	printf("\n");
-		
-		
 
 	return 0;
 }
