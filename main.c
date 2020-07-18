@@ -1,11 +1,20 @@
 #include "main.h"
 #include "define_cell_type_vtk.h"
+#include "solve_mat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 
+typedef struct
+{
+	FE_3D_BASIS  basis;
+	FE_DATA      fe;
+	NODAL_VALUES vals;
+	Dataset_CSR  csr;
+
+} FE_SYSTEM;
 
 const int DIM = 3;
 
@@ -94,6 +103,12 @@ void initialize_basis(
 		shapefunc_3d_tet_1st_value(
 				basis->integ_point[i],
 				basis->N[i]);
+
+		shapefunc_3d_tet_1st_der_value(
+				basis->integ_point[i],
+				basis->dN_dxi[i],
+				basis->dN_det[i],
+				basis->dN_dze[i]);
 	
 		for(int j=0; j<(basis->num_nodes); j++) {
 			printf("%e, ", basis->N[i][j]);
@@ -107,7 +122,7 @@ void initialize_basis(
 /**********************************************************
  * input
  **********************************************************/
-bool BEBOPS_IO_scan_line(
+static bool BEBOPS_IO_scan_line(
 		FILE** fp,
 		const int buffer_size,
 		const char* format,
@@ -128,7 +143,7 @@ bool BEBOPS_IO_scan_line(
 }
 
 
-bool BEBOPS_IO_read_file_return_char(
+static bool BEBOPS_IO_read_file_return_char(
 		char* ret_char,
 		const char* filename,
 		const char* identifier,
@@ -191,6 +206,7 @@ void input_FE_data(
 	printf("%s Num. elements: %d\n", CODENAME, fe->total_num_elems);
 
 	fe->conn = (int**)calloc(fe->total_num_elems, sizeof(int*));
+	fe->geo  = (FE_3D_GEO*)calloc(fe->total_num_elems, sizeof(FE_3D_GEO));
 	
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		fe->conn[e] = (int*)calloc(fe->local_num_nodes, sizeof(int));
@@ -304,6 +320,109 @@ void shapefunc_3d_tet_1st_der_value(
 }
 
 
+static double matrixDeterminant_3x3(
+		double mat[3][3]) 
+{
+	return ( mat[0][0]*mat[1][1]*mat[2][2] + 
+			mat[0][1]*mat[1][2]*mat[2][0] + 
+			mat[0][2]*mat[2][1]*mat[1][0] -
+			mat[0][2]*mat[1][1]*mat[2][0] - 
+			mat[0][1]*mat[1][0]*mat[2][2] - 
+			mat[0][0]*mat[2][1]*mat[1][2]   );
+}
+
+
+static void inverseMatrix_3x3(
+		double mat[3][3], /* input matrix */
+		double det_mat,   /* determinant of input matrix */
+		double invMat[3][3]     /* inverse matrix */)
+{
+	double invDet = 1.0/det_mat;
+
+	invMat[0][0] = invDet * (mat[1][1]*mat[2][2] - mat[1][2]*mat[2][1]);
+	invMat[0][1] = invDet * (mat[0][2]*mat[2][1] - mat[0][1]*mat[2][2]);
+	invMat[0][2] = invDet * (mat[0][1]*mat[1][2] - mat[0][2]*mat[1][1]);
+
+	invMat[1][0] = invDet * (mat[1][2]*mat[2][0] - mat[1][0]*mat[2][2]);
+	invMat[1][1] = invDet * (mat[0][0]*mat[2][2] - mat[0][2]*mat[2][0]);
+	invMat[1][2] = invDet * (mat[0][2]*mat[1][0] - mat[0][0]*mat[1][2]);
+
+	invMat[2][0] = invDet * (mat[1][0]*mat[2][1] - mat[1][1]*mat[2][0]);
+	invMat[2][1] = invDet * (mat[0][1]*mat[2][0] - mat[0][0]*mat[2][1]);
+	invMat[2][2] = invDet * (mat[0][0]*mat[1][1] - mat[0][1]*mat[1][0]);
+}
+
+
+void calc_3d_Jacobi_matrix(
+		double J[3][3],
+		const int local_num_nodes,
+		double**  local_x,
+		double*   local_dN_dxi,
+		double*   local_dN_det,
+		double*   local_dN_dze)
+{
+	for(int i=0; i<3; i++) {
+		for(int j=0; j<3; j++) {
+			J[i][j] = 0.0;
+		}
+	}
+
+	for(int n=0; n<local_num_nodes; n++) {
+		for(int i=0; i<3; i++) {
+			J[0][i] += local_dN_dxi[n] * local_x[n][i];
+			J[1][i] += local_dN_det[n] * local_x[n][i];
+			J[2][i] += local_dN_dze[n] * local_x[n][i];
+		}
+	}
+}
+
+
+/**********************************************************
+ * element matrix
+ **********************************************************/
+
+void set_Jacobi_matrix(
+		FE_DATA* fe,
+		FE_3D_BASIS* basis)
+{
+	double** local_x;
+	local_x = (double**)calloc(fe->local_num_nodes, sizeof(double*));
+	for(int i=0; i<(fe->local_num_nodes); i++) {
+		local_x[i] = (double*)calloc(3, sizeof(double));
+	}
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
+			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
+			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
+		}
+
+		for(int p=0; p<(basis->num_integ_points); p++) {
+			calc_3d_Jacobi_matrix(
+					fe->geo[e].J,
+					fe->local_num_nodes,
+					local_x,
+					basis->dN_dxi[p],
+					basis->dN_det[p],
+					basis->dN_dze[p]);
+
+			fe->geo[e].Jacobian = matrixDeterminant_3x3(
+					fe->geo[e].J);
+		}
+	}
+
+	for(int i=0; i<(fe->local_num_nodes); i++) {
+		free(local_x[i]);
+	}
+	free(local_x);
+}
+
+
+/**********************************************************
+ * main function
+ **********************************************************/
 int main (
 		int argc, 
 		char* argv[])
@@ -321,12 +440,22 @@ int main (
 
 	input_FE_data(&(sys.fe), "./util/meshgen/mesh.txt");
 
-	initialize_basis(
-			&(sys.basis));
+	initialize_basis(&(sys.basis));
+	
+	MatrixCSR_initialize(&sys.csr, 
+			sys.fe.total_num_nodes,
+			sys.fe.total_num_elems,
+			sys.fe.local_num_nodes,
+			1,
+			sys.fe.conn);
+
+	set_Jacobi_matrix(&(sys.fe), &(sys.basis));
 
 	write_vtk_shape(&(sys.fe), "mesh.vtk");
 	
 	printf("\n");
+		
+		
 
 	return 0;
 }

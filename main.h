@@ -22,12 +22,21 @@ typedef struct
 
 typedef struct
 {
+	double J[3][3];
+	double Jacobian;
+} FE_3D_GEO;
+
+
+typedef struct
+{
 	int      total_num_nodes;
 	double** x;
 	
-	int   total_num_elems;
-	int   local_num_nodes;
-	int** conn;
+	int        total_num_elems;
+	int        local_num_nodes;
+	int**      conn;
+	FE_3D_GEO* geo;
+
 } FE_DATA;
 
 
@@ -36,15 +45,6 @@ typedef struct
 	double* T;
 	
 } NODAL_VALUES;
-
-
-typedef struct
-{
-	FE_3D_BASIS  basis;
-	FE_DATA   fe;
-	NODAL_VALUES vals;
-
-} FE_SYSTEM;
 
 
 /**********************************************************
@@ -75,6 +75,22 @@ void initialize_basis(
 
 
 /**********************************************************
+ * input
+ **********************************************************/
+void input_FE_data(
+		FE_DATA* fe,
+		char* filename);
+
+
+/**********************************************************
+ * output
+ **********************************************************/
+void write_vtk_shape(
+		FE_DATA* fe,
+		char* filename);
+
+
+/**********************************************************
  * numerical integration
  **********************************************************/
 void integ_point_tet_5(
@@ -95,3 +111,5 @@ void shapefunc_3d_tet_1st_der_value(
 		double*         dN_dxi,
 		double*         dN_det,
 		double*         dN_dze);
+
+
