@@ -293,6 +293,22 @@ void integ_point_tet_5(
 }
 
 
+double calc_integ(
+		const int num_integ_points,
+		const double* value,
+		const double* weight,
+		const double* Jacobian)
+{
+	double val = 0.0;
+
+	for(int i=0; i<num_integ_points; i++) {
+		val += value[i] * weight[i] * Jacobian[i];
+	}
+
+	return val;	
+}
+
+
 /**********************************************************
  * shape function
  **********************************************************/
@@ -382,7 +398,7 @@ void calc_3d_Jacobi_matrix(
  **********************************************************/
 
 void set_Jacobi_matrix(
-		FE_DATA* fe,
+		FE_DATA*     fe,
 		FE_3D_BASIS* basis)
 {
 	double** local_x;
@@ -420,6 +436,69 @@ void set_Jacobi_matrix(
 }
 
 
+void get_Jacobian_array(
+		double* Jacobian_ip,
+		const int num_integ_points,
+		const int elem_num,
+		FE_DATA* fe)
+{
+	for(int p=0; p<num_integ_points; p++) {
+		Jacobian_ip[p] = fe->geo[ elem_num ].Jacobian;
+	}
+}
+
+
+void set_element_matrix(
+		FE_DATA*     fe,
+		FE_3D_BASIS* basis,
+		Dataset_CSR* csr)
+{
+	double* val_ip;
+	double* Jacobian_ip;
+	val_ip      = (double*)calloc(fe->local_num_nodes, sizeof(double));
+	Jacobian_ip = (double*)calloc(basis->num_integ_points, sizeof(double));
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			for(int j=0; j<(fe->local_num_nodes); j++) {
+				
+				for(int p=0; p<(basis->num_integ_points); p++) {
+					val_ip[p] = 
+						basis->dN_dxi[p][i] * basis->dN_dxi[p][j] +
+						basis->dN_det[p][i] * basis->dN_det[p][j] +
+						basis->dN_dze[p][i] * basis->dN_dze[p][j];
+				}
+				
+				get_Jacobian_array(
+						Jacobian_ip, 
+						basis->num_integ_points,
+						e,
+						fe);
+
+				double integ_val = calc_integ(
+						basis->num_integ_points,
+						val_ip,
+						basis->integ_weight,
+						Jacobian_ip);
+
+				MatrixCSR_add_nonzero_value(
+						csr,
+						integ_val,
+						i, j, 1, 1);
+
+				printf("%e ", e, i, j, integ_val);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
+
+	free(val_ip);
+	free(Jacobian_ip);
+}
+
+
+
 /**********************************************************
  * main function
  **********************************************************/
@@ -450,6 +529,8 @@ int main (
 			sys.fe.conn);
 
 	set_Jacobi_matrix(&(sys.fe), &(sys.basis));
+
+	set_element_matrix(&(sys.fe), &(sys.basis), &(sys.csr));
 
 	write_vtk_shape(&(sys.fe), "mesh.vtk");
 	
