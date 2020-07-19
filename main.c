@@ -216,10 +216,10 @@ static void memory_allocation_elem(
 	}
 }
 
-void read_and_memory_allocation_FE_data(
+
+void read_and_memory_allocation_FE_node(
 		FE_DATA*  fe,
-		char*     filename, 
-		int       num_integ_points)
+		char*     filename)
 {
 	FILE* fp;
 
@@ -241,6 +241,23 @@ void read_and_memory_allocation_FE_data(
 				"%lf %lf %lf", &(fe->x[i][0]), &(fe->x[i][1]), &(fe->x[i][2]));
 	}
 
+	fclose(fp);
+}
+
+
+void read_and_memory_allocation_FE_elem(
+		FE_DATA*  fe,
+		char*     filename, 
+		int       num_integ_points)
+{
+	FILE* fp;
+
+	fp = fopen(filename, "r");
+	if( fp == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, filename);
+	}
+	
 	// read the number of elements
 	BEBOPS_IO_scan_line(
 			&fp, BUFFER_SIZE, "%d %d",&(fe->total_num_elems), &(fe->local_num_nodes));
@@ -256,8 +273,6 @@ void read_and_memory_allocation_FE_data(
 
 	fclose(fp);
 }
-
-
 
 /**********************************************************
  * output
@@ -670,9 +685,12 @@ int main (
 			POL_ORDER,
 			NUM_NODES_IN_ELEM);
 
-	read_and_memory_allocation_FE_data(
+	read_and_memory_allocation_FE_node(
 			&(sys.fe), 
-			"./util/meshgen/mesh.txt",
+			"./util/meshgen/node.dat");
+	read_and_memory_allocation_FE_elem(
+			&(sys.fe), 
+			"./util/meshgen/elem.dat",
 			sys.basis.num_integ_points);
 
 	memory_allocation_nodal_values(

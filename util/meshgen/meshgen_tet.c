@@ -15,15 +15,9 @@ typedef struct
 
 typedef struct
 {
-	 int div_x;
-	 int div_y;
-	 int div_z;
-	 double l_x;
-	 double l_y;
-	 double l_z;
-	 double x0;
-	 double y0;
-	 double z0;
+	int div_x;   int div_y;   int div_z;
+	double l_x;  double l_y;  double l_z;
+	double x0;   double y0;   double z0;
 
 } CONDITION;
 
@@ -202,27 +196,39 @@ void print_data(
 
 void output_data(
 		FE_DATA* fe,
-		char* filename)
+		char* filename_node,
+		char* filename_elem)
 {
-	FILE* fp;
-	fp = fopen(filename, "w");
-	if( fp == NULL ) {
+	FILE* fp_node;
+	fp_node = fopen(filename_node, "w");
+	if( fp_node == NULL ) {
 		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
-				CODENAME, filename);
+				CODENAME, filename_node);
 	}
 
-	fprintf(fp, "%d\n", fe->total_num_nodes);
+	fprintf(fp_node, "%d\n", fe->total_num_nodes);
 	for(int i=0; i<fe->total_num_nodes; i++) {
-		fprintf(fp, "%e %e %e\n", fe->x[i][0], fe->x[i][1], fe->x[i][2]);
+		fprintf(fp_node, "%e %e %e\n", fe->x[i][0], fe->x[i][1], fe->x[i][2]);
 	}
 
-	fprintf(fp, "%d %d\n", fe->total_num_elems, fe->local_num_nodes);
+
+	FILE* fp_elem;
+	fp_elem = fopen(filename_elem, "w");
+	if( fp_elem == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, filename_elem);
+	}
+
+	fprintf(fp_elem, "%d %d\n", fe->total_num_elems, fe->local_num_nodes);
 	for(int i=0; i<fe->total_num_elems; i++) {
 		for(int j=0; j<fe->local_num_nodes; j++) {
-			fprintf(fp, "%d ", fe->conn[i][j]);
+			fprintf(fp_elem, "%d ", fe->conn[i][j]);
 		}
-		fprintf(fp, "\n");
+		fprintf(fp_elem, "\n");
 	}
+
+	fclose(fp_node);
+	fclose(fp_elem);
 }
 
 
@@ -261,7 +267,7 @@ int main(
 	set_tet(&fe_tet, &fe_hex);
 
 	//print_data(&fe_tet);
-	output_data(&fe_tet, "mesh.txt");
+	output_data(&fe_tet, "node.dat", "elem.dat");
 
 	printf("\n");
 	return 0;

@@ -598,7 +598,7 @@ void MatrixCSR_set_matrix_to_monolis(
 }
 
 
-void Matrix_CSR_solver_monolis(
+void MatrixCSR_solver_monolis(
 		Dataset_CSR* csr,
 		double* rhs,
 		int method_num,

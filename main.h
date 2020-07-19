@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "solve_mat.h"
 
+// Information of polynomials and numerical integration in normalized space
+// Instance of this structure is made for each types of FE 
 typedef struct
 {
 	// information of numerical integration in normalized space
@@ -23,6 +25,7 @@ typedef struct
 } FE_3D_BASIS;
 
 
+// geometric 
 typedef struct
 {
 	double** grad_N;     // [local_num_nodes][3 (dimension)]
@@ -85,7 +88,12 @@ void initialize_basis(
 /**********************************************************
  * input
  **********************************************************/
-void read_and_memory_allocation_FE_data(
+void read_and_memory_allocation_FE_node(
+		FE_DATA*  fe,
+		char*     filename);
+
+
+void read_and_memory_allocation_FE_elem(
 		FE_DATA*  fe,
 		char*     filename,
 		int       num_integ_points);
