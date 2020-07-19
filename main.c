@@ -1,8 +1,6 @@
 #include "main.h"
 #include "define_cell_type_vtk.h"
-#include "solve_mat.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -186,35 +184,21 @@ static bool BEBOPS_IO_read_file_return_char(
 }
 
 
-void read_and_memory_allocation_FE_data(
-		FE_DATA*  fe,
-		char*     filename, 
-		int       num_integ_points)
+static void memory_allocation_node(
+		FE_DATA*  fe)
 {
-	FILE* fp;
-
-	fp = fopen(filename, "r");
-	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" is not opened.\n", 
-				CODENAME, filename);
-	}
-
-	BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, "%d", &(fe->total_num_nodes));
-	printf("%s Num. nodes: %d\n", CODENAME, fe->total_num_nodes);
-
 	fe->x = (double**)calloc(fe->total_num_nodes, sizeof(double*));
-
+	
 	for(int i=0; i<(fe->total_num_nodes); i++) {
 		fe->x[i] = (double*)calloc(3, sizeof(double));
-
-		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
-				"%lf %lf %lf", &(fe->x[i][0]), &(fe->x[i][1]), &(fe->x[i][2]));
 	}
+}
 
-	BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, "%d %d",
-			&(fe->total_num_elems), &(fe->local_num_nodes));
-	printf("%s Num. elements: %d\n", CODENAME, fe->total_num_elems);
 
+static void memory_allocation_elem(
+		FE_DATA*  fe,
+		int       num_integ_points)
+{
 	fe->conn = (int**)calloc(fe->total_num_elems, sizeof(int*));
 	fe->geo  = (FE_3D_GEO**)calloc(fe->total_num_elems, sizeof(FE_3D_GEO*));
 
@@ -229,10 +213,44 @@ void read_and_memory_allocation_FE_data(
 				fe->geo[e][p].grad_N[i] = (double*)calloc(3, sizeof(double));
 			}
 		}
+	}
+}
 
-		if(fe->local_num_nodes == 4) {
-			BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, "%d %d %d %d", 
-					&(fe->conn[e][0]), &(fe->conn[e][1]), &(fe->conn[e][2]), (&fe->conn[e][3]));
+void read_and_memory_allocation_FE_data(
+		FE_DATA*  fe,
+		char*     filename, 
+		int       num_integ_points)
+{
+	FILE* fp;
+
+	fp = fopen(filename, "r");
+	if( fp == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, filename);
+	}
+
+	// read the number of nodes
+	BEBOPS_IO_scan_line(
+			&fp, BUFFER_SIZE, "%d", &(fe->total_num_nodes));
+	printf("%s Num. nodes: %d\n", CODENAME, fe->total_num_nodes);
+	memory_allocation_node(fe);
+
+	// read positions of nodes
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
+				"%lf %lf %lf", &(fe->x[i][0]), &(fe->x[i][1]), &(fe->x[i][2]));
+	}
+
+	// read the number of elements
+	BEBOPS_IO_scan_line(
+			&fp, BUFFER_SIZE, "%d %d",&(fe->total_num_elems), &(fe->local_num_nodes));
+	printf("%s Num. elements: %d\n", CODENAME, fe->total_num_elems);
+	memory_allocation_elem(fe, num_integ_points);
+
+	// read the connectivities of elements
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		for(int i=0; i<(fe->local_num_nodes); i++) {	
+			fscanf(fp, "%d", &(fe->conn[e][i]));
 		}
 	}
 
@@ -292,7 +310,6 @@ void write_nodal_value_scalar(
 	for(int i=0; i<(fe->total_num_nodes); i++) {	
 		fprintf(fp, "%e\n", val[i]);
 	}
-
 }
 
 
@@ -304,10 +321,12 @@ void output_result_file_vtk(
 	FILE* fp;
 	fp = fopen(filename, "w");
 	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" is not opened.\n", 
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
 				CODENAME, filename);
 	}
+
 	write_vtk_shape(fe, fp);
+	
 	fprintf(fp, "POINT_DATA %d\n", fe->total_num_nodes);
 	write_nodal_value_scalar(fe, fp, vals->T, "temperature");
 
@@ -443,7 +462,6 @@ void calc_3d_Jacobi_matrix(
 /**********************************************************
  * boundary condition
  **********************************************************/
-
 void set_Dirichlet_bc_CSR_mat(
 		Dataset_CSR*   csr,
 		const bool*    node_is_Dirichlet_bc, //[num_nodes*num_dof_on_node]
