@@ -1,6 +1,7 @@
 #include "main.h"
 #include "define_cell_type_vtk.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -10,6 +11,7 @@ typedef struct
 	FE_3D_BASIS  basis;
 	FE_DATA      fe;
 	NODAL_VALUES vals;
+	BC_DATA      bc;
 	Dataset_CSR  csr;
 
 } FE_SYSTEM;
@@ -26,6 +28,8 @@ const double MAT_MAX_ITER = 100000;
 const char* CODENAME = "test_thermal >";
 const int BUFFER_SIZE = 1000;
 
+const char* INPUT_FILENAME_NODE = "./util/meshgen/node.dat";
+const char* INPUT_FILENAME_ELEM = "./util/meshgen/elem.dat";
 const char* OUTPUT_FILENAME = "result.vtk";
 
 
@@ -218,8 +222,8 @@ static void memory_allocation_elem(
 
 
 void read_and_memory_allocation_FE_node(
-		FE_DATA*  fe,
-		char*     filename)
+		FE_DATA*     fe,
+		const char*  filename)
 {
 	FILE* fp;
 
@@ -246,9 +250,9 @@ void read_and_memory_allocation_FE_node(
 
 
 void read_and_memory_allocation_FE_elem(
-		FE_DATA*  fe,
-		char*     filename, 
-		int       num_integ_points)
+		FE_DATA*     fe,
+		const char*  filename, 
+		int          num_integ_points)
 {
 	FILE* fp;
 
@@ -417,6 +421,28 @@ void shapefunc_3d_tet_1st_der_value(
 }
 
 
+void shapefunc_3d_tet_1st_surface_conn(
+		int        surf_conn[3],
+		const int  surf_num)
+{
+	switch(surf_num) {
+		case 0:
+			surf_conn[0] = 2;  surf_conn[1] = 1;  surf_conn[2] = 3;
+			break;
+		case 1:
+			surf_conn[0] = 0;  surf_conn[1] = 2;  surf_conn[2] = 3;
+			break;
+		case 2:
+			surf_conn[0] = 1;  surf_conn[1] = 0;  surf_conn[2] = 3;
+			break;
+		case 3:
+			surf_conn[0] = 0;  surf_conn[1] = 1;  surf_conn[2] = 2;
+			break;
+	}
+
+}
+
+
 static double matrixDeterminant_3x3(
 		double mat[3][3]) 
 {
@@ -477,17 +503,52 @@ void calc_3d_Jacobi_matrix(
 /**********************************************************
  * boundary condition
  **********************************************************/
+void read_and_memory_allocation_Dirichlet_bc(
+		BC_DATA*     bc,
+		const char*  filename,
+		const int    total_num_nodes)
+{
+	FILE* fp;
+	fp = fopen(filename, "r");
+	if( fp == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, filename);
+	}
+
+	BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
+			"%d %d", &(bc->num_D_bcs), &(bc->block_size));
+	printf("%s Num. Dirichlet B.C.: %d\n", CODENAME, bc->num_D_bcs);
+
+	int n = total_num_nodes * bc->block_size;
+	bc->D_bc_exists   = (bool*  )calloc(n, sizeof(bool  ));
+	bc->imposed_D_val = (double*)calloc(n, sizeof(double));
+	for(int i=0; i<n; i++) {
+		bc->D_bc_exists[i]   = false;
+		bc->imposed_D_val[i] = 0.0;
+	}
+
+	for(int i=0; i<(bc->num_D_bcs); i++) {
+		int node_id;  int block_id;  double val;
+		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
+			"%d %d %lf", &node_id, &block_id, &val);
+
+		int index = (bc->block_size)*node_id + block_id;
+		bc->D_bc_exists[ index ]   = true;
+		bc->imposed_D_val[ index ] = val;
+	}
+}
+
+
 void set_Dirichlet_bc_CSR_mat(
-		Dataset_CSR*   csr,
-		const bool*    node_is_Dirichlet_bc, //[num_nodes*num_dof_on_node]
-		const double*  imposed_val)          //[num_nodes*num_dof_on_node]
+		Dataset_CSR*  csr,
+		BC_DATA*      bc)          
 {
 	int n = csr->num_nodes;
 	int s = csr->num_dofs_on_node;
 
 	for(int i=0; i<n; i++) {
 		for(int k=0; k<s; k++) {
-			if( node_is_Dirichlet_bc[ s*i+k ] ) {
+			if( bc->D_bc_exists[ s*i+k ] ) {
 
 				for(int j=0; j<n; j++) {
 					for(int l=0; l<s; l++) {
@@ -504,18 +565,17 @@ void set_Dirichlet_bc_CSR_mat(
 
 
 void set_Dirichlet_bc_CSR_vec(
-		Dataset_CSR* csr,
-		const bool* node_is_Dirichlet_bc,
-		double* imposed_val,
-		double*  g_rhs)
+		Dataset_CSR*  csr,
+		BC_DATA*      bc,
+		double*       g_rhs)
 {
 	int n = csr->num_nodes;
 	int s = csr->num_dofs_on_node;
 
 	for(int i=0; i<n; i++) {
 		for(int k=0; k<s; k++) {
-			if( !node_is_Dirichlet_bc[ s*i+k ] ) {
-				imposed_val[ s*i+k ] = 0.0;
+			if( !bc->D_bc_exists[ s*i+k ] ) {
+				bc->imposed_D_val[ s*i+k ] = 0.0;
 			}
 		}
 	}
@@ -524,14 +584,14 @@ void set_Dirichlet_bc_CSR_vec(
 	bc_vec = (double*)calloc(n*s, sizeof(double));
 
 	MatrixCSR_mat_vec_multiplication(
-			csr, imposed_val, bc_vec);
+			csr, bc->imposed_D_val, bc_vec);
 
 	for(int i=0; i<n; i++) {
 		for(int k=0; k<s; k++) {
 			g_rhs[ s*i+k ] -= bc_vec[ s*i+k ];
 
-			if( node_is_Dirichlet_bc[ s*i+k ] ) {
-				g_rhs[ s*i+k ] = imposed_val[ s*i+k ];
+			if( bc->D_bc_exists[ s*i+k ] ) {
+				g_rhs[ s*i+k ] = bc->imposed_D_val[ s*i+k ];
 			}
 		}
 	}
@@ -539,6 +599,38 @@ void set_Dirichlet_bc_CSR_vec(
 	free(bc_vec);
 }
 
+
+static void cross_product_3(
+		double        ans[3],
+		const double  vec_1[3],
+		const double  vec_2[3])
+{
+	ans[0] = vec_1[1]*vec_2[2] - vec_1[2]*vec_2[1];
+	ans[1] = vec_1[2]*vec_2[0] - vec_1[0]*vec_2[2];
+	ans[2] = vec_1[0]*vec_2[1] - vec_1[1]*vec_2[0];
+}
+
+
+static double vector_length_3(
+		double vec[3])
+{
+	double len = vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
+	return( sqrt(len) );
+}
+
+static void normal_vector_3(
+		double vec[3])
+{
+	double len = vector_length_3(vec);
+	if(len == 0.0) {
+		return;
+	}
+	else {
+		for(int d=0; d<3; d++) {
+			vec[d] = vec[d]/len;
+		}
+	}
+}
 
 
 /**********************************************************
@@ -666,6 +758,78 @@ void set_element_matrix(
 }
 
 
+/**********************************************************
+ * manufactured solution
+ **********************************************************/
+void manufactured_solution_write_bc(
+		FE_DATA*   fe,
+		const int  block_size)
+{
+	double** norm;
+	norm = (double**)calloc(fe->total_num_nodes, sizeof(double*));
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		norm[i] = (double*)calloc(3, sizeof(double));
+	}
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		for(int i=0; i<4; i++) {
+			int surf_conn[3];
+			shapefunc_3d_tet_1st_surface_conn(
+					surf_conn, i);
+			
+			double ans[3];  double vec_1[3];  double vec_2[3];
+			int nid_0 = fe->conn[e][ surf_conn[0] ];
+			int nid_1 = fe->conn[e][ surf_conn[1] ];
+			int nid_2 = fe->conn[e][ surf_conn[2] ];
+			for(int d=0; d<3; d++) {
+				vec_1[d] = fe->x[ nid_1 ][d] - fe->x[ nid_0 ][d];
+				vec_2[d] = fe->x[ nid_2 ][d] - fe->x[ nid_0 ][d];
+			}
+			cross_product_3(ans, vec_1, vec_2);
+			normal_vector_3(ans);
+			
+			for(int d=0; d<3; d++) {
+				norm[ nid_0 ][d] += ans[d];
+				norm[ nid_1 ][d] += ans[d];
+				norm[ nid_2 ][d] += ans[d];
+			}
+			
+		}
+	}
+
+	int num_bcs = 0;
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		double len = vector_length_3(norm[i]);
+		if(len > 1.0) {
+			num_bcs++;
+		}
+	}
+	
+	const char* filename = "bc_D.dat";
+	FILE* fp;
+	fp = fopen(filename, "w");
+	if( fp == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, filename);
+	}
+	fprintf(fp, "%d %d\n", block_size*num_bcs, block_size);
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		double len = vector_length_3(norm[i]);
+		if(len > 1.0) {
+			for(int b=0; b<block_size; b++) {
+				fprintf(fp, "%d %d %e\n", i, b, 0.0);
+			}
+		}
+	}
+
+	fclose(fp);
+
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		free(norm[i]);
+	}
+	free(norm);
+}
+
 
 /**********************************************************
  * main function
@@ -687,19 +851,31 @@ int main (
 
 	read_and_memory_allocation_FE_node(
 			&(sys.fe), 
-			"./util/meshgen/node.dat");
+			INPUT_FILENAME_NODE);
 	read_and_memory_allocation_FE_elem(
 			&(sys.fe), 
-			"./util/meshgen/elem.dat",
+			INPUT_FILENAME_ELEM,
 			sys.basis.num_integ_points);
 
 	memory_allocation_nodal_values(
 			&(sys.vals),
 			sys.fe.total_num_nodes);
 
-	initialize_basis(&(sys.basis));
+	// for manufactured solution
+	manufactured_solution_write_bc(
+			&(sys.fe), 
+			1);
 
-	MatrixCSR_initialize(&sys.csr, 
+	read_and_memory_allocation_Dirichlet_bc(
+			&(sys.bc),
+			"bc_D.dat",
+			sys.fe.total_num_nodes);
+
+	initialize_basis(
+			&(sys.basis));
+
+	MatrixCSR_initialize(
+			&sys.csr, 
 			sys.fe.total_num_nodes,
 			sys.fe.total_num_elems,
 			sys.fe.local_num_nodes,
@@ -717,22 +893,17 @@ int main (
 			&(sys.basis), 
 			&(sys.csr));
 
-	/* test code for B.C. (tentative) */
-	bool* node_is_Dirichlet_bc;  double* imposed_val;
-	node_is_Dirichlet_bc = (bool*)calloc(sys.fe.total_num_nodes, sizeof(bool));
-	imposed_val = (double*)calloc(sys.fe.total_num_nodes, sizeof(double));
 	for(int i=0; i<sys.fe.total_num_nodes; i++) {
-		node_is_Dirichlet_bc[i] = false;
-		imposed_val[i] = 0.0;
+		sys.csr.rhs[i] = 0.1;
 	}
-	int last = sys.fe.total_num_nodes - 1;
-	node_is_Dirichlet_bc[0]    = true;  imposed_val[0]    = 0.0;
-	node_is_Dirichlet_bc[last] = true;  imposed_val[last] = 1.0;
 
-	set_Dirichlet_bc_CSR_vec(&(sys.csr), node_is_Dirichlet_bc, imposed_val, sys.csr.rhs);
-	set_Dirichlet_bc_CSR_mat(&(sys.csr), node_is_Dirichlet_bc, imposed_val);
-	free(node_is_Dirichlet_bc);  free(imposed_val);
-	/************************************/
+	set_Dirichlet_bc_CSR_vec(
+			&(sys.csr),
+			&(sys.bc),
+			sys.csr.rhs);
+	set_Dirichlet_bc_CSR_mat(
+			&(sys.csr),
+			&(sys.bc));
 
 	MatrixCSR_solver_CG(
 			&(sys.csr), 

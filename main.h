@@ -40,9 +40,9 @@ typedef struct
 	int      total_num_nodes;
 	double** x;
 	
-	int        total_num_elems;
-	int        local_num_nodes;
-	int**      conn;
+	int         total_num_elems;
+	int         local_num_nodes;
+	int**       conn;
 	FE_3D_GEO** geo;  //[total_num_elems][num_integ_points]
 
 } FE_DATA;
@@ -53,6 +53,20 @@ typedef struct
 	double* T;
 	
 } NODAL_VALUES;
+
+
+typedef struct
+{
+	int block_size;
+
+	int num_D_bcs;
+	bool*   D_bc_exists;
+	double* imposed_D_val;
+
+	int num_N_bcs;
+	bool*   N_bc_exists;
+	double* imposed_N_val;
+} BC_DATA;
 
 
 /**********************************************************
@@ -155,17 +169,20 @@ void calc_3d_Jacobi_matrix(
 /**********************************************************
  * boundary condition
  **********************************************************/
+void read_and_memory_allocation_Dirichlet_bc(
+		BC_DATA*     bc,
+		const char*  filename,
+		const int    total_num_nodes);
 
 void set_Dirichlet_bc_CSR_mat(
-		Dataset_CSR*   csr,
-		const bool*    node_is_Dirichlet_bc, //[num_nodes*num_dof_on_node]
-		const double*  imposed_val);         //[num_nodes*num_dof_on_node]
+		Dataset_CSR*  csr,
+		BC_DATA*      bc); 
+
 
 void set_Dirichlet_bc_CSR_vec(
-		Dataset_CSR* csr,
-		const bool* node_is_Dirichlet_bc,
-		double* imposed_val,
-		double*  g_rhs);
+		Dataset_CSR*  csr,
+		BC_DATA*      bc,
+		double*       g_rhs);
 
 /**********************************************************
  * element matrix
