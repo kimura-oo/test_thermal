@@ -192,7 +192,7 @@ static void memory_allocation_node(
 		FE_DATA*  fe)
 {
 	fe->x = (double**)calloc(fe->total_num_nodes, sizeof(double*));
-	
+
 	for(int i=0; i<(fe->total_num_nodes); i++) {
 		fe->x[i] = (double*)calloc(3, sizeof(double));
 	}
@@ -209,7 +209,7 @@ static void memory_allocation_elem(
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		fe->conn[e] = (int*)calloc(fe->local_num_nodes, sizeof(int));
 		fe->geo[e]  = (FE_3D_GEO*)calloc(num_integ_points, sizeof(FE_3D_GEO));
-		
+
 		for(int p=0; p<num_integ_points; p++) {
 			fe->geo[e][p].grad_N = (double**)calloc(fe->local_num_nodes, sizeof(double*));
 
@@ -261,7 +261,7 @@ void read_and_memory_allocation_FE_elem(
 		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
 				CODENAME, filename);
 	}
-	
+
 	// read the number of elements
 	BEBOPS_IO_scan_line(
 			&fp, BUFFER_SIZE, "%d %d",&(fe->total_num_elems), &(fe->local_num_nodes));
@@ -325,7 +325,7 @@ void write_nodal_value_scalar(
 {
 	fprintf(fp, "SCALARS %s float\n", label);
 	fprintf(fp, "LOOKUP_TABLE default\n");
-	
+
 	for(int i=0; i<(fe->total_num_nodes); i++) {	
 		fprintf(fp, "%e\n", val[i]);
 	}
@@ -345,7 +345,7 @@ void output_result_file_vtk(
 	}
 
 	write_vtk_shape(fe, fp);
-	
+
 	fprintf(fp, "POINT_DATA %d\n", fe->total_num_nodes);
 	write_nodal_value_scalar(fe, fp, vals->T, "temperature");
 
@@ -370,11 +370,11 @@ void integ_point_tet_5(
 	integ_point[3][0] = 1.0/6.0;  integ_point[3][1] = 1.0/2.0;  integ_point[3][2] = 1.0/6.0;
 	integ_point[4][0] = 1.0/2.0;  integ_point[4][1] = 1.0/6.0;  integ_point[4][2] = 1.0/6.0;
 
-	integ_weight[0] = -2.0/15.0;
-	integ_weight[1] =  3.0/40.0;
-	integ_weight[2] =  3.0/40.0;
-	integ_weight[3] =  3.0/40.0;
-	integ_weight[4] =  3.0/40.0;
+	integ_weight[0] = -4.0/30.0;
+	integ_weight[1] =  9.0/120.0;
+	integ_weight[2] =  9.0/120.0;
+	integ_weight[3] =  9.0/120.0;
+	integ_weight[4] =  9.0/120.0;
 }
 
 
@@ -439,7 +439,24 @@ void shapefunc_3d_tet_1st_surface_conn(
 			surf_conn[0] = 0;  surf_conn[1] = 1;  surf_conn[2] = 2;
 			break;
 	}
+}
 
+
+void shapefunc_3d_map_integ_point(
+		double        x[3],
+		const int     local_num_nodes,
+		double**      local_x,
+		double*       N)
+{
+	for(int d=0; d<3; d++) {
+		x[d] = 0.0;
+	}
+
+	for(int i=0; i<local_num_nodes; i++) {
+		for(int d=0; d<3; d++) {
+			x[d] += N[i]*local_x[i][d];
+		}
+	}
 }
 
 
@@ -515,11 +532,14 @@ void read_and_memory_allocation_Dirichlet_bc(
 				CODENAME, filename);
 	}
 
+	bc->total_num_nodes = total_num_nodes;
+
 	BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
 			"%d %d", &(bc->num_D_bcs), &(bc->block_size));
 	printf("%s Num. Dirichlet B.C.: %d\n", CODENAME, bc->num_D_bcs);
 
 	int n = total_num_nodes * bc->block_size;
+
 	bc->D_bc_exists   = (bool*  )calloc(n, sizeof(bool  ));
 	bc->imposed_D_val = (double*)calloc(n, sizeof(double));
 	for(int i=0; i<n; i++) {
@@ -530,7 +550,7 @@ void read_and_memory_allocation_Dirichlet_bc(
 	for(int i=0; i<(bc->num_D_bcs); i++) {
 		int node_id;  int block_id;  double val;
 		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
-			"%d %d %lf", &node_id, &block_id, &val);
+				"%d %d %lf", &node_id, &block_id, &val);
 
 		int index = (bc->block_size)*node_id + block_id;
 		bc->D_bc_exists[ index ]   = true;
@@ -732,10 +752,10 @@ void set_element_matrix(
 						fe);
 
 				for(int p=0; p<(basis->num_integ_points); p++) {
-					val_ip[p] = 
-						fe->geo[e][p].grad_N[i][0] * fe->geo[e][p].grad_N[j][0] +
-						fe->geo[e][p].grad_N[i][1] * fe->geo[e][p].grad_N[j][1] +
-						fe->geo[e][p].grad_N[i][2] * fe->geo[e][p].grad_N[j][2];
+					val_ip[p] = -(
+							fe->geo[e][p].grad_N[i][0] * fe->geo[e][p].grad_N[j][0] +
+							fe->geo[e][p].grad_N[i][1] * fe->geo[e][p].grad_N[j][1] +
+							fe->geo[e][p].grad_N[i][2] * fe->geo[e][p].grad_N[j][2]);
 				}
 
 				double integ_val = calc_integ(
@@ -776,7 +796,7 @@ void manufactured_solution_write_bc(
 			int surf_conn[3];
 			shapefunc_3d_tet_1st_surface_conn(
 					surf_conn, i);
-			
+
 			double ans[3];  double vec_1[3];  double vec_2[3];
 			int nid_0 = fe->conn[e][ surf_conn[0] ];
 			int nid_1 = fe->conn[e][ surf_conn[1] ];
@@ -787,13 +807,13 @@ void manufactured_solution_write_bc(
 			}
 			cross_product_3(ans, vec_1, vec_2);
 			normal_vector_3(ans);
-			
+
 			for(int d=0; d<3; d++) {
 				norm[ nid_0 ][d] += ans[d];
 				norm[ nid_1 ][d] += ans[d];
 				norm[ nid_2 ][d] += ans[d];
 			}
-			
+
 		}
 	}
 
@@ -804,7 +824,7 @@ void manufactured_solution_write_bc(
 			num_bcs++;
 		}
 	}
-	
+
 	const char* filename = "bc_D.dat";
 	FILE* fp;
 	fp = fopen(filename, "w");
@@ -830,6 +850,102 @@ void manufactured_solution_write_bc(
 	free(norm);
 }
 
+
+double manufactured_solution_get_solution_scalar(
+		double x[3])
+{
+	double sol = sin( x[0] ) * sin( x[1] ) * sin( x[2] );
+	return sol;
+}
+
+
+double manufactured_solution_get_rhs_scalar(
+		double x[3])
+{
+	double rhs = -3.0*sin( x[0] ) * sin( x[1] ) * sin( x[2] );
+	return rhs;
+}
+
+
+void manufactured_solution_set_bc_scalar(
+		FE_DATA* fe,
+		BC_DATA* bc)
+{
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		if( bc->D_bc_exists[i] ) {
+			double x[3];
+			for(int d=0; d<3; d++) {
+				x[d] = fe->x[i][d];
+			}
+
+			bc->imposed_D_val[i] = 
+				manufactured_solution_get_solution_scalar(x);
+		}
+	}
+}
+
+
+void manufactured_solution_set_rhs_scalar(
+		FE_DATA* fe,
+		FE_3D_BASIS* basis,
+		double* rhs)
+{
+	double* val_ip;
+	double* Jacobian_ip;
+	val_ip      = (double*)calloc(basis->num_integ_points, sizeof(double));
+	Jacobian_ip = (double*)calloc(basis->num_integ_points, sizeof(double));
+	
+	double** local_x;
+	local_x = (double**)calloc(fe->local_num_nodes, sizeof(double*));
+	for(int i=0; i<(fe->local_num_nodes); i++) {
+		local_x[i] = (double*)calloc(3, sizeof(double));
+	}
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
+			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
+			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
+		}
+
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			get_Jacobian_array(
+					Jacobian_ip, 
+					basis->num_integ_points,
+					e,
+					fe);
+
+			for(int p=0; p<(basis->num_integ_points); p++) {
+				double x_ip[3];
+				shapefunc_3d_map_integ_point(
+						x_ip,
+						fe->local_num_nodes,
+						local_x,
+						basis->N[p]);
+
+				double rhs_ip = manufactured_solution_get_rhs_scalar(x_ip);
+				val_ip[p] = rhs_ip * basis->N[p][i];
+			}
+
+			double integ_val = calc_integ(
+					basis->num_integ_points,
+					val_ip,
+					basis->integ_weight,
+					Jacobian_ip);
+
+			rhs[ fe->conn[e][i] ] += integ_val;
+		}
+	}
+
+	free(val_ip);
+	free(Jacobian_ip);
+
+	for(int i=0; i<(fe->local_num_nodes); i++) {
+		free(local_x[i]);
+	}
+	free(local_x);
+}
 
 /**********************************************************
  * main function
@@ -893,9 +1009,14 @@ int main (
 			&(sys.basis), 
 			&(sys.csr));
 
-	for(int i=0; i<sys.fe.total_num_nodes; i++) {
-		sys.csr.rhs[i] = 0.1;
-	}
+	// for manufactured solution
+	manufactured_solution_set_bc_scalar(
+			&(sys.fe),
+			&(sys.bc));
+	manufactured_solution_set_rhs_scalar(
+			&(sys.fe),
+			&(sys.basis),
+			sys.csr.rhs);
 
 	set_Dirichlet_bc_CSR_vec(
 			&(sys.csr),
@@ -912,7 +1033,7 @@ int main (
 			MAT_EPSILON, 
 			MAT_MAX_ITER, 
 			true);
-	
+
 	output_result_file_vtk(
 			&(sys.fe),
 			&(sys.vals),

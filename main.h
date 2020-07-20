@@ -17,9 +17,9 @@ typedef struct
 	int      pol_order;  // polynomial order
 	int      num_nodes;  // the number of nodes in an element
 	double** N;          // array of shape function 
-	                     // [num_integ_points][num_nodes_in_elem]
+	                     // [num_integ_points][local_num_nodes]
 	double** dN_dxi;	 // array of derivative (xi) shape function
-	                     // [num_integ_points][num_nodes_in_elem]
+	                     // [num_integ_points][local_num_nodes]
 	double** dN_det;     // (eta)
 	double** dN_dze;     // (zeta)
 } FE_3D_BASIS;
@@ -57,6 +57,7 @@ typedef struct
 
 typedef struct
 {
+	int total_num_nodes;
 	int block_size;
 
 	int num_D_bcs;
