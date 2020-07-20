@@ -349,6 +349,21 @@ void output_result_file_vtk(
 	fprintf(fp, "POINT_DATA %d\n", fe->total_num_nodes);
 	write_nodal_value_scalar(fe, fp, vals->T, "temperature");
 
+	double* error;
+	error = (double*)calloc(fe->total_num_nodes, sizeof(double));
+	for(int i=0; i<fe->total_num_nodes; i++) {
+		double x[3];
+		for(int d=0; d<3; d++) {
+			x[d] = fe->x[i][d];
+		}
+		double theo_sol = manufactured_solution_get_solution_scalar(x);
+		error[i] = vals->T[i] - theo_sol;
+	}
+	
+	write_nodal_value_scalar(fe, fp, error, "abs_error");
+
+	free(error);
+
 	fclose(fp);
 
 }
@@ -854,7 +869,7 @@ void manufactured_solution_write_bc(
 double manufactured_solution_get_solution_scalar(
 		double x[3])
 {
-	double sol = sin( x[0] ) * sin( x[1] ) * sin( x[2] );
+	double sol = sin( 0.5*x[0] ) * sin( 1.0*x[1] ) * sin( 2.0*x[2] );
 	return sol;
 }
 
@@ -862,7 +877,7 @@ double manufactured_solution_get_solution_scalar(
 double manufactured_solution_get_rhs_scalar(
 		double x[3])
 {
-	double rhs = -3.0*sin( x[0] ) * sin( x[1] ) * sin( x[2] );
+	double rhs = -5.25*sin( 0.5*x[0] ) * sin( x[1] ) * sin( 2.0*x[2] );
 	return rhs;
 }
 

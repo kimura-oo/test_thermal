@@ -207,3 +207,25 @@ void set_element_matrix(
 		FE_3D_BASIS* basis,
 		Dataset_CSR* csr);
 
+/**********************************************************
+ * manufactured solution
+ **********************************************************/
+void manufactured_solution_write_bc(
+		FE_DATA*   fe,
+		const int  block_size);
+
+double manufactured_solution_get_solution_scalar(
+		double x[3]);
+
+double manufactured_solution_get_rhs_scalar(
+		double x[3]);
+
+void manufactured_solution_set_bc_scalar(
+		FE_DATA* fe,
+		BC_DATA* bc);
+
+
+void manufactured_solution_set_rhs_scalar(
+		FE_DATA* fe,
+		FE_3D_BASIS* basis,
+		double* rhs);
