@@ -39,7 +39,7 @@ static bool same_index_set_exists(
 
 
 static bool sort_in_ascending_order(
-		int* item_in_index,  
+		int* item_in_index,
 		int num_sets)
 {
 	for (int i=0; i<num_sets; ++i) {
@@ -103,9 +103,9 @@ static void set_csr_index_and_item(
 					index_set[0] = g_num_j;
 				}
 
-				if( 
+				if(
 						!same_index_set_exists
-						(buf[ index_set[0] ], index_set[1], num_buf[ index_set[0] ] ) 
+						(buf[ index_set[0] ], index_set[1], num_buf[ index_set[0] ] )
 				  ) {
 					buf[ index_set[0] ][ num_buf[ index_set[0] ] ] = index_set[1];
 
@@ -194,7 +194,7 @@ static void init_monolis_matrix(
 	monomat->NDOF = NDOF;
 
 	monomat->indexU = (int*)calloc(N+1, sizeof(int));
-	monomat->indexL = (int*)calloc(N+1, sizeof(int));	
+	monomat->indexL = (int*)calloc(N+1, sizeof(int));
 	monomat->itemU  = (int*)calloc(NPU, sizeof(int));
 	monomat->itemL  = (int*)calloc(NPL, sizeof(int));
 
@@ -206,9 +206,9 @@ static void init_monolis_matrix(
 	monomat->B = (double*)calloc(N*NDOF, sizeof(double));
 
 	monolis_convert_csr_get_index(
-			num_nodes, 
-			num_nonzero_vals, 
-			csr_index, 
+			num_nodes,
+			num_nonzero_vals,
+			csr_index,
 			csr_item,
 			monomat->NPU,
 			monomat->NPL,
@@ -244,7 +244,7 @@ void MatrixCSR_initialize(
 		const int total_num_elems,
 		const int local_num_nodes,
 		const int num_dofs_on_node,
-		int** conn) 
+		int** conn)
 {
 
 	csr->num_nodes        = total_num_nodes;
@@ -266,7 +266,7 @@ void MatrixCSR_initialize(
 	csr->sol = (double*)calloc(nn*ndof      , sizeof(double));
 
 	set_csr_index_and_item(
-			csr, 
+			csr,
 			total_num_nodes,
 			total_num_elems,
 			local_num_nodes,
@@ -373,7 +373,7 @@ void MatrixCSR_set_nonzero_value(
 		int g_node_num_i,
 		int g_node_num_j,
 		int submat_i,
-		int submat_j)  
+		int submat_j)
 {
 	int n_start = csr->index[ g_node_num_i  ];
 	int n_end   = csr->index[ g_node_num_i+1];
@@ -387,7 +387,7 @@ void MatrixCSR_set_nonzero_value(
 	}
 
 	if(csr_num == -1) {
-		return;	
+		return;
 	}
 
 	int n = MatrixCSR_get_index(
@@ -407,7 +407,7 @@ void MatrixCSR_add_nonzero_value(
 		int g_node_num_i,
 		int g_node_num_j,
 		int submat_i,
-		int submat_j)  
+		int submat_j)
 {
 	int n_start = csr->index[ g_node_num_i   ];
 	int n_end   = csr->index[ g_node_num_i+1 ];
@@ -421,7 +421,7 @@ void MatrixCSR_add_nonzero_value(
 	}
 
 	if(csr_num == -1) {
-		return;	
+		return;
 	}
 
 	int n = MatrixCSR_get_index(
@@ -440,7 +440,7 @@ double MatrixCSR_get_nonzero_value(
 		int g_node_num_i,
 		int g_node_num_j,
 		int submat_i,
-		int submat_j)  
+		int submat_j)
 {
 	int n_start = csr->index[ g_node_num_i   ];
 	int n_end   = csr->index[ g_node_num_i+1 ];
@@ -454,7 +454,7 @@ double MatrixCSR_get_nonzero_value(
 	}
 
 	if(csr_num == -1) {
-		return 0.0;	
+		return 0.0;
 	}
 
 	int n = MatrixCSR_get_index(
@@ -473,7 +473,7 @@ void MatrixCSR_mat_vec_multiplication(
 		const double* vec,
 		double* ans)
 {
-	int nn   = csr->num_nodes; 
+	int nn   = csr->num_nodes;
 	int ndof = csr->num_dofs_on_node;
 
 	for(int i=0; i<nn; i++) {
@@ -482,11 +482,11 @@ void MatrixCSR_mat_vec_multiplication(
 
 		for(int k=0; k<ndof; k++) {
 			ans[ndof*i + k] = 0.0;
-			
+
 			for(int j=start; j<end; j++) {
 
 				for(int l=0; l<ndof; l++) {
-					ans[ndof*i + k] += 
+					ans[ndof*i + k] +=
 						csr->mat[ MatrixCSR_get_index(j, ndof, k, l) ] * vec[ ndof*(csr->item[j]) + l ];
 				}
 			}
@@ -556,7 +556,7 @@ int MatrixCSR_solver_CG(
 		//update p
 		for(int i=0; i<n; i++) {
 			p[i] = r[i] + beta*p[i];
-		}	
+		}
 	}
 
 	free(r);
@@ -573,20 +573,20 @@ void MatrixCSR_set_matrix_to_monolis(
 {
 
 	monolis_convert_csr_update_matrix_entry(
-			csr->num_nodes, 
-			csr->num_nonzero_vals, 
-			csr->num_dofs_on_node, 
-			csr->mat, 
+			csr->num_nodes,
+			csr->num_nonzero_vals,
+			csr->num_dofs_on_node,
+			csr->mat,
 			csr->index,
-			csr->item, 
-			csr->monomat.NPU, 
-			csr->monomat.NPL, 
-			csr->monomat.D, 
-			csr->monomat.AU, 
-			csr->monomat.AL, 
-			csr->monomat.indexU, 
-			csr->monomat.itemU, 
-			csr->monomat.indexL, 
+			csr->item,
+			csr->monomat.NPU,
+			csr->monomat.NPL,
+			csr->monomat.D,
+			csr->monomat.AU,
+			csr->monomat.AL,
+			csr->monomat.indexU,
+			csr->monomat.itemU,
+			csr->monomat.indexL,
 			csr->monomat.itemL);
 
 	int num_mat_elems = csr->num_nodes * csr->num_dofs_on_node;
@@ -612,23 +612,23 @@ void MatrixCSR_solver_monolis(
 {
 
 	monolis_serial(
-			csr->monomat.N, 
-			csr->monomat.NDOF, 
-			csr->monomat.NPU, 
-			csr->monomat.NPL, 
-			csr->monomat.D, 
-			csr->monomat.AU, 
-			csr->monomat.AL, 
+			csr->monomat.N,
+			csr->monomat.NDOF,
+			csr->monomat.NPU,
+			csr->monomat.NPL,
+			csr->monomat.D,
+			csr->monomat.AU,
+			csr->monomat.AL,
 			csr->monomat.X,
 			rhs,
-			csr->monomat.indexU, 
-			csr->monomat.itemU, 
+			csr->monomat.indexU,
+			csr->monomat.itemU,
 			csr->monomat.indexL,
-			csr->monomat.itemL, 
+			csr->monomat.itemL,
 			method_num,
-			precond_num, 
-			max_num_iters, 
-			tol, 
+			precond_num,
+			max_num_iters,
+			tol,
 			is_scaling,
 			is_reordering,
 			is_init_x,
@@ -636,7 +636,7 @@ void MatrixCSR_solver_monolis(
 
 	int num_mat_elems = csr->num_nodes * csr->num_dofs_on_node;
 	for(int i=0; i<num_mat_elems; i++) {
-		csr->sol[i] = csr->monomat.X[i]; 
+		csr->sol[i] = csr->monomat.X[i];
 	}
 }
 #endif

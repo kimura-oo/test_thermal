@@ -43,7 +43,7 @@ void memory_allocation_basis(
 		const int       num_nodes_in_elem)
 {
 	memory_allocation_integ(
-			basis, 
+			basis,
 			num_integ_points);
 
 	memory_allocation_shapefunc(
@@ -229,7 +229,7 @@ void read_and_memory_allocation_FE_node(
 
 	fp = fopen(filename, "r");
 	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+		printf("%s ERROR: File \"%s\" cannot be opened.\n",
 				CODENAME, filename);
 	}
 
@@ -241,7 +241,7 @@ void read_and_memory_allocation_FE_node(
 
 	// read positions of nodes
 	for(int i=0; i<(fe->total_num_nodes); i++) {
-		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
+		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE,
 				"%lf %lf %lf", &(fe->x[i][0]), &(fe->x[i][1]), &(fe->x[i][2]));
 	}
 
@@ -251,14 +251,14 @@ void read_and_memory_allocation_FE_node(
 
 void read_and_memory_allocation_FE_elem(
 		FE_DATA*     fe,
-		const char*  filename, 
+		const char*  filename,
 		int          num_integ_points)
 {
 	FILE* fp;
 
 	fp = fopen(filename, "r");
 	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+		printf("%s ERROR: File \"%s\" cannot be opened.\n",
 				CODENAME, filename);
 	}
 
@@ -270,7 +270,7 @@ void read_and_memory_allocation_FE_elem(
 
 	// read the connectivities of elements
 	for(int e=0; e<(fe->total_num_elems); e++) {
-		for(int i=0; i<(fe->local_num_nodes); i++) {	
+		for(int i=0; i<(fe->local_num_nodes); i++) {
 			fscanf(fp, "%d", &(fe->conn[e][i]));
 		}
 	}
@@ -297,7 +297,7 @@ void write_vtk_shape(
 	}
 
 	int num_nodes_in_cell = 1;
-	fprintf(fp, "CELLS %d %d\n", 
+	fprintf(fp, "CELLS %d %d\n",
 			fe->total_num_elems, fe->total_num_elems*(fe->local_num_nodes + 1));
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		fprintf(fp, "%d ", fe->local_num_nodes);
@@ -326,7 +326,7 @@ void write_nodal_value_scalar(
 	fprintf(fp, "SCALARS %s float\n", label);
 	fprintf(fp, "LOOKUP_TABLE default\n");
 
-	for(int i=0; i<(fe->total_num_nodes); i++) {	
+	for(int i=0; i<(fe->total_num_nodes); i++) {
 		fprintf(fp, "%e\n", val[i]);
 	}
 }
@@ -340,7 +340,7 @@ void output_result_file_vtk(
 	FILE* fp;
 	fp = fopen(filename, "w");
 	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+		printf("%s ERROR: File \"%s\" cannot be opened.\n",
 				CODENAME, filename);
 	}
 
@@ -359,7 +359,7 @@ void output_result_file_vtk(
 		double theo_sol = manufactured_solution_get_solution_scalar(x);
 		error[i] = vals->T[i] - theo_sol;
 	}
-	
+
 	write_nodal_value_scalar(fe, fp, error, "abs_error");
 
 	free(error);
@@ -405,7 +405,7 @@ double calc_integ(
 		val += value[i] * weight[i] * Jacobian[i];
 	}
 
-	return val;	
+	return val;
 }
 
 
@@ -429,10 +429,10 @@ void shapefunc_3d_tet_1st_der_value(
 		double*         dN_det,
 		double*         dN_dze)
 {
-	dN_dxi[0] = -1.0;  dN_det[0] = -1.0;  dN_dze[0] = -1.0; 
-	dN_dxi[1] =  1.0;  dN_det[1] =  0.0;  dN_dze[1] =  0.0; 
-	dN_dxi[2] =  0.0;  dN_det[2] =  1.0;  dN_dze[2] =  0.0; 
-	dN_dxi[3] =  0.0;  dN_det[3] =  0.0;  dN_dze[3] =  1.0; 
+	dN_dxi[0] = -1.0;  dN_det[0] = -1.0;  dN_dze[0] = -1.0;
+	dN_dxi[1] =  1.0;  dN_det[1] =  0.0;  dN_dze[1] =  0.0;
+	dN_dxi[2] =  0.0;  dN_det[2] =  1.0;  dN_dze[2] =  0.0;
+	dN_dxi[3] =  0.0;  dN_det[3] =  0.0;  dN_dze[3] =  1.0;
 }
 
 
@@ -476,13 +476,13 @@ void shapefunc_3d_map_integ_point(
 
 
 static double matrixDeterminant_3x3(
-		double mat[3][3]) 
+		double mat[3][3])
 {
-	return ( mat[0][0]*mat[1][1]*mat[2][2] + 
-			mat[0][1]*mat[1][2]*mat[2][0] + 
+	return ( mat[0][0]*mat[1][1]*mat[2][2] +
+			mat[0][1]*mat[1][2]*mat[2][0] +
 			mat[0][2]*mat[2][1]*mat[1][0] -
-			mat[0][2]*mat[1][1]*mat[2][0] - 
-			mat[0][1]*mat[1][0]*mat[2][2] - 
+			mat[0][2]*mat[1][1]*mat[2][0] -
+			mat[0][1]*mat[1][0]*mat[2][2] -
 			mat[0][0]*mat[2][1]*mat[1][2]   );
 }
 
@@ -543,13 +543,13 @@ void read_and_memory_allocation_Dirichlet_bc(
 	FILE* fp;
 	fp = fopen(filename, "r");
 	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+		printf("%s ERROR: File \"%s\" cannot be opened.\n",
 				CODENAME, filename);
 	}
 
 	bc->total_num_nodes = total_num_nodes;
 
-	BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
+	BEBOPS_IO_scan_line(&fp, BUFFER_SIZE,
 			"%d %d", &(bc->num_D_bcs), &(bc->block_size));
 	printf("%s Num. Dirichlet B.C.: %d\n", CODENAME, bc->num_D_bcs);
 
@@ -564,7 +564,7 @@ void read_and_memory_allocation_Dirichlet_bc(
 
 	for(int i=0; i<(bc->num_D_bcs); i++) {
 		int node_id;  int block_id;  double val;
-		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE, 
+		BEBOPS_IO_scan_line(&fp, BUFFER_SIZE,
 				"%d %d %lf", &node_id, &block_id, &val);
 
 		int index = (bc->block_size)*node_id + block_id;
@@ -576,7 +576,7 @@ void read_and_memory_allocation_Dirichlet_bc(
 
 void set_Dirichlet_bc_CSR_mat(
 		Dataset_CSR*  csr,
-		BC_DATA*      bc)          
+		BC_DATA*      bc)
 {
 	int n = csr->num_nodes;
 	int s = csr->num_dofs_on_node;
@@ -735,7 +735,7 @@ void set_shapefunc_derivative(
 
 			for(int i=0; i<(fe->local_num_nodes); i++) {
 				for(int d=0; d<3; d++) {
-					fe->geo[e][p].grad_N[i][d] = 
+					fe->geo[e][p].grad_N[i][d] =
 						J_inv[d][0] * basis->dN_dxi[p][i] +
 						J_inv[d][1] * basis->dN_det[p][i] +
 						J_inv[d][2] * basis->dN_dze[p][i];
@@ -761,7 +761,7 @@ void set_element_matrix(
 			for(int j=0; j<(fe->local_num_nodes); j++) {
 
 				get_Jacobian_array(
-						Jacobian_ip, 
+						Jacobian_ip,
 						basis->num_integ_points,
 						e,
 						fe);
@@ -844,7 +844,7 @@ void manufactured_solution_write_bc(
 	FILE* fp;
 	fp = fopen(filename, "w");
 	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+		printf("%s ERROR: File \"%s\" cannot be opened.\n",
 				CODENAME, filename);
 	}
 	fprintf(fp, "%d %d\n", block_size*num_bcs, block_size);
@@ -893,7 +893,7 @@ void manufactured_solution_set_bc_scalar(
 				x[d] = fe->x[i][d];
 			}
 
-			bc->imposed_D_val[i] = 
+			bc->imposed_D_val[i] =
 				manufactured_solution_get_solution_scalar(x);
 		}
 	}
@@ -909,7 +909,7 @@ void manufactured_solution_set_rhs_scalar(
 	double* Jacobian_ip;
 	val_ip      = (double*)calloc(basis->num_integ_points, sizeof(double));
 	Jacobian_ip = (double*)calloc(basis->num_integ_points, sizeof(double));
-	
+
 	double** local_x;
 	local_x = (double**)calloc(fe->local_num_nodes, sizeof(double*));
 	for(int i=0; i<(fe->local_num_nodes); i++) {
@@ -926,7 +926,7 @@ void manufactured_solution_set_rhs_scalar(
 
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			get_Jacobian_array(
-					Jacobian_ip, 
+					Jacobian_ip,
 					basis->num_integ_points,
 					e,
 					fe);
@@ -966,7 +966,7 @@ void manufactured_solution_set_rhs_scalar(
  * main function
  **********************************************************/
 int main (
-		int argc, 
+		int argc,
 		char* argv[])
 {
 
@@ -981,10 +981,10 @@ int main (
 			NUM_NODES_IN_ELEM);
 
 	read_and_memory_allocation_FE_node(
-			&(sys.fe), 
+			&(sys.fe),
 			INPUT_FILENAME_NODE);
 	read_and_memory_allocation_FE_elem(
-			&(sys.fe), 
+			&(sys.fe),
 			INPUT_FILENAME_ELEM,
 			sys.basis.num_integ_points);
 
@@ -994,7 +994,7 @@ int main (
 
 	// for manufactured solution
 	manufactured_solution_write_bc(
-			&(sys.fe), 
+			&(sys.fe),
 			1);
 
 	read_and_memory_allocation_Dirichlet_bc(
@@ -1006,7 +1006,7 @@ int main (
 			&(sys.basis));
 
 	MatrixCSR_initialize(
-			&sys.csr, 
+			&sys.csr,
 			sys.fe.total_num_nodes,
 			sys.fe.total_num_elems,
 			sys.fe.local_num_nodes,
@@ -1014,14 +1014,14 @@ int main (
 			sys.fe.conn);
 
 	set_Jacobi_matrix(
-			&(sys.fe), 
+			&(sys.fe),
 			&(sys.basis));
 	set_shapefunc_derivative(
-			&(sys.fe), 
+			&(sys.fe),
 			&(sys.basis));
 	set_element_matrix(
-			&(sys.fe), 
-			&(sys.basis), 
+			&(sys.fe),
+			&(sys.basis),
 			&(sys.csr));
 
 	// for manufactured solution
@@ -1042,11 +1042,11 @@ int main (
 			&(sys.bc));
 
 	MatrixCSR_solver_CG(
-			&(sys.csr), 
-			sys.csr.rhs, 
-			sys.vals.T, 
-			MAT_EPSILON, 
-			MAT_MAX_ITER, 
+			&(sys.csr),
+			sys.csr.rhs,
+			sys.vals.T,
+			MAT_EPSILON,
+			MAT_MAX_ITER,
 			true);
 
 	output_result_file_vtk(
