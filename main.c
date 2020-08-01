@@ -779,21 +779,10 @@ void set_element_matrix(
 {
 	double* val_ip;
 	double* Jacobian_ip;
-	double** elem_mat;
 	val_ip      = (double*)calloc(basis->num_integ_points, sizeof(double));
 	Jacobian_ip = (double*)calloc(basis->num_integ_points, sizeof(double));
-	elem_mat = (double**)calloc(fe->local_num_nodes, sizeof(double*));
-	for(int i=0; i<(fe->local_num_nodes); i++) {
-		elem_mat[i] = (double*)calloc(fe->local_num_nodes, sizeof(double));
-	}
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
-		for(int i=0; i<(fe->local_num_nodes); i++) {
-			for(int j=0; j<(fe->local_num_nodes); j++) {
-				elem_mat[i][j] = 0.0;
-			}
-		}
-
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			for(int j=0; j<(fe->local_num_nodes); j++) {
 
@@ -820,23 +809,17 @@ void set_element_matrix(
 						csr,
 						integ_val,
 						fe->conn[e][i], fe->conn[e][j], 0, 0);
-				elem_mat[i][j] += integ_val;
+
+				monolis_add_scalar_to_sparse_matrix(
+						monolis,
+						integ_val,
+						fe->conn[e][i], fe->conn[e][j], 0, 0);
 			}
 		}
-
-		monolis_add_sparse_matrix(
-				monolis,
-				fe->local_num_nodes,
-				&(fe->conn[e][0]),
-				elem_mat);
 	}
 
 	free(val_ip);
 	free(Jacobian_ip);
-	for(int i=0; i<(fe->local_num_nodes); i++) {
-		free(elem_mat[i]);
-	}
-	free(elem_mat);
 }
 
 
