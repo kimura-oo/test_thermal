@@ -1076,7 +1076,7 @@ int main (
 	monolis_solve(
 			&monolis,
 			monolis.mat.B,
-			monolis.mat.X);
+			sys.vals.T);
 
 	output_result_file_vtk(
 			&(sys.fe),
