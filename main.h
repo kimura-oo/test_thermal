@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include "solve_mat.h"
+#include "monolis.h"
 
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
@@ -203,9 +204,9 @@ void set_shapefunc_derivative(
 		FE_3D_BASIS*  basis);
 
 void set_element_matrix(
+		MONOLIS*     monolis,
 		FE_DATA*     fe,
-		FE_3D_BASIS* basis,
-		Dataset_CSR* csr);
+		FE_3D_BASIS* basis);
 
 /**********************************************************
  * manufactured solution

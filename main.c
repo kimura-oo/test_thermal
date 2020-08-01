@@ -638,22 +638,20 @@ void set_Dirichlet_bc_CSR_vec(
 
 void set_Dirichlet_bc(
 		MONOLIS*      monolis,
-		Dataset_CSR*  csr,
+		int           num_nodes,
+		int           num_dofs_on_node,
 		BC_DATA*      bc,
 		double*       g_rhs)
 	{
-	int n = csr->num_nodes;
-	int s = csr->num_dofs_on_node;
-
-	for(int i=0; i<n; i++) {
-		for(int k=0; k<s; k++) {
-			if( bc->D_bc_exists[ s*i+k ] ) {
+	for(int i=0; i<num_nodes; i++) {
+		for(int k=0; k<num_dofs_on_node; k++) {
+			if( bc->D_bc_exists[ num_dofs_on_node*i+k ] ) {
 				monolis_set_Dirichlet_bc(
 						monolis,
 						g_rhs,
 						i,
 						k,
-						bc->imposed_D_val[ s*i+k ]);
+						bc->imposed_D_val[ num_dofs_on_node*i+k ]);
 			}
 		}
 	}
@@ -774,8 +772,7 @@ void set_shapefunc_derivative(
 void set_element_matrix(
 		MONOLIS*     monolis,
 		FE_DATA*     fe,
-		FE_3D_BASIS* basis,
-		Dataset_CSR* csr)
+		FE_3D_BASIS* basis)
 {
 	double* val_ip;
 	double* Jacobian_ip;
@@ -804,11 +801,6 @@ void set_element_matrix(
 						val_ip,
 						basis->integ_weight,
 						Jacobian_ip);
-
-				MatrixCSR_add_nonzero_value(
-						csr,
-						integ_val,
-						fe->conn[e][i], fe->conn[e][j], 0, 0);
 
 				monolis_add_scalar_to_sparse_matrix(
 						monolis,
@@ -1049,14 +1041,6 @@ int main (
 			sys.fe.total_num_elems,
 			sys.fe.conn);
 
-	MatrixCSR_initialize(
-			&sys.csr,
-			sys.fe.total_num_nodes,
-			sys.fe.total_num_elems,
-			sys.fe.local_num_nodes,
-			1,
-			sys.fe.conn);
-
 	set_Jacobi_matrix(
 			&(sys.fe),
 			&(sys.basis));
@@ -1066,8 +1050,7 @@ int main (
 	set_element_matrix(
 			&monolis,
 			&(sys.fe),
-			&(sys.basis),
-			&(sys.csr));
+			&(sys.basis));
 
 	// for manufactured solution
 	manufactured_solution_set_bc_scalar(
@@ -1076,32 +1059,14 @@ int main (
 	manufactured_solution_set_rhs_scalar(
 			&(sys.fe),
 			&(sys.basis),
-			sys.csr.rhs);
-
-	set_Dirichlet_bc_CSR_vec(
-			&(sys.csr),
-			&(sys.bc),
-			sys.csr.rhs);
-	set_Dirichlet_bc_CSR_mat(
-			&(sys.csr),
-			&(sys.bc));
+			monolis.mat.B);
 
 	set_Dirichlet_bc(
 			&monolis,
-			&(sys.csr),
+			sys.fe.total_num_nodes,
+			1,
 			&(sys.bc),
 			monolis.mat.B);
-
-	double t2 = monolis_get_time();
-	MatrixCSR_solver_CG(
-			&(sys.csr),
-			sys.csr.rhs,
-			sys.vals.T,
-			MAT_EPSILON,
-			MAT_MAX_ITER,
-			true);
-	double t3 = monolis_get_time();
-	printf("** MatrixCSR_solver_CG time: %f\n", t3 - t2);
 
 	monolis_set_method   (&monolis, monolis_iter_CG);
 	monolis_set_precond  (&monolis, monolis_prec_DIAG);
@@ -1110,16 +1075,8 @@ int main (
 
 	monolis_solve(
 			&monolis,
-			sys.csr.rhs,
+			monolis.mat.B,
 			monolis.mat.X);
-
-	double r = 0.0;
-	//printf("%d\n", monolis.mat.N);
-	for(int i=0; i<monolis.mat.N; i++) {
-		//printf("%f %f \n", sys.vals.T[i], monolis.mat.X[i]);
-		r += pow(sys.vals.T[i] - monolis.mat.X[i], 2.0);
-	}
-	printf("** ANS L2 error: %lf\n", sqrt(r));
 
 	output_result_file_vtk(
 			&(sys.fe),
@@ -1129,8 +1086,8 @@ int main (
 	monolis_finalize(&monolis);
 	monolis_global_finalize();
 
-	double t4 = monolis_get_time();
-	printf("** Total time: %f\n", t4 - t1);
+	double t2 = monolis_get_time();
+	printf("** Total time: %f\n", t2 - t1);
 
 	printf("\n");
 
