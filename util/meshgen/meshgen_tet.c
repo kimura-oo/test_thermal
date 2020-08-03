@@ -140,7 +140,7 @@ bool arg_manager(
 	if(argc < 7) {
 		printf("%s Please specify parameters for meshing\n", CODENAME);
 		printf("%s Format: \n", VOIDNAME);
-		printf("%s ./meshgen_tet [1: num. elements (x)] [2: num. elements (y)] [3: num. elements (x)] [4: total length (x)] [5: total length (y)] [6: total length (z)] \n\n", VOIDNAME);
+		printf("%s ./meshgen_tet [1: num. elements (x)] [2: num. elements (y)] [3: num. elements (z)] [4: total length (x)] [5: total length (y)] [6: total length (z)] \n\n", VOIDNAME);
 
 		exit(0);
 	}

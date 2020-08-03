@@ -359,7 +359,6 @@ void output_result_file_vtk(
 		double theo_sol = manufactured_solution_get_solution_scalar(x);
 		error[i] = vals->T[i] - theo_sol;
 	}
-	
 	write_nodal_value_scalar(fe, fp, error, "abs_error");
 
 	free(error);
@@ -969,7 +968,6 @@ int main (
 		int argc, 
 		char* argv[])
 {
-
 	printf("\n");
 
 	FE_SYSTEM sys;

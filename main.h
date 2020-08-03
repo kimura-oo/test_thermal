@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <stdbool.h>
 #include "solve_mat.h"
 
 // Information of polynomials and numerical integration in normalized space
@@ -104,14 +105,14 @@ void initialize_basis(
  * input
  **********************************************************/
 void read_and_memory_allocation_FE_node(
-		FE_DATA*  fe,
-		char*     filename);
+		FE_DATA*     fe,
+		const char*  filename);
 
 
 void read_and_memory_allocation_FE_elem(
-		FE_DATA*  fe,
-		char*     filename,
-		int       num_integ_points);
+		FE_DATA*     fe,
+		const char*  filename,
+		int          num_integ_points);
 
 
 /**********************************************************
@@ -119,7 +120,7 @@ void read_and_memory_allocation_FE_elem(
  **********************************************************/
 void write_vtk_shape(
 		FE_DATA*  fe,
-		char*     filename);
+		FILE*     fp);
 
 void write_nodal_value_scalar(
 		FE_DATA*     fe,
