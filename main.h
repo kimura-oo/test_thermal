@@ -122,7 +122,7 @@ void write_vtk_shape(
 		FE_DATA*  fe,
 		FILE*     fp);
 
-void write_nodal_value_scalar(
+void write_nodal_vals_scalar_vtk(
 		FE_DATA*     fe,
 		FILE*        fp,
 		double*      val,
@@ -132,6 +132,11 @@ void output_result_file_vtk(
 		FE_DATA*       fe,
 		NODAL_VALUES*  vals,
 		const char*    filename);
+
+void output_nodal_vals_scalar_ascii(
+		FE_DATA*     fe,
+		double*      vals,
+		const char*  filename);
 
 /**********************************************************
  * numerical integration

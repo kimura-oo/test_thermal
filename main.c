@@ -28,9 +28,11 @@ const double MAT_MAX_ITER = 100000;
 const char* CODENAME = "test_thermal >";
 const int BUFFER_SIZE = 1000;
 
-const char* INPUT_FILENAME_NODE = "./util/meshgen/node.dat";
-const char* INPUT_FILENAME_ELEM = "./util/meshgen/elem.dat";
-const char* OUTPUT_FILENAME = "result.vtk";
+const char* INPUT_FILENAME_NODE        = "./util/meshgen/node.dat";
+const char* INPUT_FILENAME_ELEM        = "./util/meshgen/elem.dat";
+const char* OUTPUT_FILENAME_VTK        = "result.vtk";
+const char* OUTPUT_FILENAME_ASCII_TEMP = "temparature.dat";
+const char* OUTPUT_FILENAME_ASCII_RHS  = "rhs.dat";
 
 
 /**********************************************************
@@ -317,7 +319,7 @@ void write_vtk_shape(
 
 }
 
-void write_nodal_value_scalar(
+void write_nodal_vals_scalar_vtk(
 		FE_DATA*     fe,
 		FILE*        fp,
 		double*      val,
@@ -347,7 +349,7 @@ void output_result_file_vtk(
 	write_vtk_shape(fe, fp);
 
 	fprintf(fp, "POINT_DATA %d\n", fe->total_num_nodes);
-	write_nodal_value_scalar(fe, fp, vals->T, "temperature");
+	write_nodal_vals_scalar_vtk(fe, fp, vals->T, "temperature");
 
 	double* error;
 	error = (double*)calloc(fe->total_num_nodes, sizeof(double));
@@ -359,9 +361,34 @@ void output_result_file_vtk(
 		double theo_sol = manufactured_solution_get_solution_scalar(x);
 		error[i] = vals->T[i] - theo_sol;
 	}
-	write_nodal_value_scalar(fe, fp, error, "abs_error");
+	write_nodal_vals_scalar_vtk(fe, fp, error, "abs_error");
 
 	free(error);
+
+	fclose(fp);
+
+}
+
+
+
+void output_nodal_vals_scalar_ascii(
+		FE_DATA*     fe,
+		double*      vals,
+		const char*  filename)
+{
+	FILE* fp;
+	fp = fopen(filename, "w");
+	if( fp == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, filename);
+	}
+
+
+	fprintf(fp, "%d\n", fe->total_num_nodes);
+
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		fprintf(fp, "%e\n", vals[i]);
+	}
 
 	fclose(fp);
 
@@ -1050,7 +1077,17 @@ int main (
 	output_result_file_vtk(
 			&(sys.fe),
 			&(sys.vals),
-			OUTPUT_FILENAME);
+			OUTPUT_FILENAME_VTK);
+
+	output_nodal_vals_scalar_ascii(
+			&(sys.fe),
+			sys.vals.T,
+			OUTPUT_FILENAME_ASCII_TEMP);
+
+	output_nodal_vals_scalar_ascii(
+			&(sys.fe),
+			sys.csr.rhs,
+			OUTPUT_FILENAME_ASCII_RHS);
 
 	printf("\n");
 
