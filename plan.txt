@@ -1,0 +1,20 @@
+* 各独立した
+
+
+- fe_lib/
+  - numerical_integ
+  - shape_func
+  - element_mapping
+    - 実座標マッピング
+    - iso-parametric 写像
+    - 表面抽出
+
+- fe_elem_mat
+  - Laplace
+  - Mass
+
+- memory
+- read
+- write
+- bc
+
