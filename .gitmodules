@@ -1,5 +1,5 @@
 [submodule "submodule/monolis"]
 	path = submodule/monolis
-	url = git@github.com:nqomorita/monolis.git
+	url = https://github.com/nqomorita/monolis.git
         ignore = dirty
 
