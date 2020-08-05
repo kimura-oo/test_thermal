@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "solve_mat.h"
+#include "monolis.h"
 
 // Information of polynomials and numerical integration in normalized space
-// Instance of this structure is made for each types of FE 
+// Instance of this structure is made for each types of FE
 typedef struct
 {
 	// information of numerical integration in normalized space
@@ -17,7 +18,7 @@ typedef struct
 	/* inforamtion of shape functions in normalized space */
 	int      pol_order;  // polynomial order
 	int      num_nodes;  // the number of nodes in an element
-	double** N;          // array of shape function 
+	double** N;          // array of shape function
 	                     // [num_integ_points][local_num_nodes]
 	double** dN_dxi;	 // array of derivative (xi) shape function
 	                     // [num_integ_points][local_num_nodes]
@@ -26,7 +27,7 @@ typedef struct
 } FE_3D_BASIS;
 
 
-// geometric 
+// geometric
 typedef struct
 {
 	double** grad_N;     // [local_num_nodes][3 (dimension)]
@@ -40,7 +41,7 @@ typedef struct
 {
 	int      total_num_nodes;
 	double** x;
-	
+
 	int         total_num_elems;
 	int         local_num_nodes;
 	int**       conn;
@@ -52,7 +53,7 @@ typedef struct
 typedef struct
 {
 	double* T;
-	
+
 } NODAL_VALUES;
 
 
@@ -183,7 +184,7 @@ void read_and_memory_allocation_Dirichlet_bc(
 
 void set_Dirichlet_bc_CSR_mat(
 		Dataset_CSR*  csr,
-		BC_DATA*      bc); 
+		BC_DATA*      bc);
 
 
 void set_Dirichlet_bc_CSR_vec(
@@ -209,9 +210,9 @@ void set_shapefunc_derivative(
 		FE_3D_BASIS*  basis);
 
 void set_element_matrix(
+		MONOLIS*     monolis,
 		FE_DATA*     fe,
-		FE_3D_BASIS* basis,
-		Dataset_CSR* csr);
+		FE_3D_BASIS* basis);
 
 /**********************************************************
  * manufactured solution

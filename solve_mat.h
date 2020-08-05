@@ -59,21 +59,21 @@ void MatrixCSR_copy_matrix(
 
 void MatrixCSR_set_nonzero_value(
 		Dataset_CSR* csr,
-		double val,      
+		double val,
 		int g_node_num_i,
 		int g_node_num_j,
 		int submat_i,
-		int submat_j); 
+		int submat_j);
 
 
 
 void MatrixCSR_add_nonzero_value(
 		Dataset_CSR* csr,
-		double val,      
+		double val,
 		int g_node_num_i,
 		int g_node_num_j,
 		int submat_i,
-		int submat_j); 
+		int submat_j);
 
 
 double MatrixCSR_get_nonzero_value(
@@ -81,7 +81,7 @@ double MatrixCSR_get_nonzero_value(
 		int g_node_num_i,
 		int g_node_num_j,
 		int submat_i,
-		int submat_j); 
+		int submat_j);
 
 
 void MatrixCSR_mat_vec_multiplication(
