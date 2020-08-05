@@ -133,7 +133,7 @@ void set_tet(
 }
 
 
-bool arg_manager(
+void arg_manager(
 		int argc,
 		char* argv[])
 {
