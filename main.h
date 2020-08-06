@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include "solve_mat.h"
 #include "monolis.h"
 
 // Information of polynomials and numerical integration in normalized space
@@ -182,6 +181,7 @@ void read_and_memory_allocation_Dirichlet_bc(
 		const char*  filename,
 		const int    total_num_nodes);
 
+/*
 void set_Dirichlet_bc_CSR_mat(
 		Dataset_CSR*  csr,
 		BC_DATA*      bc);
@@ -189,6 +189,14 @@ void set_Dirichlet_bc_CSR_mat(
 
 void set_Dirichlet_bc_CSR_vec(
 		Dataset_CSR*  csr,
+		BC_DATA*      bc,
+		double*       g_rhs);
+*/
+
+void set_Dirichlet_bc(
+		MONOLIS*      monolis,
+		int           num_nodes,
+		int           num_dofs_on_node,
 		BC_DATA*      bc,
 		double*       g_rhs);
 

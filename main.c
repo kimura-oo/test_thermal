@@ -13,7 +13,6 @@ typedef struct
 	FE_DATA      fe;
 	NODAL_VALUES vals;
 	BC_DATA      bc;
-	Dataset_CSR  csr;
 
 } FE_SYSTEM;
 
@@ -601,7 +600,7 @@ void read_and_memory_allocation_Dirichlet_bc(
 	}
 }
 
-
+/*
 void set_Dirichlet_bc_CSR_mat(
 		Dataset_CSR*  csr,
 		BC_DATA*      bc)
@@ -661,7 +660,7 @@ void set_Dirichlet_bc_CSR_vec(
 
 	free(bc_vec);
 }
-
+*/
 
 void set_Dirichlet_bc(
 		MONOLIS*      monolis,
