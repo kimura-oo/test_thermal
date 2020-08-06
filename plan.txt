@@ -1,21 +1,29 @@
-- bb_lib/
+# Bebops汎用ライブラリ 
+- libBB/ (接頭辞: BB_. 以下ファイル名が接頭辞につく)
   - std
   - math
+    - vec_2d
+	- vec_3d
+	- mat_2d
+	- mat_3d
+  - vtk
+    - celltype
 
-- fe_lib/
-  - numerical_integ
-  - shape_func
-  - element_mapping
+# Bebops FE 関数群 (接頭辞: BBFE_)
+- FE_std/ (接頭辞: BBFE_std_、以下ファイル名が接頭辞につく)
+  - integ
+  - shapefunc
+  - element
     - 実座標マッピング
     - iso-parametric 写像
     - 表面抽出
 
-- fe_elem_mat
-  - Laplace
-  - Mass
+- FE_elemmat (接頭辞: BBFE_elemmat_)
+  - 開発中
 
-- memory
-- read
-- write
-- bc
+- FE_sys (接頭辞: BBFE_sys_、以下ファイル名が接頭辞につく)
+  - memory
+  - read
+  - write
+  - bc
 
