@@ -1,5 +1,6 @@
-* 各独立した
-
+- bb_lib/
+  - std
+  - math
 
 - fe_lib/
   - numerical_integ

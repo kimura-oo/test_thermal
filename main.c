@@ -38,6 +38,123 @@ const char* OUTPUT_FILENAME_ASCII_RHS  = "rhs.dat";
 /**********************************************************
  * memory allocation
  **********************************************************/
+
+
+double* BB_std_calloc_1d_double(
+		double*   array,
+		const int size)
+{
+	array = (double*)calloc(size, sizeof(double));
+
+	return array;
+}
+
+
+double** BB_std_calloc_2d_double(
+		double**   array,
+		const int  size1,
+		const int  size2)
+{
+	array = (double**)calloc(size1, sizeof(double*));
+	for(int i=0; i<size1; i++) {
+		array[i] = (double*)calloc(size2, sizeof(double));
+	}
+
+	return array;
+}
+
+
+int* BB_std_calloc_1d_int(
+		int*      array,
+		const int size)
+{
+	array = (int*)calloc(size, sizeof(int));
+
+	return array;
+}
+
+
+int** BB_std_calloc_2d_int(
+		int**      array,
+		const int  size1,
+		const int  size2)
+{
+	array = (int**)calloc(size1, sizeof(int*));
+	for(int i=0; i<size1; i++) {
+		array[i] = (int*)calloc(size2, sizeof(int));
+	}
+
+	return array;
+}
+
+
+bool* BB_std_calloc_1d_bool(
+		bool*     array,
+		const int size)
+{
+	array = (bool*)calloc(size, sizeof(bool));
+
+	return array;
+}
+
+
+void BB_std_free_1d_double(
+		double*   array,
+		const int size)
+{
+	free(array);
+	array = NULL;
+}
+
+
+void BB_std_free_2d_double(
+		double**   array,
+		const int  size1,
+		const int  size2)
+{
+	for(int i=0; i<size1; i++) {
+		free(array[i]);
+		array[i] = NULL;
+	}
+
+	free(array);
+	array = NULL;
+}
+
+
+void BB_std_free_1d_int(
+		int*      array,
+		const int size)
+{
+	free(array);
+	array = NULL;
+}
+
+
+void BB_std_free_2d_int(
+		int**   array,
+		const int  size1,
+		const int  size2)
+{
+	for(int i=0; i<size1; i++) {
+		free(array[i]);
+		array[i] = NULL;
+	}
+
+	free(array);
+	array = NULL;
+}
+
+
+void BB_std_free_1d_bool(
+		bool*     array,
+		const int size)
+{
+	free(array);
+	array = NULL;
+}
+
+
 void memory_allocation_basis(
 		FE_3D_BASIS*    basis,
 		const int       num_integ_points,
@@ -64,11 +181,8 @@ void memory_allocation_integ(
 
 	basis->num_integ_points = num;
 
-	basis->integ_point  = (double**)calloc(num, sizeof(double*));
-	basis->integ_weight = (double* )calloc(num, sizeof(double ));
-	for(int i=0; i<num; i++) {
-		basis->integ_point[i] = (double*)calloc(DIM, sizeof(double));
-	}
+	basis->integ_point  = BB_std_calloc_2d_double(basis->integ_point , num, DIM);
+	basis->integ_weight = BB_std_calloc_1d_double(basis->integ_weight, num);
 }
 
 
@@ -84,16 +198,10 @@ void memory_allocation_shapefunc(
 	basis->num_nodes = nn;
 	basis->pol_order = pol_order;
 
-	basis->N      = (double**)calloc(ni, sizeof(double*));
-	basis->dN_dxi = (double**)calloc(ni, sizeof(double*));
-	basis->dN_det = (double**)calloc(ni, sizeof(double*));
-	basis->dN_dze = (double**)calloc(ni, sizeof(double*));
-	for(int i=0; i<ni; i++) {
-		basis->N[i]      = (double*)calloc(nn, sizeof(double));
-		basis->dN_dxi[i] = (double*)calloc(nn, sizeof(double));
-		basis->dN_det[i] = (double*)calloc(nn, sizeof(double));
-		basis->dN_dze[i] = (double*)calloc(nn, sizeof(double));
-	}
+	basis->N      = BB_std_calloc_2d_double(basis->N     , ni, nn);
+	basis->dN_dxi = BB_std_calloc_2d_double(basis->dN_dxi, ni, nn);
+	basis->dN_det = BB_std_calloc_2d_double(basis->dN_det, ni, nn);
+	basis->dN_dze = BB_std_calloc_2d_double(basis->dN_dze, ni, nn);
 }
 
 
@@ -101,7 +209,7 @@ void memory_allocation_nodal_values(
 		NODAL_VALUES*   vals,
 		const int       total_num_nodes)
 {
-	vals->T = (double*)calloc(total_num_nodes, sizeof(double));
+	vals->T = BB_std_calloc_1d_double(vals->T, total_num_nodes);
 }
 
 
@@ -193,11 +301,7 @@ static bool BEBOPS_IO_read_file_return_char(
 static void memory_allocation_node(
 		FE_DATA*  fe)
 {
-	fe->x = (double**)calloc(fe->total_num_nodes, sizeof(double*));
-
-	for(int i=0; i<(fe->total_num_nodes); i++) {
-		fe->x[i] = (double*)calloc(3, sizeof(double));
-	}
+	fe->x = BB_std_calloc_2d_double(fe->x, fe->total_num_nodes, DIM);
 }
 
 
@@ -205,19 +309,14 @@ static void memory_allocation_elem(
 		FE_DATA*  fe,
 		int       num_integ_points)
 {
-	fe->conn = (int**)calloc(fe->total_num_elems, sizeof(int*));
+	fe->conn = BB_std_calloc_2d_int(fe->conn, fe->total_num_elems, fe->local_num_nodes);
+	
 	fe->geo  = (FE_3D_GEO**)calloc(fe->total_num_elems, sizeof(FE_3D_GEO*));
-
 	for(int e=0; e<(fe->total_num_elems); e++) {
-		fe->conn[e] = (int*)calloc(fe->local_num_nodes, sizeof(int));
 		fe->geo[e]  = (FE_3D_GEO*)calloc(num_integ_points, sizeof(FE_3D_GEO));
 
 		for(int p=0; p<num_integ_points; p++) {
-			fe->geo[e][p].grad_N = (double**)calloc(fe->local_num_nodes, sizeof(double*));
-
-			for(int i=0; i<(fe->local_num_nodes); i++) {
-				fe->geo[e][p].grad_N[i] = (double*)calloc(3, sizeof(double));
-			}
+			fe->geo[e][p].grad_N = BB_std_calloc_2d_double(fe->geo[e][p].grad_N, fe->local_num_nodes, DIM);
 		}
 	}
 }
@@ -352,7 +451,7 @@ void output_result_file_vtk(
 	write_nodal_vals_scalar_vtk(fe, fp, vals->T, "temperature");
 
 	double* error;
-	error = (double*)calloc(fe->total_num_nodes, sizeof(double));
+	error = BB_std_calloc_1d_double(error, fe->total_num_nodes);
 	for(int i=0; i<fe->total_num_nodes; i++) {
 		double x[3];
 		for(int d=0; d<3; d++) {
@@ -364,7 +463,7 @@ void output_result_file_vtk(
 
 	write_nodal_vals_scalar_vtk(fe, fp, error, "abs_error");
 
-	free(error);
+	BB_std_free_1d_double(error, fe->total_num_nodes);
 
 	fclose(fp);
 
@@ -582,8 +681,8 @@ void read_and_memory_allocation_Dirichlet_bc(
 
 	int n = total_num_nodes * bc->block_size;
 
-	bc->D_bc_exists   = (bool*  )calloc(n, sizeof(bool  ));
-	bc->imposed_D_val = (double*)calloc(n, sizeof(double));
+	bc->D_bc_exists   = BB_std_calloc_1d_bool(  bc->D_bc_exists  , n);
+	bc->imposed_D_val = BB_std_calloc_1d_double(bc->imposed_D_val, n);
 	for(int i=0; i<n; i++) {
 		bc->D_bc_exists[i]   = false;
 		bc->imposed_D_val[i] = 0.0;
@@ -725,10 +824,7 @@ void set_Jacobi_matrix(
 		FE_3D_BASIS* basis)
 {
 	double** local_x;
-	local_x = (double**)calloc(fe->local_num_nodes, sizeof(double*));
-	for(int i=0; i<(fe->local_num_nodes); i++) {
-		local_x[i] = (double*)calloc(3, sizeof(double));
-	}
+	local_x = BB_std_calloc_2d_double(local_x, fe->local_num_nodes, DIM);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 
@@ -752,10 +848,7 @@ void set_Jacobi_matrix(
 		}
 	}
 
-	for(int i=0; i<(fe->local_num_nodes); i++) {
-		free(local_x[i]);
-	}
-	free(local_x);
+	BB_std_free_2d_double(local_x, fe->local_num_nodes, DIM);
 }
 
 
@@ -802,8 +895,8 @@ void set_element_matrix(
 {
 	double* val_ip;
 	double* Jacobian_ip;
-	val_ip      = (double*)calloc(basis->num_integ_points, sizeof(double));
-	Jacobian_ip = (double*)calloc(basis->num_integ_points, sizeof(double));
+	val_ip      = BB_std_calloc_1d_double(val_ip      , basis->num_integ_points);
+	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip , basis->num_integ_points);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		for(int i=0; i<(fe->local_num_nodes); i++) {
@@ -836,8 +929,8 @@ void set_element_matrix(
 		}
 	}
 
-	free(val_ip);
-	free(Jacobian_ip);
+	BB_std_free_1d_double(val_ip,     basis->num_integ_points);
+	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 }
 
 
@@ -849,10 +942,7 @@ void manufactured_solution_write_bc(
 		const int  block_size)
 {
 	double** norm;
-	norm = (double**)calloc(fe->total_num_nodes, sizeof(double*));
-	for(int i=0; i<(fe->total_num_nodes); i++) {
-		norm[i] = (double*)calloc(3, sizeof(double));
-	}
+	norm = BB_std_calloc_2d_double(norm, fe->total_num_nodes, DIM);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		for(int i=0; i<4; i++) {
@@ -907,10 +997,7 @@ void manufactured_solution_write_bc(
 
 	fclose(fp);
 
-	for(int i=0; i<(fe->total_num_nodes); i++) {
-		free(norm[i]);
-	}
-	free(norm);
+	BB_std_free_2d_double(norm, fe->total_num_nodes, DIM);
 }
 
 
@@ -955,17 +1042,13 @@ void manufactured_solution_set_rhs_scalar(
 {
 	double* val_ip;
 	double* Jacobian_ip;
-	val_ip      = (double*)calloc(basis->num_integ_points, sizeof(double));
-	Jacobian_ip = (double*)calloc(basis->num_integ_points, sizeof(double));
+	val_ip      = BB_std_calloc_1d_double(val_ip      , basis->num_integ_points);
+	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip , basis->num_integ_points);
 
 	double** local_x;
-	local_x = (double**)calloc(fe->local_num_nodes, sizeof(double*));
-	for(int i=0; i<(fe->local_num_nodes); i++) {
-		local_x[i] = (double*)calloc(3, sizeof(double));
-	}
+	local_x = BB_std_calloc_2d_double(local_x, fe->local_num_nodes, DIM);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
-
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
 			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
@@ -1001,13 +1084,11 @@ void manufactured_solution_set_rhs_scalar(
 		}
 	}
 
-	free(val_ip);
-	free(Jacobian_ip);
+	BB_std_free_1d_double(val_ip,     basis->num_integ_points);
+	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 
-	for(int i=0; i<(fe->local_num_nodes); i++) {
-		free(local_x[i]);
-	}
-	free(local_x);
+	BB_std_free_2d_double(local_x, fe->local_num_nodes, DIM);
+
 }
 
 /**********************************************************
