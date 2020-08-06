@@ -17,7 +17,7 @@ $(TARGET): $(OBJS)
 	$(FC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 clean:
-		-rm -f $(OBJS)
+		-rm -f $(OBJS) $(TARGET)
 
 .cpp.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $^

@@ -52,6 +52,7 @@ typedef struct
 typedef struct
 {
 	double* T;
+	double* error;
 
 } NODAL_VALUES;
 
@@ -72,8 +73,9 @@ typedef struct
 
 
 /**********************************************************
- * memory allocation
+ * libBB_std
  **********************************************************/
+
 double* BB_std_calloc_1d_double(
 		double*   array,
 		const int size);
@@ -118,66 +120,114 @@ void BB_std_free_1d_bool(
 		bool*     array,
 		const int size);
 
-void memory_allocation_basis(
+bool BB_std_scan_line(
+		FILE** fp,
+		const int buffer_size,
+		const char* format,
+		...);
+
+bool BB_std_read_file_return_char(
+		char* ret_char,
+		const char* filename,
+		const char* identifier,
+		const int buffer_size);
+
+/**********************************************************
+ * libBB_math
+ **********************************************************/
+void BB_math_vec3d_cross(
+		double        ans[3],
+		const double  vec_1[3],
+		const double  vec_2[3]);
+
+double BB_math_vec3d_length(
+		double vec[3]);
+
+void BB_math_vec3d_normal_vec(
+		double vec[3]);
+
+/**********************************************************
+ * libBB_vtk
+ **********************************************************/
+void BB_vtk_write_header(
+		FILE* fp);
+
+void BB_vtk_write_points_3d(
+		FILE*    fp,
+		int      num_points,
+		double** x); //[num_points][3]
+
+void BB_vtk_write_cells(
+		FILE* fp,
+		int   num_cells,
+		int   num_points_in_cell,
+		int** connectivity); //[num_cells][num_points_in_cell]
+
+void BB_vtk_write_cell_types(
+		FILE* fp,
+		int   num_cells,
+		int   elem_type);
+
+void BB_vtk_write_point_vals_scalar(
+		FILE*        fp,
+		double*      val,
+		const int    num_points,
+		const char*  label);
+
+/**********************************************************
+ * memory allocation
+ **********************************************************/
+
+void BBFE_std_memory_allocation_basis(
 		FE_3D_BASIS*    basis,
 		const int       num_integ_points,
 		const int       pol_order,
 		const int       num_nodes_in_elem);
 
-void memory_allocation_integ(
+void BBFE_std_memory_allocation_integ(
 		FE_3D_BASIS*    basis,
 		const int       num_integ_points);
 
-void memory_allocation_shapefunc(
+void BBFE_std_memory_allocation_shapefunc(
 		FE_3D_BASIS*    basis,
 		const int       num_nodes_in_elem,
 		const int       pol_order,
 		const int       num_integ_points);
 
-void memory_allocation_nodal_values(
-		NODAL_VALUES*   vals,
-		const int       total_num_nodes);
+void BBFE_std_memory_allocation_node(
+		FE_DATA*  fe);
+
+void BBFE_std_memory_allocation_elem(
+		FE_DATA*  fe,
+		int       num_integ_points);
 
 /**********************************************************
- * initializers
+ * read
  **********************************************************/
-void initialize_basis(
-		FE_3D_BASIS*  basis);
-
-
-/**********************************************************
- * input
- **********************************************************/
-void read_and_memory_allocation_FE_node(
+void BBFE_sys_read_node(
 		FE_DATA*     fe,
 		const char*  filename);
 
-
-void read_and_memory_allocation_FE_elem(
+void BBFE_sys_read_elem(
 		FE_DATA*     fe,
 		const char*  filename,
 		int          num_integ_points);
 
+void BBFE_sys_read_Dirichlet_bc(
+		BC_DATA*     bc,
+		const char*  filename,
+		const int    total_num_nodes);
 
 /**********************************************************
- * output
+ * write
  **********************************************************/
-void write_vtk_shape(
+
+void BBFE_sys_write_vtk_shape(
+		FILE*     fp,
 		FE_DATA*  fe,
-		FILE*     fp);
+		const int cell_type);
 
-void write_nodal_vals_scalar_vtk(
-		FE_DATA*     fe,
-		FILE*        fp,
-		double*      val,
-		const char*  label);
-
-void output_result_file_vtk(
-		FE_DATA*       fe,
-		NODAL_VALUES*  vals,
-		const char*    filename);
-
-void output_nodal_vals_scalar_ascii(
+void BBFE_write_ascii_nodal_vals_scalar(
 		FE_DATA*     fe,
 		double*      vals,
 		const char*  filename);
@@ -185,12 +235,12 @@ void output_nodal_vals_scalar_ascii(
 /**********************************************************
  * numerical integration
  **********************************************************/
-void integ_point_tet_5(
+void BBFE_std_integ_set_tet_5(
 		int*        num_integ_points,
 		double**    integ_point,
 		double*     integ_weight);
 
-double calc_integ(
+double BBFE_std_integ_calc(
 		const int      num_integ_points,
 		const double*  value,
 		const double*  weight,
@@ -199,17 +249,25 @@ double calc_integ(
 /**********************************************************
  * shape function
  **********************************************************/
-void shapefunc_3d_tet_1st_value(
+void BBFE_std_shapefunc_get_val_tet_1st(
 		const double    xi[3],
 		double*         N);
 
-void shapefunc_3d_tet_1st_der_value(
+void BBFE_std_shapefunc_get_derivative_tet_1st(
 		const double    xi[3],
 		double*         dN_dxi,
 		double*         dN_det,
 		double*         dN_dze);
 
-void calc_3d_Jacobi_matrix(
+void BBFE_std_shapefunc_get_surface_tet_1st(
+		int        surf_conn[3],
+		const int  surf_num);
+
+/**********************************************************
+ * mapping
+ **********************************************************/
+
+void BBFE_std_mapping_calc_Jacobi_mat_3d(
 		double     J[3][3],
 		const int  local_num_nodes,
 		double**   local_x,
@@ -217,27 +275,39 @@ void calc_3d_Jacobi_matrix(
 		double*    local_dN_det,
 		double*    local_dN_dze);
 
+
+void BBFE_std_mapping_integ_point(
+		double        x[3],
+		const int     local_num_nodes,
+		double**      local_x,
+		double*       N);
+
+
 /**********************************************************
- * boundary condition
+ * surface
  **********************************************************/
-void read_and_memory_allocation_Dirichlet_bc(
-		BC_DATA*     bc,
-		const char*  filename,
-		const int    total_num_nodes);
 
-/*
-void set_Dirichlet_bc_CSR_mat(
-		Dataset_CSR*  csr,
-		BC_DATA*      bc);
+int BBFE_std_surface_get_surface_node(
+		bool*    node_is_on_surface,
+		FE_DATA* fe);
 
 
-void set_Dirichlet_bc_CSR_vec(
-		Dataset_CSR*  csr,
-		BC_DATA*      bc,
-		double*       g_rhs);
-*/
+/**********************************************************
+ * equivval
+ **********************************************************/
 
-void set_Dirichlet_bc(
+void BBFE_std_equivval_volume_smooth_function(
+		double* equiv_val,
+		FE_DATA* fe,
+		FE_3D_BASIS* basis,
+		double (*func)(double, double, double)); // scalar function(x, y, z)
+
+
+/**********************************************************
+ * monolis wrapper
+ **********************************************************/
+
+void BBFE_sys_monowrap_set_Dirichlet_bc(
 		MONOLIS*      monolis,
 		int           num_nodes,
 		int           num_dofs_on_node,
@@ -247,44 +317,51 @@ void set_Dirichlet_bc(
 /**********************************************************
  * element matrix
  **********************************************************/
-void set_Jacobi_matrix(
+void BBFE_elemmat_set_Jacobi_mat(
 		FE_DATA*     fe,
 		FE_3D_BASIS* basis);
 
-void get_Jacobian_array(
-		double*    Jacobian_ip,
-		const int  num_integ_points,
-		const int  elem_num,
-		FE_DATA*   fe);
-
-void set_shapefunc_derivative(
+void BBFE_elemmat_set_shapefunc_derivative(
 		FE_DATA*      fe,
 		FE_3D_BASIS*  basis);
 
-void set_element_matrix(
+void BBFE_elemmat_set_element_mat(
 		MONOLIS*     monolis,
 		FE_DATA*     fe,
 		FE_3D_BASIS* basis);
 
+double BBFE_elemmat_thermal_steady_linear(
+		double grad_N_i[3],
+		double grad_N_j[3]);
+
 /**********************************************************
  * manufactured solution
  **********************************************************/
-void manufactured_solution_write_bc(
+void BBFE_std_manusol_calc_nodal_error_scalar(
+		FE_DATA*      fe,
+		double*       error,
+		const double* val);
+
+void BBFE_std_manusol_overwrite_bc_file(
 		FE_DATA*   fe,
 		const int  block_size);
 
-double manufactured_solution_get_solution_scalar(
-		double x[3]);
+double BBFE_std_manusol_get_sol_scalar_3d(
+		double x,
+		double y,
+		double z);
 
-double manufactured_solution_get_rhs_scalar(
-		double x[3]);
+double BBFE_std_manusol_get_rhs_scalar_3d(
+		double x,
+		double y,
+		double z);
 
-void manufactured_solution_set_bc_scalar(
+void BBFE_std_manusol_set_bc_scalar(
 		FE_DATA* fe,
 		BC_DATA* bc);
 
 
-void manufactured_solution_set_rhs_scalar(
+void BBFE_std_manusol_add_rhs_scalar(
 		FE_DATA* fe,
 		FE_3D_BASIS* basis,
 		double* rhs);

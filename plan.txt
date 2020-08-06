@@ -2,10 +2,10 @@
 - libBB/ (接頭辞: BB_. 以下ファイル名が接頭辞につく)
   - std
   - math
-    - vec_2d
-	- vec_3d
-	- mat_2d
-	- mat_3d
+    - vec2d
+	- vec3d
+	- mat2d
+	- mat3d
   - vtk
     - celltype
 
@@ -13,17 +13,22 @@
 - FE_std/ (接頭辞: BBFE_std_、以下ファイル名が接頭辞につく)
   - integ
   - shapefunc
-  - element
+  - mapping
     - 実座標マッピング
     - iso-parametric 写像
+  - surface
     - 表面抽出
+  - equivval
+  - manusol
 
 - FE_elemmat (接頭辞: BBFE_elemmat_)
-  - 開発中
+  - set
+  - thermal
+  - (その他の方程式用計算ルーチン) 開発中
 
 - FE_sys (接頭辞: BBFE_sys_、以下ファイル名が接頭辞につく)
   - memory
   - read
   - write
-  - bc
+  - monowrap (monolis の wrapper)
 
