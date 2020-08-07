@@ -22,27 +22,6 @@
 
 #include "FE_elemmat/set.h"
 #include "FE_elemmat/equivval.h"
+#include "FE_elemmat/thermal.h"
 
 #include "FE_manusol/manusol.h"
-
-
-typedef struct
-{
-	double* T;
-	double* error;
-
-} NODAL_VALUES;
-
-
-/**********************************************************
- * equivval
- **********************************************************/
-
-/**********************************************************
- * element matrix
- **********************************************************/
-
-double BBFE_elemmat_thermal_steady_linear(
-		double grad_N_i[3],
-		double grad_N_j[3]);
-

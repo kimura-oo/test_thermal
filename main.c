@@ -1,19 +1,10 @@
 #include "main.h"
-#include "monolis.h"
 
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 
-typedef struct
-{
-	FE_3D_BASIS  basis;
-	FE_DATA      fe;
-	NODAL_VALUES vals;
-	BC_DATA      bc;
-
-} FE_SYSTEM;
 
 const int DIM = 3;
 
@@ -36,28 +27,22 @@ const char* OUTPUT_FILENAME_ASCII_RHS  = "rhs.dat";
 
 
 
-/**********************************************************
- * element matrix
- **********************************************************/
-
-
-
-double BBFE_elemmat_thermal_steady_linear(
-		double grad_N_i[3],
-		double grad_N_j[3])
+typedef struct
 {
-	double val = -(  
-			grad_N_i[0] * grad_N_j[0] +
-			grad_N_i[1] * grad_N_j[1] +
-			grad_N_i[2] * grad_N_j[2]);
+	double* T;
+	double* error;
 
-	return val;
-}
+} NODAL_VALUES;
 
 
-/**********************************************************
- * main function
- **********************************************************/
+typedef struct
+{
+	FE_3D_BASIS  basis;
+	FE_DATA      fe;
+	NODAL_VALUES vals;
+	BC_DATA      bc;
+
+} FE_SYSTEM;
 
 
 void memory_allocation_nodal_values(
