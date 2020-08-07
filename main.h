@@ -16,6 +16,7 @@
 
 #include "FE_sys/FE_dataset.h"
 #include "FE_sys/memory.h"
+#include "FE_sys/read.h"
 
 
 
@@ -25,23 +26,6 @@ typedef struct
 	double* error;
 
 } NODAL_VALUES;
-
-/**********************************************************
- * read
- **********************************************************/
-void BBFE_sys_read_node(
-		FE_DATA*     fe,
-		const char*  filename);
-
-void BBFE_sys_read_elem(
-		FE_DATA*     fe,
-		const char*  filename,
-		int          num_integ_points);
-
-void BBFE_sys_read_Dirichlet_bc(
-		BC_DATA*     bc,
-		const char*  filename,
-		const int    total_num_nodes);
 
 /**********************************************************
  * write
