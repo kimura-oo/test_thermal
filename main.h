@@ -20,6 +20,8 @@
 #include "FE_sys/write.h"
 #include "FE_sys/monowrap.h"
 
+#include "FE_elemmat/set.h"
+
 #include "FE_manusol/manusol.h"
 
 
@@ -45,18 +47,6 @@ void BBFE_elemmat_equivval_volume_smooth_function(
 /**********************************************************
  * element matrix
  **********************************************************/
-void BBFE_elemmat_set_Jacobi_mat(
-		FE_DATA*     fe,
-		FE_3D_BASIS* basis);
-
-void BBFE_elemmat_set_shapefunc_derivative(
-		FE_DATA*      fe,
-		FE_3D_BASIS*  basis);
-
-void BBFE_elemmat_set_element_mat(
-		MONOLIS*     monolis,
-		FE_DATA*     fe,
-		FE_3D_BASIS* basis);
 
 double BBFE_elemmat_thermal_steady_linear(
 		double grad_N_i[3],
