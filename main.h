@@ -21,6 +21,7 @@
 #include "FE_sys/monowrap.h"
 
 #include "FE_elemmat/set.h"
+#include "FE_elemmat/equivval.h"
 
 #include "FE_manusol/manusol.h"
 
@@ -36,13 +37,6 @@ typedef struct
 /**********************************************************
  * equivval
  **********************************************************/
-
-void BBFE_elemmat_equivval_volume_smooth_function(
-		double* equiv_val,
-		FE_DATA* fe,
-		FE_3D_BASIS* basis,
-		double (*func)(double, double, double)); // scalar function(x, y, z)
-
 
 /**********************************************************
  * element matrix
