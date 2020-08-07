@@ -2,7 +2,9 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+
 #include "monolis.h"
+#include "libBB/std.h"
 
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
@@ -71,66 +73,6 @@ typedef struct
 	double* imposed_N_val;
 } BC_DATA;
 
-
-/**********************************************************
- * libBB_std
- **********************************************************/
-
-double* BB_std_calloc_1d_double(
-		double*   array,
-		const int size);
-
-double** BB_std_calloc_2d_double(
-		double**   array,
-		const int  size1,
-		const int  size2);
-
-int* BB_std_calloc_1d_int(
-		int*      array,
-		const int size);
-
-int** BB_std_calloc_2d_int(
-		int**      array,
-		const int  size1,
-		const int  size2);
-
-bool* BB_std_calloc_1d_bool(
-		bool*     array,
-		const int size);
-
-void BB_std_free_1d_double(
-		double*   array,
-		const int size);
-
-void BB_std_free_2d_double(
-		double**   array,
-		const int  size1,
-		const int  size2);
-
-void BB_std_free_1d_int(
-		int*      array,
-		const int size);
-
-void BB_std_free_2d_int(
-		int**   array,
-		const int  size1,
-		const int  size2);
-
-void BB_std_free_1d_bool(
-		bool*     array,
-		const int size);
-
-bool BB_std_scan_line(
-		FILE** fp,
-		const int buffer_size,
-		const char* format,
-		...);
-
-bool BB_std_read_file_return_char(
-		char* ret_char,
-		const char* filename,
-		const char* identifier,
-		const int buffer_size);
 
 /**********************************************************
  * libBB_math
