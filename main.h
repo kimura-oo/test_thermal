@@ -86,26 +86,26 @@ typedef struct
  * memory allocation
  **********************************************************/
 
-void BBFE_std_memory_allocation_basis(
+void BBFE_sys_memory_allocation_basis(
 		FE_3D_BASIS*    basis,
 		const int       num_integ_points,
 		const int       pol_order,
 		const int       num_nodes_in_elem);
 
-void BBFE_std_memory_allocation_integ(
+void BBFE_sys_memory_allocation_integ(
 		FE_3D_BASIS*    basis,
 		const int       num_integ_points);
 
-void BBFE_std_memory_allocation_shapefunc(
+void BBFE_sys_memory_allocation_shapefunc(
 		FE_3D_BASIS*    basis,
 		const int       num_nodes_in_elem,
 		const int       pol_order,
 		const int       num_integ_points);
 
-void BBFE_std_memory_allocation_node(
+void BBFE_sys_memory_allocation_node(
 		FE_DATA*  fe);
 
-void BBFE_std_memory_allocation_elem(
+void BBFE_sys_memory_allocation_elem(
 		FE_DATA*  fe,
 		int       num_integ_points);
 
@@ -145,7 +145,7 @@ void BBFE_write_ascii_nodal_vals_scalar(
  * equivval
  **********************************************************/
 
-void BBFE_std_equivval_volume_smooth_function(
+void BBFE_elemmat_equivval_volume_smooth_function(
 		double* equiv_val,
 		FE_DATA* fe,
 		FE_3D_BASIS* basis,
@@ -186,31 +186,31 @@ double BBFE_elemmat_thermal_steady_linear(
 /**********************************************************
  * manufactured solution
  **********************************************************/
-void BBFE_std_manusol_calc_nodal_error_scalar(
+void BBFE_sys_manusol_calc_nodal_error_scalar(
 		FE_DATA*      fe,
 		double*       error,
 		const double* val);
 
-void BBFE_std_manusol_overwrite_bc_file(
+void BBFE_sys_manusol_overwrite_bc_file(
 		FE_DATA*   fe,
 		const int  block_size);
 
-double BBFE_std_manusol_get_sol_scalar_3d(
+double BBFE_sys_manusol_get_sol_scalar_3d(
 		double x,
 		double y,
 		double z);
 
-double BBFE_std_manusol_get_rhs_scalar_3d(
+double BBFE_sys_manusol_get_rhs_scalar_3d(
 		double x,
 		double y,
 		double z);
 
-void BBFE_std_manusol_set_bc_scalar(
+void BBFE_sys_manusol_set_bc_scalar(
 		FE_DATA* fe,
 		BC_DATA* bc);
 
 
-void BBFE_std_manusol_add_rhs_scalar(
+void BBFE_sys_manusol_add_rhs_scalar(
 		FE_DATA* fe,
 		FE_3D_BASIS* basis,
 		double* rhs);

@@ -39,17 +39,17 @@ const char* OUTPUT_FILENAME_ASCII_RHS  = "rhs.dat";
  **********************************************************/
 
 
-void BBFE_std_memory_allocation_basis(
+void BBFE_sys_memory_allocation_basis(
 		FE_3D_BASIS*    basis,
 		const int       num_integ_points,
 		const int       pol_order,
 		const int       num_nodes_in_elem)
 {
-	BBFE_std_memory_allocation_integ(
+	BBFE_sys_memory_allocation_integ(
 			basis,
 			num_integ_points);
 
-	BBFE_std_memory_allocation_shapefunc(
+	BBFE_sys_memory_allocation_shapefunc(
 			basis,
 			num_nodes_in_elem,
 			pol_order,
@@ -57,7 +57,7 @@ void BBFE_std_memory_allocation_basis(
 }
 
 
-void BBFE_std_memory_allocation_integ(
+void BBFE_sys_memory_allocation_integ(
 		FE_3D_BASIS*    basis,
 		const int       num_integ_points)
 {
@@ -70,7 +70,7 @@ void BBFE_std_memory_allocation_integ(
 }
 
 
-void BBFE_std_memory_allocation_shapefunc(
+void BBFE_sys_memory_allocation_shapefunc(
 		FE_3D_BASIS*    basis,
 		const int       num_nodes_in_elem,
 		const int       pol_order,
@@ -89,14 +89,14 @@ void BBFE_std_memory_allocation_shapefunc(
 }
 
 
-void BBFE_std_memory_allocation_node(
+void BBFE_sys_memory_allocation_node(
 		FE_DATA*  fe)
 {
 	fe->x = BB_std_calloc_2d_double(fe->x, fe->total_num_nodes, DIM);
 }
 
 
-void BBFE_std_memory_allocation_elem(
+void BBFE_sys_memory_allocation_elem(
 		FE_DATA*  fe,
 		int       num_integ_points)
 {
@@ -134,7 +134,7 @@ void BBFE_sys_read_node(
 	BB_std_scan_line(
 			&fp, BUFFER_SIZE, "%d", &(fe->total_num_nodes));
 	printf("%s Num. nodes: %d\n", CODENAME, fe->total_num_nodes);
-	BBFE_std_memory_allocation_node(fe);
+	BBFE_sys_memory_allocation_node(fe);
 
 	// read positions of nodes
 	for(int i=0; i<(fe->total_num_nodes); i++) {
@@ -163,7 +163,7 @@ void BBFE_sys_read_elem(
 	BB_std_scan_line(
 			&fp, BUFFER_SIZE, "%d %d",&(fe->total_num_elems), &(fe->local_num_nodes));
 	printf("%s Num. elements: %d\n", CODENAME, fe->total_num_elems);
-	BBFE_std_memory_allocation_elem(fe, num_integ_points);
+	BBFE_sys_memory_allocation_elem(fe, num_integ_points);
 
 	// read the connectivities of elements
 	for(int e=0; e<(fe->total_num_elems); e++) {
@@ -275,7 +275,7 @@ static void get_Jacobian_array(
 }
 
 
-void BBFE_std_equivval_volume_smooth_function(
+void BBFE_elemmat_equivval_volume_smooth_function(
 		double* equiv_val,
 		FE_DATA* fe,
 		FE_3D_BASIS* basis,
@@ -489,7 +489,7 @@ double BBFE_elemmat_thermal_steady_linear(
  * manufactured solution
  **********************************************************/
 
-void BBFE_std_manusol_calc_nodal_error_scalar(
+void BBFE_sys_manusol_calc_nodal_error_scalar(
 		FE_DATA*      fe,
 		double*       error,
 		const double* val)
@@ -499,14 +499,14 @@ void BBFE_std_manusol_calc_nodal_error_scalar(
 		for(int d=0; d<3; d++) {
 			x[d] = fe->x[i][d];
 		}
-		double theo_sol = BBFE_std_manusol_get_sol_scalar_3d(x[0], x[1], x[2]);
+		double theo_sol = BBFE_sys_manusol_get_sol_scalar_3d(x[0], x[1], x[2]);
 		error[i] = val[i] - theo_sol;
 	}
 
 }
 
 
-void BBFE_std_manusol_overwrite_bc_file(
+void BBFE_sys_manusol_overwrite_bc_file(
 		FE_DATA*   fe,
 		const int  block_size)
 {
@@ -544,7 +544,7 @@ void BBFE_std_manusol_overwrite_bc_file(
 }
 
 
-double BBFE_std_manusol_get_sol_scalar_3d(
+double BBFE_sys_manusol_get_sol_scalar_3d(
 		double x,
 		double y,
 		double z)
@@ -554,7 +554,7 @@ double BBFE_std_manusol_get_sol_scalar_3d(
 }
 
 
-double BBFE_std_manusol_get_rhs_scalar_3d(
+double BBFE_sys_manusol_get_rhs_scalar_3d(
 		double x,
 		double y,
 		double z)
@@ -564,7 +564,7 @@ double BBFE_std_manusol_get_rhs_scalar_3d(
 }
 
 
-void BBFE_std_manusol_set_bc_scalar(
+void BBFE_sys_manusol_set_bc_scalar(
 		FE_DATA* fe,
 		BC_DATA* bc)
 {
@@ -576,13 +576,13 @@ void BBFE_std_manusol_set_bc_scalar(
 			}
 
 			bc->imposed_D_val[i] =
-				BBFE_std_manusol_get_sol_scalar_3d(x[0], x[1], x[2]);
+				BBFE_sys_manusol_get_sol_scalar_3d(x[0], x[1], x[2]);
 		}
 	}
 }
 
 
-void BBFE_std_manusol_add_rhs_scalar(
+void BBFE_sys_manusol_add_rhs_scalar(
 		FE_DATA* fe,
 		FE_3D_BASIS* basis,
 		double* rhs)
@@ -590,8 +590,8 @@ void BBFE_std_manusol_add_rhs_scalar(
 	double* equiv_val;
 	equiv_val = BB_std_calloc_1d_double(equiv_val, fe->total_num_nodes);
 	
-	BBFE_std_equivval_volume_smooth_function(
-			equiv_val, fe, basis, BBFE_std_manusol_get_rhs_scalar_3d);
+	BBFE_elemmat_equivval_volume_smooth_function(
+			equiv_val, fe, basis, BBFE_sys_manusol_get_rhs_scalar_3d);
 
 	BB_std_free_1d_double(equiv_val, fe->total_num_nodes);
 }
@@ -671,7 +671,7 @@ int main (
 	monolis_global_initialize();
 	monolis_initialize(&monolis);
 
-	BBFE_std_memory_allocation_basis(
+	BBFE_sys_memory_allocation_basis(
 			&(sys.basis),
 			NUM_INTEG_POINTS,
 			POL_ORDER,
@@ -690,7 +690,7 @@ int main (
 			sys.fe.total_num_nodes);
 
 	// for manufactured solution
-	BBFE_std_manusol_overwrite_bc_file(
+	BBFE_sys_manusol_overwrite_bc_file(
 			&(sys.fe),
 			BLOCK_SIZE);
 
@@ -722,10 +722,10 @@ int main (
 			&(sys.basis));
 
 	// for manufactured solution
-	BBFE_std_manusol_set_bc_scalar(
+	BBFE_sys_manusol_set_bc_scalar(
 			&(sys.fe),
 			&(sys.bc));
-	BBFE_std_manusol_add_rhs_scalar(
+	BBFE_sys_manusol_add_rhs_scalar(
 			&(sys.fe),
 			&(sys.basis),
 			monolis.mat.B);
@@ -747,7 +747,7 @@ int main (
 			monolis.mat.B,
 			sys.vals.T);
 
-	BBFE_std_manusol_calc_nodal_error_scalar(
+	BBFE_sys_manusol_calc_nodal_error_scalar(
 			&(sys.fe), sys.vals.error, sys.vals.T);
 
 	output_result_file_vtk(

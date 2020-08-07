@@ -12,12 +12,6 @@
   - mapping (実座標マッピング, iso-parametric 写像)
   - surface (表面抽出)
 
-- FE_elemmat (接頭辞: BBFE_elemmat_)
-  - set
-  - equivval
-  - thermal
-  - (その他の方程式用計算ルーチン) 開発中
-
 - FE_sys (接頭辞: BBFE_sys_、以下ファイル名が接頭辞につく)
   - memory
   - read
@@ -25,3 +19,8 @@
   - monowrap (monolis の wrapper)
   - manusol
 
+- FE_elemmat (接頭辞: BBFE_elemmat_)
+  - set
+  - equivval
+  - thermal
+  - (その他の方程式用計算ルーチン) 開発中
