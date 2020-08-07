@@ -258,58 +258,6 @@ void BBFE_write_ascii_nodal_vals_scalar(
 
 }
 
-/**********************************************************
- * surface
- **********************************************************/
-
-int BBFE_std_surface_get_surface_node(
-		bool*    node_is_on_surface,
-		FE_DATA* fe)
-{
-	double** norm;
-	norm = BB_std_calloc_2d_double(norm, fe->total_num_nodes, DIM);
-
-	for(int e=0; e<(fe->total_num_elems); e++) {
-		for(int i=0; i<4; i++) {
-			int surf_conn[3];
-			BBFE_std_shapefunc_tet1st_get_surface(
-					surf_conn, i);
-
-			double ans[3];  double vec_1[3];  double vec_2[3];
-			int nid_0 = fe->conn[e][ surf_conn[0] ];
-			int nid_1 = fe->conn[e][ surf_conn[1] ];
-			int nid_2 = fe->conn[e][ surf_conn[2] ];
-			for(int d=0; d<3; d++) {
-				vec_1[d] = fe->x[ nid_1 ][d] - fe->x[ nid_0 ][d];
-				vec_2[d] = fe->x[ nid_2 ][d] - fe->x[ nid_0 ][d];
-			}
-			BB_calc_vec3d_cross(ans, vec_1, vec_2);
-			BB_calc_vec3d_normal_vec(ans);
-
-			for(int d=0; d<3; d++) {
-				norm[ nid_0 ][d] += ans[d];
-				norm[ nid_1 ][d] += ans[d];
-				norm[ nid_2 ][d] += ans[d];
-			}
-
-		}
-	}
-	
-	int num_surface_nodes = 0;
-	for(int i=0; i<(fe->total_num_nodes); i++) {
-		double len = BB_calc_vec3d_length(norm[i]);
-		if(len > 1.0) {
-			num_surface_nodes++;
-			node_is_on_surface[i] = true;
-		}
-	}
-	
-	BB_std_free_2d_double(norm, fe->total_num_nodes, DIM);
-
-	return num_surface_nodes;
-}
-
-
 
 /**********************************************************
  * equivval
@@ -569,7 +517,10 @@ void BBFE_std_manusol_overwrite_bc_file(
 	}
 	
 	int num_bcs;
-	num_bcs = BBFE_std_surface_get_surface_node(node_is_on_surface, fe);
+	num_bcs = BBFE_std_surface_tet1st_get_surface_node(
+			node_is_on_surface, 
+			fe->total_num_nodes, fe->x,
+			fe->total_num_elems, fe->conn);
 
 	const char* filename = "bc_D.dat";
 	FILE* fp;

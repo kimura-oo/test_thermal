@@ -12,6 +12,7 @@
 #include "FE_std/integ.h"
 #include "FE_std/shapefunc.h"
 #include "FE_std/mapping.h"
+#include "FE_std/surface.h"
 
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
@@ -138,14 +139,6 @@ void BBFE_write_ascii_nodal_vals_scalar(
 		FE_DATA*     fe,
 		double*      vals,
 		const char*  filename);
-
-/**********************************************************
- * surface
- **********************************************************/
-
-int BBFE_std_surface_get_surface_node(
-		bool*    node_is_on_surface,
-		FE_DATA* fe);
 
 
 /**********************************************************
