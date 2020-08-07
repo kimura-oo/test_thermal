@@ -9,6 +9,8 @@
 #include "libBB/calc.h"
 #include "libBB/vtk.h"
 
+#include "FE_std/integ.h"
+
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
 typedef struct
@@ -135,19 +137,6 @@ void BBFE_write_ascii_nodal_vals_scalar(
 		double*      vals,
 		const char*  filename);
 
-/**********************************************************
- * numerical integration
- **********************************************************/
-void BBFE_std_integ_set_tet_5(
-		int*        num_integ_points,
-		double**    integ_point,
-		double*     integ_weight);
-
-double BBFE_std_integ_calc(
-		const int      num_integ_points,
-		const double*  value,
-		const double*  weight,
-		const double*  Jacobian);
 
 /**********************************************************
  * shape function
