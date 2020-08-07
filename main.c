@@ -35,44 +35,6 @@ const char* OUTPUT_FILENAME_VTK        = "result.vtk";
 const char* OUTPUT_FILENAME_ASCII_TEMP = "temparature.dat";
 const char* OUTPUT_FILENAME_ASCII_RHS  = "rhs.dat";
 
-
-
-
-/**********************************************************
- * libBB_math
- **********************************************************/
-void BB_math_vec3d_cross(
-		double        ans[3],
-		const double  vec_1[3],
-		const double  vec_2[3])
-{
-	ans[0] = vec_1[1]*vec_2[2] - vec_1[2]*vec_2[1];
-	ans[1] = vec_1[2]*vec_2[0] - vec_1[0]*vec_2[2];
-	ans[2] = vec_1[0]*vec_2[1] - vec_1[1]*vec_2[0];
-}
-
-
-double BB_math_vec3d_length(
-		double vec[3])
-{
-	double len = vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
-	return( sqrt(len) );
-}
-
-void BB_math_vec3d_normal_vec(
-		double vec[3])
-{
-	double len = BB_math_vec3d_length(vec);
-	if(len == 0.0) {
-		return;
-	}
-	else {
-		for(int d=0; d<3; d++) {
-			vec[d] = vec[d]/len;
-		}
-	}
-}
-
 /**********************************************************
  * libBB_vtk
  **********************************************************/
@@ -458,39 +420,6 @@ void BBFE_std_shapefunc_get_surface_tet_1st(
 }
 
 
-static double matrixDeterminant_3x3(
-		double mat[3][3])
-{
-	return ( mat[0][0]*mat[1][1]*mat[2][2] +
-			mat[0][1]*mat[1][2]*mat[2][0] +
-			mat[0][2]*mat[2][1]*mat[1][0] -
-			mat[0][2]*mat[1][1]*mat[2][0] -
-			mat[0][1]*mat[1][0]*mat[2][2] -
-			mat[0][0]*mat[2][1]*mat[1][2]   );
-}
-
-
-static void inverseMatrix_3x3(
-		double mat[3][3], /* input matrix */
-		double det_mat,   /* determinant of input matrix */
-		double invMat[3][3]     /* inverse matrix */)
-{
-	double invDet = 1.0/det_mat;
-
-	invMat[0][0] = invDet * (mat[1][1]*mat[2][2] - mat[1][2]*mat[2][1]);
-	invMat[0][1] = invDet * (mat[0][2]*mat[2][1] - mat[0][1]*mat[2][2]);
-	invMat[0][2] = invDet * (mat[0][1]*mat[1][2] - mat[0][2]*mat[1][1]);
-
-	invMat[1][0] = invDet * (mat[1][2]*mat[2][0] - mat[1][0]*mat[2][2]);
-	invMat[1][1] = invDet * (mat[0][0]*mat[2][2] - mat[0][2]*mat[2][0]);
-	invMat[1][2] = invDet * (mat[0][2]*mat[1][0] - mat[0][0]*mat[1][2]);
-
-	invMat[2][0] = invDet * (mat[1][0]*mat[2][1] - mat[1][1]*mat[2][0]);
-	invMat[2][1] = invDet * (mat[0][1]*mat[2][0] - mat[0][0]*mat[2][1]);
-	invMat[2][2] = invDet * (mat[0][0]*mat[1][1] - mat[0][1]*mat[1][0]);
-}
-
-
 /**********************************************************
  * mapping
  **********************************************************/
@@ -563,8 +492,8 @@ int BBFE_std_surface_get_surface_node(
 				vec_1[d] = fe->x[ nid_1 ][d] - fe->x[ nid_0 ][d];
 				vec_2[d] = fe->x[ nid_2 ][d] - fe->x[ nid_0 ][d];
 			}
-			BB_math_vec3d_cross(ans, vec_1, vec_2);
-			BB_math_vec3d_normal_vec(ans);
+			BB_calc_vec3d_cross(ans, vec_1, vec_2);
+			BB_calc_vec3d_normal_vec(ans);
 
 			for(int d=0; d<3; d++) {
 				norm[ nid_0 ][d] += ans[d];
@@ -577,7 +506,7 @@ int BBFE_std_surface_get_surface_node(
 	
 	int num_surface_nodes = 0;
 	for(int i=0; i<(fe->total_num_nodes); i++) {
-		double len = BB_math_vec3d_length(norm[i]);
+		double len = BB_calc_vec3d_length(norm[i]);
 		if(len > 1.0) {
 			num_surface_nodes++;
 			node_is_on_surface[i] = true;
@@ -725,7 +654,7 @@ void BBFE_elemmat_set_Jacobi_mat(
 					basis->dN_det[p],
 					basis->dN_dze[p]);
 
-			fe->geo[e][p].Jacobian = matrixDeterminant_3x3(
+			fe->geo[e][p].Jacobian = BB_calc_mat3d_determinant(
 					fe->geo[e][p].J);
 		}
 	}
@@ -742,7 +671,7 @@ void BBFE_elemmat_set_shapefunc_derivative(
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		for(int p=0; p<(basis->num_integ_points); p++) {
-			inverseMatrix_3x3(
+			BB_calc_mat3d_inverse(
 					fe->geo[e][p].J, fe->geo[e][p].Jacobian, J_inv);
 
 			for(int i=0; i<(fe->local_num_nodes); i++) {

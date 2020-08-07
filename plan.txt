@@ -1,11 +1,7 @@
 # Bebops汎用ライブラリ 
 - libBB/ (接頭辞: BB_. 以下ファイル名が接頭辞につく)
   - std
-  - math
-    - vec2d
-	- vec3d
-	- mat2d
-	- mat3d
+  - calc (vec2d, vec3d, mat2d, mat3d)
   - vtk
     - celltype
 

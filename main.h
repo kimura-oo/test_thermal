@@ -4,7 +4,9 @@
 #include <stdbool.h>
 
 #include "monolis.h"
+
 #include "libBB/std.h"
+#include "libBB/calc.h"
 
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
@@ -73,20 +75,6 @@ typedef struct
 	double* imposed_N_val;
 } BC_DATA;
 
-
-/**********************************************************
- * libBB_math
- **********************************************************/
-void BB_math_vec3d_cross(
-		double        ans[3],
-		const double  vec_1[3],
-		const double  vec_2[3]);
-
-double BB_math_vec3d_length(
-		double vec[3]);
-
-void BB_math_vec3d_normal_vec(
-		double vec[3]);
 
 /**********************************************************
  * libBB_vtk
