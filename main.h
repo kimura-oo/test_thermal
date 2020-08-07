@@ -18,6 +18,7 @@
 #include "FE_sys/memory.h"
 #include "FE_sys/read.h"
 #include "FE_sys/write.h"
+#include "FE_sys/monowrap.h"
 
 
 
@@ -39,17 +40,6 @@ void BBFE_elemmat_equivval_volume_smooth_function(
 		FE_3D_BASIS* basis,
 		double (*func)(double, double, double)); // scalar function(x, y, z)
 
-
-/**********************************************************
- * monolis wrapper
- **********************************************************/
-
-void BBFE_sys_monowrap_set_Dirichlet_bc(
-		MONOLIS*      monolis,
-		int           num_nodes,
-		int           num_dofs_on_node,
-		BC_DATA*      bc,
-		double*       g_rhs);
 
 /**********************************************************
  * element matrix

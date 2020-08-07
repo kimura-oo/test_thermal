@@ -112,35 +112,6 @@ void BBFE_elemmat_equivval_volume_smooth_function(
 	BB_std_free_2d_double(local_x, fe->local_num_nodes, DIM);
 }
 
-
-
-/**********************************************************
- * monolis wrapper
- **********************************************************/
-
-
-void BBFE_sys_monowrap_set_Dirichlet_bc(
-		MONOLIS*      monolis,
-		int           num_nodes,
-		int           num_dofs_on_node,
-		BC_DATA*      bc,
-		double*       g_rhs)
-	{
-	for(int i=0; i<num_nodes; i++) {
-		for(int k=0; k<num_dofs_on_node; k++) {
-			if( bc->D_bc_exists[ num_dofs_on_node*i+k ] ) {
-				monolis_set_Dirichlet_bc(
-						monolis,
-						g_rhs,
-						i,
-						k,
-						bc->imposed_D_val[ num_dofs_on_node*i+k ]);
-			}
-		}
-	}
-}
-
-
 /**********************************************************
  * element matrix
  **********************************************************/
