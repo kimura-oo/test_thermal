@@ -17,10 +17,11 @@
   - read
   - write
   - monowrap (monolis の wrapper)
-  - manusol
 
 - FE_elemmat (接頭辞: BBFE_elemmat_)
   - set
   - equivval
   - thermal
   - (その他の方程式用計算ルーチン) 開発中
+
+- FE_manusol (接頭辞: BBFE_manusol_)

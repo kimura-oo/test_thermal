@@ -20,6 +20,7 @@
 #include "FE_sys/write.h"
 #include "FE_sys/monowrap.h"
 
+#include "FE_manusol/manusol.h"
 
 
 typedef struct
@@ -61,34 +62,3 @@ double BBFE_elemmat_thermal_steady_linear(
 		double grad_N_i[3],
 		double grad_N_j[3]);
 
-/**********************************************************
- * manufactured solution
- **********************************************************/
-void BBFE_sys_manusol_calc_nodal_error_scalar(
-		FE_DATA*      fe,
-		double*       error,
-		const double* val);
-
-void BBFE_sys_manusol_overwrite_bc_file(
-		FE_DATA*   fe,
-		const int  block_size);
-
-double BBFE_sys_manusol_get_sol_scalar_3d(
-		double x,
-		double y,
-		double z);
-
-double BBFE_sys_manusol_get_rhs_scalar_3d(
-		double x,
-		double y,
-		double z);
-
-void BBFE_sys_manusol_set_bc_scalar(
-		FE_DATA* fe,
-		BC_DATA* bc);
-
-
-void BBFE_sys_manusol_add_rhs_scalar(
-		FE_DATA* fe,
-		FE_3D_BASIS* basis,
-		double* rhs);
