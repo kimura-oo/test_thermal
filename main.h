@@ -10,6 +10,7 @@
 #include "libBB/vtk.h"
 
 #include "FE_std/integ.h"
+#include "FE_std/shapefunc.h"
 
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
