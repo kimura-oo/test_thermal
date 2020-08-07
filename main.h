@@ -7,6 +7,7 @@
 
 #include "libBB/std.h"
 #include "libBB/calc.h"
+#include "libBB/vtk.h"
 
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
@@ -75,34 +76,6 @@ typedef struct
 	double* imposed_N_val;
 } BC_DATA;
 
-
-/**********************************************************
- * libBB_vtk
- **********************************************************/
-void BB_vtk_write_header(
-		FILE* fp);
-
-void BB_vtk_write_points_3d(
-		FILE*    fp,
-		int      num_points,
-		double** x); //[num_points][3]
-
-void BB_vtk_write_cells(
-		FILE* fp,
-		int   num_cells,
-		int   num_points_in_cell,
-		int** connectivity); //[num_cells][num_points_in_cell]
-
-void BB_vtk_write_cell_types(
-		FILE* fp,
-		int   num_cells,
-		int   elem_type);
-
-void BB_vtk_write_point_vals_scalar(
-		FILE*        fp,
-		double*      val,
-		const int    num_points,
-		const char*  label);
 
 /**********************************************************
  * memory allocation
