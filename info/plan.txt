@@ -9,11 +9,8 @@
 - FE_std/ (接頭辞: BBFE_std_、以下ファイル名が接頭辞につく)
   - integ
   - shapefunc
-  - mapping
-    - 実座標マッピング
-    - iso-parametric 写像
-  - surface
-    - 表面抽出
+  - mapping (実座標マッピング, iso-parametric 写像)
+  - surface (表面抽出)
   - equivval
   - manusol
 

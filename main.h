@@ -11,6 +11,7 @@
 
 #include "FE_std/integ.h"
 #include "FE_std/shapefunc.h"
+#include "FE_std/mapping.h"
 
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
@@ -137,44 +138,6 @@ void BBFE_write_ascii_nodal_vals_scalar(
 		FE_DATA*     fe,
 		double*      vals,
 		const char*  filename);
-
-
-/**********************************************************
- * shape function
- **********************************************************/
-void BBFE_std_shapefunc_get_val_tet_1st(
-		const double    xi[3],
-		double*         N);
-
-void BBFE_std_shapefunc_get_derivative_tet_1st(
-		const double    xi[3],
-		double*         dN_dxi,
-		double*         dN_det,
-		double*         dN_dze);
-
-void BBFE_std_shapefunc_get_surface_tet_1st(
-		int        surf_conn[3],
-		const int  surf_num);
-
-/**********************************************************
- * mapping
- **********************************************************/
-
-void BBFE_std_mapping_calc_Jacobi_mat_3d(
-		double     J[3][3],
-		const int  local_num_nodes,
-		double**   local_x,
-		double*    local_dN_dxi,
-		double*    local_dN_det,
-		double*    local_dN_dze);
-
-
-void BBFE_std_mapping_integ_point(
-		double        x[3],
-		const int     local_num_nodes,
-		double**      local_x,
-		double*       N);
-
 
 /**********************************************************
  * surface
