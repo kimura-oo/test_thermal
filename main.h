@@ -17,6 +17,7 @@
 #include "FE_sys/FE_dataset.h"
 #include "FE_sys/memory.h"
 #include "FE_sys/read.h"
+#include "FE_sys/write.h"
 
 
 
@@ -26,20 +27,6 @@ typedef struct
 	double* error;
 
 } NODAL_VALUES;
-
-/**********************************************************
- * write
- **********************************************************/
-
-void BBFE_sys_write_vtk_shape(
-		FILE*     fp,
-		FE_DATA*  fe,
-		const int cell_type);
-
-void BBFE_write_ascii_nodal_vals_scalar(
-		FE_DATA*     fe,
-		double*      vals,
-		const char*  filename);
 
 
 /**********************************************************
