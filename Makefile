@@ -7,7 +7,9 @@ INCLUDES = -I/usr/local/include -I./submodule/monolis/include
 LIBS = -L/usr/local/lib -lm -lstdc++ -L./submodule/monolis/lib -lmonolis -lmetis
 
 TARGET = thermal
-OBJS = main.o libBB/std.o libBB/calc.o libBB/vtk.o FE_std/integ.o FE_std/shapefunc.o FE_std/mapping.o FE_std/surface.o
+OBJS = main.o libBB/std.o libBB/calc.o libBB/vtk.o \
+	   FE_std/integ.o FE_std/shapefunc.o FE_std/mapping.o FE_std/surface.o \
+	   FE_sys/memory.o
 
 .SUFFIXES: .c .cpp .o
 
