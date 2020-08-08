@@ -114,5 +114,8 @@ void BBFE_manusol_add_rhs_scalar(
 	BBFE_elemmat_equivval_volume_smooth_function(
 			equiv_val, fe, basis, BBFE_manusol_get_rhs_scalar_3d);
 
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		rhs[i] += equiv_val[i];
+	}
 	BB_std_free_1d_double(equiv_val, fe->total_num_nodes);
 }

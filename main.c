@@ -182,7 +182,7 @@ int main (
 			&(sys.bc),
 			monolis.mat.B);
 
-	monolis_set_method   (&monolis, monolis_iter_CG);
+	monolis_set_method   (&monolis, monolis_iter_BiCGSTAB_noprec);
 	monolis_set_precond  (&monolis, monolis_prec_DIAG);
 	monolis_set_maxiter  (&monolis, MAT_MAX_ITER);
 	monolis_set_tolerance(&monolis, MAT_EPSILON);
