@@ -169,10 +169,12 @@ int main (
 	// for manufactured solution
 	BBFE_manusol_set_bc_scalar(
 			&(sys.fe),
-			&(sys.bc));
+			&(sys.bc),
+			0.0);
 	BBFE_manusol_add_rhs_scalar(
 			&(sys.fe),
 			&(sys.basis),
+			0.0,
 			monolis.mat.B);
 
 	BBFE_sys_monowrap_set_Dirichlet_bc(
@@ -193,7 +195,7 @@ int main (
 			sys.vals.T);
 
 	BBFE_manusol_calc_nodal_error_scalar(
-			&(sys.fe), sys.vals.error, sys.vals.T);
+			&(sys.fe), 0.0, sys.vals.error, sys.vals.T);
 
 	output_result_file_vtk(
 			&(sys.fe),

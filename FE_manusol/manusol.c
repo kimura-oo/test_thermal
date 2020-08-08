@@ -12,6 +12,7 @@ static const char* CODENAME = "FE_sys/manusol >";
 
 void BBFE_manusol_calc_nodal_error_scalar(
 		FE_DATA*      fe,
+		double        t,
 		double*       error,
 		const double* val)
 {
@@ -20,7 +21,7 @@ void BBFE_manusol_calc_nodal_error_scalar(
 		for(int d=0; d<3; d++) {
 			x[d] = fe->x[i][d];
 		}
-		double theo_sol = BBFE_manusol_get_sol_scalar_3d(x[0], x[1], x[2]);
+		double theo_sol = BBFE_manusol_get_sol_scalar_3d(x[0], x[1], x[2], t);
 		error[i] = val[i] - theo_sol;
 	}
 
@@ -68,7 +69,8 @@ void BBFE_manusol_overwrite_bc_file(
 double BBFE_manusol_get_sol_scalar_3d(
 		double x,
 		double y,
-		double z)
+		double z,
+		double t)
 {
 	double sol = sin( 0.5*x ) * sin( 1.0*y ) * sin( 2.0*z );
 	return sol;
@@ -78,7 +80,8 @@ double BBFE_manusol_get_sol_scalar_3d(
 double BBFE_manusol_get_rhs_scalar_3d(
 		double x,
 		double y,
-		double z)
+		double z,
+		double t)
 {
 	double rhs = -5.25*sin( 0.5*x ) * sin( y ) * sin( 2.0*z );
 	return rhs;
@@ -87,7 +90,8 @@ double BBFE_manusol_get_rhs_scalar_3d(
 
 void BBFE_manusol_set_bc_scalar(
 		FE_DATA* fe,
-		BC_DATA* bc)
+		BC_DATA* bc,
+		double   t)
 {
 	for(int i=0; i<(fe->total_num_nodes); i++) {
 		if( bc->D_bc_exists[i] ) {
@@ -97,22 +101,23 @@ void BBFE_manusol_set_bc_scalar(
 			}
 
 			bc->imposed_D_val[i] =
-				BBFE_manusol_get_sol_scalar_3d(x[0], x[1], x[2]);
+				BBFE_manusol_get_sol_scalar_3d(x[0], x[1], x[2], t);
 		}
 	}
 }
 
 
 void BBFE_manusol_add_rhs_scalar(
-		FE_DATA* fe,
+		FE_DATA*     fe,
 		FE_3D_BASIS* basis,
-		double* rhs)
+		double       t,
+		double*      rhs)
 {
 	double* equiv_val;
 	equiv_val = BB_std_calloc_1d_double(equiv_val, fe->total_num_nodes);
 	
 	BBFE_elemmat_equivval_volume_smooth_function(
-			equiv_val, fe, basis, BBFE_manusol_get_rhs_scalar_3d);
+			equiv_val, fe, basis, t, BBFE_manusol_get_rhs_scalar_3d);
 
 	for(int i=0; i<(fe->total_num_nodes); i++) {
 		rhs[i] += equiv_val[i];

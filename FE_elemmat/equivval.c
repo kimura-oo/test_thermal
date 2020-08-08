@@ -6,10 +6,11 @@
 #include "../FE_std/integ.h"
 
 void BBFE_elemmat_equivval_volume_smooth_function(
-		double* equiv_val,
-		FE_DATA* fe,
+		double*      equiv_val,
+		FE_DATA*     fe,
 		FE_3D_BASIS* basis,
-		double (*func)(double, double, double)) // scalar function(x, y, z)
+		double       t,
+		double       (*func)(double, double, double, double)) // scalar function(x, y, z, t)
 {
 
 	for(int i=0; i<(fe->total_num_nodes); i++) {
@@ -46,7 +47,7 @@ void BBFE_elemmat_equivval_volume_smooth_function(
 						local_x,
 						basis->N[p]);
 
-				double rhs_ip = func(x_ip[0], x_ip[1], x_ip[2]);
+				double rhs_ip = func(x_ip[0], x_ip[1], x_ip[2], t);
 				val_ip[p] = rhs_ip * basis->N[p][i];
 			}
 
