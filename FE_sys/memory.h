@@ -29,3 +29,8 @@ void BBFE_sys_memory_allocation_elem(
 		FE_DATA*  fe,
 		const int num_integ_points,
 		const int dimension);
+
+void BBFE_sys_memory_allocation_Dirichlet_bc(
+		BC_DATA*   bc,
+		const int  total_num_nodes,
+		const int  block_size);

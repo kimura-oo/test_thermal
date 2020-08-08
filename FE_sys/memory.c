@@ -84,3 +84,14 @@ void BBFE_sys_memory_allocation_elem(
 	}
 }
 
+
+void BBFE_sys_memory_allocation_Dirichlet_bc(
+		BC_DATA*   bc,
+		const int  total_num_nodes,
+		const int  block_size)
+{
+	int n = total_num_nodes * block_size;
+
+	bc->D_bc_exists   = BB_std_calloc_1d_bool(  bc->D_bc_exists  , n);
+	bc->imposed_D_val = BB_std_calloc_1d_double(bc->imposed_D_val, n);
+}

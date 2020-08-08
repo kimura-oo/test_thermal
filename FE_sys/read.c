@@ -83,10 +83,9 @@ void BBFE_sys_read_Dirichlet_bc(
 			"%d %d", &(bc->num_D_bcs), &(bc->block_size));
 	printf("%s Num. Dirichlet B.C.: %d\n", CODENAME, bc->num_D_bcs);
 
+	BBFE_sys_memory_allocation_Dirichlet_bc(bc, total_num_nodes, bc->block_size);
 	int n = total_num_nodes * bc->block_size;
 
-	bc->D_bc_exists   = BB_std_calloc_1d_bool(  bc->D_bc_exists  , n);
-	bc->imposed_D_val = BB_std_calloc_1d_double(bc->imposed_D_val, n);
 	for(int i=0; i<n; i++) {
 		bc->D_bc_exists[i]   = false;
 		bc->imposed_D_val[i] = 0.0;
