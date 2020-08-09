@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct
 {
@@ -24,7 +25,7 @@ typedef struct
 
 static const char* CODENAME = "meshgen_tet >";
 static const char* VOIDNAME = "            >";
-
+static const int BUFFER_SIZE = 10000;
 
 
 void init_fe_data(
@@ -133,7 +134,31 @@ void set_tet(
 }
 
 
-void arg_manager(
+static const char* read_args_return_next_arg(
+		int argc,
+		char* argv[],
+		const char* c_option)
+{
+	int num = 0;
+
+	for(int i=1; i<argc-1; i++) {
+		if(strcmp(argv[i], c_option) == 0 ) {
+			num = i;
+		}
+	}
+
+	if(num == 0) {
+		return NULL;
+	}
+	else {
+		return argv[num+1];
+	}
+
+}
+
+
+
+const char* arg_manager(
 		int argc,
 		char* argv[])
 {
@@ -141,8 +166,19 @@ void arg_manager(
 		printf("%s Please specify parameters for meshing\n", CODENAME);
 		printf("%s Format: \n", VOIDNAME);
 		printf("%s ./meshgen_tet [1: num. elements (x)] [2: num. elements (y)] [3: num. elements (z)] [4: total length (x)] [5: total length (y)] [6: total length (z)] \n\n", VOIDNAME);
+		printf("%s Options: \n", VOIDNAME);
+		printf("%s -o [output directory] (Default: ./) \n\n", VOIDNAME);
 
 		exit(0);
+	}
+
+	const char* dir_name;
+	dir_name = read_args_return_next_arg(argc, argv, "-o");
+	if(dir_name == NULL) {
+		return "./";
+	}
+	else {
+		return dir_name;
 	}
 }
 
@@ -196,14 +232,17 @@ void print_data(
 
 void output_data(
 		FE_DATA* fe,
-		char* filename_node,
-		char* filename_elem)
+		const char* filename_node,
+		const char* filename_elem,
+		const char* directory)
 {
+	char fname_node[BUFFER_SIZE];
+	snprintf(fname_node, BUFFER_SIZE, "%s/%s", directory, filename_node);
 	FILE* fp_node;
-	fp_node = fopen(filename_node, "w");
+	fp_node = fopen(fname_node, "w");
 	if( fp_node == NULL ) {
 		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
-				CODENAME, filename_node);
+				CODENAME, fname_node);
 	}
 
 	fprintf(fp_node, "%d\n", fe->total_num_nodes);
@@ -211,12 +250,13 @@ void output_data(
 		fprintf(fp_node, "%e %e %e\n", fe->x[i][0], fe->x[i][1], fe->x[i][2]);
 	}
 
-
+	char fname_elem[BUFFER_SIZE];
+	snprintf(fname_elem, BUFFER_SIZE, "%s/%s", directory, filename_elem);
 	FILE* fp_elem;
-	fp_elem = fopen(filename_elem, "w");
+	fp_elem = fopen(fname_elem, "w");
 	if( fp_elem == NULL ) {
 		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
-				CODENAME, filename_elem);
+				CODENAME, fname_elem);
 	}
 
 	fprintf(fp_elem, "%d %d\n", fe->total_num_elems, fe->local_num_nodes);
@@ -239,7 +279,8 @@ int main(
 {
 	printf("\n");
 
-	arg_manager(argc, argv);
+	const char* dir_name = arg_manager(argc, argv);
+	printf("%s Output directory: %s\n", CODENAME, dir_name);
 
 	FE_DATA fe_hex;
 	FE_DATA fe_tet;
@@ -267,7 +308,7 @@ int main(
 	set_tet(&fe_tet, &fe_hex);
 
 	//print_data(&fe_tet);
-	output_data(&fe_tet, "node.dat", "elem.dat");
+	output_data(&fe_tet, "node.dat", "elem.dat", dir_name);
 
 	printf("\n");
 	return 0;

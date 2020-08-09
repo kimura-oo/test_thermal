@@ -92,14 +92,11 @@ void set_basis(
 void output_result_file_vtk(
 		FE_DATA*       fe,
 		NODAL_VALUES*  vals,
-		const char*    filename)
+		const char*    filename,
+		const char*    directory)
 {
 	FILE* fp;
-	fp = fopen(filename, "w");
-	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n",
-				CODENAME, filename);
-	}
+	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
 	BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_TETRA);
 	
@@ -278,18 +275,19 @@ int main (
 	output_result_file_vtk(
 			&(sys.fe),
 			&(sys.vals),
-			OUTPUT_FILENAME_VTK);
+			OUTPUT_FILENAME_VTK,
+			dir_name);
 
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys.fe),
 			sys.vals.T,
 			OUTPUT_FILENAME_ASCII_TEMP,
-			".");
+			dir_name);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys.fe),
 			sys.monolis.mat.B,
 			OUTPUT_FILENAME_ASCII_RHS,
-			".");
+			dir_name);
 	
 	double L2_error = BBFE_elemmat_equivval_relative_L2_error_scalar(
 			&(sys.fe),

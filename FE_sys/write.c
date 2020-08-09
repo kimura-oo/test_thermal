@@ -62,11 +62,7 @@ void BBFE_write_ascii_nodal_vals_scalar(
 		const char*  directory)
 {
 	FILE* fp;
-	fp = fopen(filename, "w");
-	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n",
-				CODENAME, filename);
-	}
+	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
 	fprintf(fp, "%d\n", fe->total_num_nodes);
 
