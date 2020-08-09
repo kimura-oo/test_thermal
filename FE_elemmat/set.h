@@ -16,8 +16,3 @@ void BBFE_elemmat_set_Jacobi_mat(
 void BBFE_elemmat_set_shapefunc_derivative(
 		FE_DATA*      fe,
 		FE_3D_BASIS*  basis);
-
-void BBFE_elemmat_set_element_mat(
-		MONOLIS*     monolis,
-		FE_DATA*     fe,
-		FE_3D_BASIS* basis);

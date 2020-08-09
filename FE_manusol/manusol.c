@@ -2,12 +2,13 @@
 #include "manusol.h"
 #include "../libBB/std.h"
 #include "../FE_std/surface.h"
+#include "../FE_sys/write.h"
 #include "../main.h"
 
 #include <stdio.h>
 #include <math.h>
 
-static const char* CODENAME = "FE_sys/manusol >";
+static const char* CODENAME = "FE_manusol/manusol >";
 
 
 void BBFE_manusol_calc_nodal_error_scalar(
@@ -29,8 +30,10 @@ void BBFE_manusol_calc_nodal_error_scalar(
 
 
 void BBFE_manusol_overwrite_bc_file(
-		FE_DATA*   fe,
-		const int  block_size)
+		FE_DATA*    fe,
+		const int   block_size,
+		const char* filename,
+		const char* directory)
 {
 	bool* node_is_on_surface;
 	node_is_on_surface = BB_std_calloc_1d_bool(node_is_on_surface, fe->total_num_nodes);
@@ -44,13 +47,9 @@ void BBFE_manusol_overwrite_bc_file(
 			fe->total_num_nodes, fe->x,
 			fe->total_num_elems, fe->conn);
 
-	const char* filename = "bc_D.dat";
 	FILE* fp;
-	fp = fopen(filename, "w");
-	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n",
-				CODENAME, filename);
-	}
+	fp = BBFE_sys_write_fopen(fp, filename, directory);
+
 	fprintf(fp, "%d %d\n", block_size*num_bcs, block_size);
 	for(int i=0; i<(fe->total_num_nodes); i++) {
 		if(node_is_on_surface[i]) {

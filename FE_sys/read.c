@@ -3,21 +3,52 @@
 #include "memory.h"
 #include "../libBB/std.h"
 
+#include <stdlib.h>
+
 static const char* CODENAME = "FE_sys/read >";
 static const int BUFFER_SIZE = 10000;
 
 
-void BBFE_sys_read_node(
-		FE_DATA*     fe,
-		const char*  filename)
+FILE* BBFE_sys_read_fopen(
+		FILE*        fp,
+		const char*  filename,
+		const char*  directory)
 {
-	FILE* fp;
+	char fname[BUFFER_SIZE];
+	snprintf(fname, BUFFER_SIZE, "%s/%s", directory, filename);
 
-	fp = fopen(filename, "r");
+	fp = fopen(fname, "r");
 	if( fp == NULL ) {
 		printf("%s ERROR: File \"%s\" cannot be opened.\n",
-				CODENAME, filename);
+				CODENAME, fname);
+		exit(EXIT_FAILURE);
 	}
+
+	return fp;
+}
+
+
+FILE* BBFE_sys_read_fopen_without_error(
+		FILE*        fp,
+		const char*  filename,
+		const char*  directory)
+{
+	char fname[BUFFER_SIZE];
+	snprintf(fname, BUFFER_SIZE, "%s/%s", directory, filename);
+
+	fp = fopen(fname, "r");
+
+	return fp;
+}
+
+
+void BBFE_sys_read_node(
+		FE_DATA*     fe,
+		const char*  filename,
+		const char*  directory)
+{
+	FILE* fp;
+	fp = BBFE_sys_read_fopen(fp, filename, directory);
 
 	// read the number of nodes
 	BB_std_scan_line(
@@ -38,15 +69,11 @@ void BBFE_sys_read_node(
 void BBFE_sys_read_elem(
 		FE_DATA*     fe,
 		const char*  filename,
+		const char*  directory,
 		int          num_integ_points)
 {
 	FILE* fp;
-
-	fp = fopen(filename, "r");
-	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n",
-				CODENAME, filename);
-	}
+	fp = BBFE_sys_read_fopen(fp, filename, directory);
 
 	// read the number of elements
 	BB_std_scan_line(
@@ -68,14 +95,11 @@ void BBFE_sys_read_elem(
 void BBFE_sys_read_Dirichlet_bc(
 		BC_DATA*     bc,
 		const char*  filename,
+		const char*  directory,
 		const int    total_num_nodes)
 {
 	FILE* fp;
-	fp = fopen(filename, "r");
-	if( fp == NULL ) {
-		printf("%s ERROR: File \"%s\" cannot be opened.\n",
-				CODENAME, filename);
-	}
+	fp = BBFE_sys_read_fopen(fp, filename, directory);
 
 	bc->total_num_nodes = total_num_nodes;
 

@@ -9,8 +9,10 @@ void BBFE_manusol_calc_nodal_error_scalar(
 		const double* val);
 
 void BBFE_manusol_overwrite_bc_file(
-		FE_DATA*   fe,
-		const int  block_size);
+		FE_DATA*    fe,
+		const int   block_size,
+		const char* filename,
+		const char* directory);
 
 double BBFE_manusol_get_sol_scalar_3d(
 		double x,
