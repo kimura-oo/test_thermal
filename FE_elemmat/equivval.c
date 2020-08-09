@@ -5,6 +5,9 @@
 #include "../FE_std/mapping.h"
 #include "../FE_std/integ.h"
 
+#include <math.h>
+
+
 void BBFE_elemmat_equivval_volume_smooth_function(
 		double*      equiv_val,
 		FE_DATA*     fe,
@@ -41,14 +44,14 @@ void BBFE_elemmat_equivval_volume_smooth_function(
 
 			for(int p=0; p<(basis->num_integ_points); p++) {
 				double x_ip[3];
-				BBFE_std_mapping_integ_point(
+				BBFE_std_mapping_vector_value_integ_point_3d(
 						x_ip,
 						fe->local_num_nodes,
 						local_x,
 						basis->N[p]);
 
-				double rhs_ip = func(x_ip[0], x_ip[1], x_ip[2], t);
-				val_ip[p] = rhs_ip * basis->N[p][i];
+				double func_ip = func(x_ip[0], x_ip[1], x_ip[2], t);
+				val_ip[p] = func_ip * basis->N[p][i];
 			}
 
 			double integ_val = BBFE_std_integ_calc(
@@ -67,4 +70,89 @@ void BBFE_elemmat_equivval_volume_smooth_function(
 	BB_std_free_2d_double(local_x, fe->local_num_nodes, 3);
 }
 
+
+double BBFE_elemmat_equivval_relative_L2_error_scalar(
+		FE_DATA*      fe,
+		FE_3D_BASIS*  basis,
+		double        t,
+		const double* comp_vec, // [total_num_nodes]
+		double        (*func)(double, double, double, double)) // scalar function(x, y, z, t)
+{
+	double L2_abs_error = 0.0;
+	double L2_abs_theo  = 0.0;
+
+	double* val_ip_error;
+	double* val_ip_theo;
+	double* Jacobian_ip;
+	val_ip_error = BB_std_calloc_1d_double(val_ip_error, basis->num_integ_points);
+	val_ip_theo  = BB_std_calloc_1d_double(val_ip_theo , basis->num_integ_points);
+	Jacobian_ip  = BB_std_calloc_1d_double(Jacobian_ip , basis->num_integ_points);
+
+	double** local_x;
+	local_x   = BB_std_calloc_2d_double(local_x  , fe->local_num_nodes, 3);
+
+	double* local_val;
+	local_val = BB_std_calloc_1d_double(local_val, fe->local_num_nodes);
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			local_val[i] = comp_vec[ fe->conn[e][i] ];
+
+			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
+			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
+			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
+		}
+
+		BBFE_elemmat_set_Jacobian_array(
+				Jacobian_ip,
+				basis->num_integ_points,
+				e,
+				fe);
+
+		for(int p=0; p<(basis->num_integ_points); p++) {
+			double val_ip;
+			val_ip = BBFE_std_mapping_scalar_value_integ_point_3d(
+					fe->local_num_nodes,
+					local_val,
+					basis->N[p]);
+
+			double x_ip[3];
+			BBFE_std_mapping_vector_value_integ_point_3d(
+					x_ip,
+					fe->local_num_nodes,
+					local_x,
+					basis->N[p]);
+
+			val_ip_error[p] = 
+				pow( fabs( val_ip - func(x_ip[0], x_ip[1], x_ip[2], t) ), 2 );
+			val_ip_theo[p] =
+				pow( fabs( func(x_ip[0], x_ip[1], x_ip[2], t) ), 2 );
+		}
+
+		double integ_val_error = BBFE_std_integ_calc(
+				basis->num_integ_points,
+				val_ip_error,
+				basis->integ_weight,
+				Jacobian_ip);
+		double integ_val_theo  = BBFE_std_integ_calc(
+				basis->num_integ_points,
+				val_ip_theo,
+				basis->integ_weight,
+				Jacobian_ip);
+
+		L2_abs_error += integ_val_error;
+		L2_abs_theo  += integ_val_theo;
+	}
+	printf("%e, %e\n", L2_abs_error, L2_abs_theo);
+
+	BB_std_free_1d_double(val_ip_error, basis->num_integ_points);
+	BB_std_free_1d_double(val_ip_theo,  basis->num_integ_points);
+	BB_std_free_1d_double(Jacobian_ip,  basis->num_integ_points);
+
+	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
+	BB_std_free_1d_double(local_val, fe->local_num_nodes);
+
+	return ( sqrt(L2_abs_error)/sqrt(L2_abs_theo) );
+}
 

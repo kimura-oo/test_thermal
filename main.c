@@ -211,6 +211,14 @@ int main (
 			&(sys.fe),
 			monolis.mat.B,
 			OUTPUT_FILENAME_ASCII_RHS);
+	
+	double L2_error = BBFE_elemmat_equivval_relative_L2_error_scalar(
+			&(sys.fe),
+			&(sys.basis),
+			0.0,
+			sys.vals.T,
+			BBFE_manusol_get_sol_scalar_3d);
+	printf("L2 error: %e\n", L2_error);
 
 	monolis_finalize(&monolis);
 	monolis_global_finalize();
