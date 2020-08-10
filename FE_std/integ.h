@@ -7,6 +7,11 @@ double BBFE_std_integ_calc(
 		const double*  weight,
 		const double*  Jacobian);
 
+double BBFE_std_integ_calc_volume(
+		const int      num_integ_points,
+		const double*  weight,
+		const double*  Jacobian);
+
 /**********************************************************
  * 1D line (generalized)
  **********************************************************/

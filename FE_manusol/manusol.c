@@ -118,7 +118,12 @@ double BBFE_manusol_get_rhs_scalar_3d(
 		double z,
 		double t)
 {
-	double rhs = -5.25*sin( 0.5*x ) * sin( y ) * sin( 2.0*z );
+	double rhs = 
+		0.0 * ( 0.5*cos( 0.5*x ) * sin( 1.0*y ) * sin( 2.0*z ) ) + 
+		100.0 * ( sin( 0.5*x ) * cos( 1.0*y ) * sin( 2.0*z ) ) + 
+		0.0 * ( 0.5*sin( 0.5*x ) * sin( 1.0*y ) * 2.0*cos( 2.0*z ) ) + 
+		1.0 * (5.25*sin( 0.5*x ) * sin( y ) * sin( 2.0*z ));
+	
 	return rhs;
 }
 

@@ -144,7 +144,7 @@ const char* get_directory_name(
 }
 
 
-void set_element_mat(
+void set_element_mat_vec(
 		MONOLIS*     monolis,
 		FE_DATA*     fe,
 		FE_3D_BASIS* basis)
@@ -154,21 +154,49 @@ void set_element_mat(
 	val_ip      = BB_std_calloc_1d_double(val_ip      , basis->num_integ_points);
 	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip , basis->num_integ_points);
 
+	double** local_x;
+	local_x   = BB_std_calloc_2d_double(local_x  , fe->local_num_nodes, 3);
+
+	double a[3] = {0.0, 100.0, 0.0};
+	double k = 1.0;
+	
 	for(int e=0; e<(fe->total_num_elems); e++) {
+		BBFE_elemmat_set_Jacobian_array(
+				Jacobian_ip,
+				basis->num_integ_points,
+				e,
+				fe);
+		
+		double vol = BBFE_std_integ_calc_volume(
+				basis->num_integ_points,
+				basis->integ_weight,
+				Jacobian_ip);
+
+		double h_e = cbrt(vol);
+
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			for(int j=0; j<(fe->local_num_nodes); j++) {
 
-				BBFE_elemmat_set_Jacobian_array(
-						Jacobian_ip,
-						basis->num_integ_points,
-						e,
-						fe);
 
 				for(int p=0; p<(basis->num_integ_points); p++) {
-					val_ip[p] =
-						BBFE_elemmat_thermal_steady_linear(
+					val_ip[p] = 0.0;
+
+					val_ip[p] += BBFE_elemmat_convdiff_mat_conv(
+								basis->N[i][p],
+								fe->geo[e][p].grad_N[j],
+								a);
+
+					val_ip[p] -= BBFE_elemmat_convdiff_mat_diff(
 								fe->geo[e][p].grad_N[i],
-								fe->geo[e][p].grad_N[j]);
+								fe->geo[e][p].grad_N[j],
+								k);
+					
+					double tau = BBFE_elemmat_convdiff_stab_coef(
+							k, a, h_e);
+					val_ip[p] += BBFE_elemmat_convdiff_mat_stab_conv(
+							fe->geo[e][p].grad_N[i],
+							fe->geo[e][p].grad_N[j],
+							a, tau);
 				}
 
 				double integ_val = BBFE_std_integ_calc(
@@ -185,8 +213,64 @@ void set_element_mat(
 		}
 	}
 
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		BBFE_elemmat_set_Jacobian_array(
+				Jacobian_ip,
+				basis->num_integ_points,
+				e,
+				fe);
+		
+		double vol = BBFE_std_integ_calc_volume(
+				basis->num_integ_points,
+				basis->integ_weight,
+				Jacobian_ip);
+
+		double h_e = cbrt(vol);
+		
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
+			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
+			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
+		}
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			for(int p=0; p<(basis->num_integ_points); p++) {
+				val_ip[p] = 0.0;
+				
+				double x_ip[3];
+				BBFE_std_mapping_vector_value_integ_point_3d(
+						x_ip,
+						fe->local_num_nodes,
+						local_x,
+						basis->N[p]);
+				
+				val_ip[p] += BBFE_elemmat_convdiff_vec_source(
+						basis->N[i][p],
+						BBFE_manusol_get_rhs_scalar_3d(x_ip[0], x_ip[1], x_ip[2], 0.0) );
+				
+				double tau = BBFE_elemmat_convdiff_stab_coef(
+						k, a, h_e);
+				val_ip[p] += BBFE_elemmat_convdiff_vec_stab_source(
+						fe->geo[e][p].grad_N[i],
+						a,
+						tau,
+						BBFE_manusol_get_rhs_scalar_3d(x_ip[0], x_ip[1], x_ip[2], 0.0) );
+			}
+
+			double integ_val = BBFE_std_integ_calc(
+					basis->num_integ_points,
+					val_ip,
+					basis->integ_weight,
+					Jacobian_ip);
+			
+			monolis->mat.B[ fe->conn[e][i] ] += integ_val;
+		}
+	}
+
+
 	BB_std_free_1d_double(val_ip,     basis->num_integ_points);
 	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
+
+	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
 }
 
 
@@ -269,7 +353,7 @@ int main (
 	BBFE_elemmat_set_shapefunc_derivative(
 			&(sys.fe),
 			&(sys.basis));
-	set_element_mat(
+	set_element_mat_vec(
 			&(sys.monolis),
 			&(sys.fe),
 			&(sys.basis));
@@ -279,11 +363,6 @@ int main (
 			&(sys.fe),
 			&(sys.bc),
 			0.0);
-	BBFE_manusol_add_rhs_scalar(
-			&(sys.fe),
-			&(sys.basis),
-			0.0,
-			sys.monolis.mat.B);
 
 	BBFE_sys_monowrap_set_Dirichlet_bc(
 			&(sys.monolis),
