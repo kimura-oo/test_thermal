@@ -1,4 +1,25 @@
-#include "main.h"
+#include "monolis.h"
+
+#include "libBB/std.h"
+#include "libBB/calc.h"
+#include "libBB/vtk.h"
+
+#include "FE_std/integ.h"
+#include "FE_std/shapefunc.h"
+#include "FE_std/mapping.h"
+#include "FE_std/surface.h"
+
+#include "FE_sys/FE_dataset.h"
+#include "FE_sys/memory.h"
+#include "FE_sys/read.h"
+#include "FE_sys/write.h"
+#include "FE_sys/monowrap.h"
+
+#include "FE_elemmat/set.h"
+#include "FE_elemmat/equivval.h"
+#include "FE_elemmat/convdiff.h"
+
+#include "FE_manusol/manusol.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -8,9 +29,9 @@
 
 const int DIM = 3;
 
-const int NUM_INTEG_POINTS   = 27;
-const int POL_ORDER          = 1;
-const int BLOCK_SIZE         = 1;
+const int NUM_INTEG_POINTS_EACH_AXIS = 3;
+const int NUM_INTEG_POINTS           = 27;
+const int BLOCK_SIZE                 = 1;
 
 const double MAT_EPSILON  = 1.0e-10;
 const double MAT_MAX_ITER = 100000;
@@ -61,7 +82,7 @@ void set_basis(
 		case 4:
 			basis->num_integ_points = 
 				BBFE_std_integ_tet_set_arbitrary_points(
-						3,
+						NUM_INTEG_POINTS_EACH_AXIS,
 						basis->integ_point,
 						basis->integ_weight);
 
@@ -81,7 +102,7 @@ void set_basis(
 		case 8:
 			basis->num_integ_points = 
 				BBFE_std_integ_hex_set_arbitrary_points(
-						3,
+						NUM_INTEG_POINTS_EACH_AXIS,
 						basis->integ_point,
 						basis->integ_weight);
 
@@ -301,7 +322,7 @@ int main (
 	BBFE_sys_memory_allocation_basis(
 			&(sys.basis),
 			NUM_INTEG_POINTS,
-			POL_ORDER,
+			1,
 			sys.fe.local_num_nodes,
 			3);
 

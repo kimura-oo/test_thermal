@@ -3,7 +3,7 @@
 #include "../libBB/std.h"
 #include "../FE_std/surface.h"
 #include "../FE_sys/write.h"
-#include "../main.h"
+#include "../FE_elemmat/equivval.h"
 
 #include <stdio.h>
 #include <math.h>

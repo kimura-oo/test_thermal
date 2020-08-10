@@ -4,7 +4,6 @@
 #include "../libBB/calc.h"
 #include "../FE_std/integ.h"
 #include "../FE_std/mapping.h"
-#include "../main.h"
 
 void BBFE_elemmat_set_Jacobian_array(
 		double*    Jacobian_ip,
