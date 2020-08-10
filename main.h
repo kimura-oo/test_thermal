@@ -22,6 +22,6 @@
 
 #include "FE_elemmat/set.h"
 #include "FE_elemmat/equivval.h"
-#include "FE_elemmat/thermal.h"
+#include "FE_elemmat/convdiff.h"
 
 #include "FE_manusol/manusol.h"
