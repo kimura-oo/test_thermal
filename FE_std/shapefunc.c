@@ -1,4 +1,7 @@
 
+/**********************************************************
+ * 3D tetrahedron, 1st order
+ **********************************************************/
 void BBFE_std_shapefunc_tet1st_get_val(
 		const double    xi[3],
 		double*         N)

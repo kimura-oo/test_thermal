@@ -8,7 +8,7 @@
 
 const int DIM = 3;
 
-const int NUM_INTEG_POINTS   = 5;
+const int NUM_INTEG_POINTS   = 27;
 const int POL_ORDER          = 1;
 const int NUM_NODES_IN_ELEM  = 4;
 const int BLOCK_SIZE         = 1;
@@ -26,7 +26,6 @@ const char* OUTPUT_FILENAME_ASCII_TEMP = "temparature.dat";
 const char* OUTPUT_FILENAME_ASCII_RHS  = "rhs.dat";
 
 
-
 typedef struct
 {
 	double* T;
@@ -34,16 +33,6 @@ typedef struct
 
 } NODAL_VALUES;
 
-
-typedef struct
-{
-	char* data_directory;
-	char* filename_node;
-	char* filename_elem;
-	char* filename_D_bc;
-	char* filename_N_bc;
-
-} CONDITIONS;
 
 typedef struct
 {
@@ -68,11 +57,11 @@ void memory_allocation_nodal_values(
 void set_basis(
 		FE_3D_BASIS*  basis)
 {
-	BBFE_std_integ_tet_set_5points(
-			&(basis->num_integ_points),
-			basis->integ_point,
-			basis->integ_weight
-			);
+	basis->num_integ_points = 
+		BBFE_std_integ_tet_set_arbitrary_points(
+				3,
+				basis->integ_point,
+				basis->integ_weight);
 
 	for(int i=0; i<(basis->num_integ_points); i++) {
 		BBFE_std_shapefunc_tet1st_get_val(
@@ -99,7 +88,7 @@ void output_result_file_vtk(
 	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
 	BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_TETRA);
-	
+
 	fprintf(fp, "POINT_DATA %d\n", fe->total_num_nodes);
 	BB_vtk_write_point_vals_scalar(fp, vals->T, fe->total_num_nodes, "temperature");
 	BB_vtk_write_point_vals_scalar(fp, vals->error, fe->total_num_nodes, "abs_error");
@@ -147,8 +136,8 @@ void set_element_mat(
 				for(int p=0; p<(basis->num_integ_points); p++) {
 					val_ip[p] =
 						BBFE_elemmat_thermal_steady_linear(
-							fe->geo[e][p].grad_N[i],
-							fe->geo[e][p].grad_N[j]);
+								fe->geo[e][p].grad_N[i],
+								fe->geo[e][p].grad_N[j]);
 				}
 
 				double integ_val = BBFE_std_integ_calc(
@@ -179,7 +168,7 @@ int main (
 	FE_SYSTEM sys;
 
 	double t1 = monolis_get_time();
-	
+
 	monolis_global_initialize();
 
 	const char* dir_name = get_directory_name(argc, argv);	
@@ -288,7 +277,7 @@ int main (
 			sys.monolis.mat.B,
 			OUTPUT_FILENAME_ASCII_RHS,
 			dir_name);
-	
+
 	double L2_error = BBFE_elemmat_equivval_relative_L2_error_scalar(
 			&(sys.fe),
 			&(sys.basis),
