@@ -4,18 +4,23 @@ LDFLAGS =
 INCLUDES = -I/usr/local/include
 LIBS = -L/usr/local/lib -lm 
 
-TARGET = meshgen_tet
-OBJS = meshgen_tet.o
+TARGET1 = meshgen_tet
+OBJS1 = meshgen_tet.o
+
+TARGET1 = meshgen_hex
+OBJS1 = meshgen_hex.o
 
 .SUFFIXES: .c .cpp .o
 
-all: $(TARGET)
+all: $(TARGET1) $(TARGET2)
 
-$(TARGET): $(OBJS)
+$(TARGET1): $(OBJS1)
+		$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+$(TARGET2): $(OBJS2)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 clean:
-		-rm -f $(OBJS)
+		-rm -f $(OBJS1)
 
 .cpp.o:
 	$(CC) $(CFLAGS) -o $@ -c $^ 

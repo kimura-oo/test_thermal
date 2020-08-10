@@ -10,7 +10,6 @@ const int DIM = 3;
 
 const int NUM_INTEG_POINTS   = 27;
 const int POL_ORDER          = 1;
-const int NUM_NODES_IN_ELEM  = 4;
 const int BLOCK_SIZE         = 1;
 
 const double MAT_EPSILON  = 1.0e-10;
@@ -55,26 +54,50 @@ void memory_allocation_nodal_values(
 
 
 void set_basis(
-		FE_3D_BASIS*  basis)
+		FE_3D_BASIS*  basis,
+		int           local_num_nodes)
 {
-	basis->num_integ_points = 
-		BBFE_std_integ_tet_set_arbitrary_points(
-				3,
-				basis->integ_point,
-				basis->integ_weight);
+	switch( local_num_nodes ) {
+		case 4:
+			basis->num_integ_points = 
+				BBFE_std_integ_tet_set_arbitrary_points(
+						3,
+						basis->integ_point,
+						basis->integ_weight);
 
-	for(int i=0; i<(basis->num_integ_points); i++) {
-		BBFE_std_shapefunc_tet1st_get_val(
-				basis->integ_point[i],
-				basis->N[i]);
+			for(int i=0; i<(basis->num_integ_points); i++) {
+				BBFE_std_shapefunc_tet1st_get_val(
+						basis->integ_point[i],
+						basis->N[i]);
 
-		BBFE_std_shapefunc_tet1st_get_derivative(
-				basis->integ_point[i],
-				basis->dN_dxi[i],
-				basis->dN_det[i],
-				basis->dN_dze[i]);
+				BBFE_std_shapefunc_tet1st_get_derivative(
+						basis->integ_point[i],
+						basis->dN_dxi[i],
+						basis->dN_det[i],
+						basis->dN_dze[i]);
+			}
+			break;
+
+		case 8:
+			basis->num_integ_points = 
+				BBFE_std_integ_hex_set_arbitrary_points(
+						3,
+						basis->integ_point,
+						basis->integ_weight);
+
+			for(int i=0; i<(basis->num_integ_points); i++) {
+				BBFE_std_shapefunc_hex1st_get_val(
+						basis->integ_point[i],
+						basis->N[i]);
+
+				BBFE_std_shapefunc_hex1st_get_derivative(
+						basis->integ_point[i],
+						basis->dN_dxi[i],
+						basis->dN_det[i],
+						basis->dN_dze[i]);
+			}
+			break;
 	}
-
 }
 
 
@@ -87,7 +110,15 @@ void output_result_file_vtk(
 	FILE* fp;
 	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
-	BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_TETRA);
+	switch( fe->local_num_nodes ) {
+		case 4:
+			BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_TETRA);
+			break;
+
+		case 8:
+			BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_HEXAHEDRON);
+			break;
+	}
 
 	fprintf(fp, "POINT_DATA %d\n", fe->total_num_nodes);
 	BB_vtk_write_point_vals_scalar(fp, vals->T, fe->total_num_nodes, "temperature");
@@ -173,13 +204,6 @@ int main (
 
 	const char* dir_name = get_directory_name(argc, argv);	
 
-	BBFE_sys_memory_allocation_basis(
-			&(sys.basis),
-			NUM_INTEG_POINTS,
-			POL_ORDER,
-			NUM_NODES_IN_ELEM,
-			3);
-
 	BBFE_sys_read_node(
 			&(sys.fe),
 			INPUT_FILENAME_NODE,
@@ -188,18 +212,37 @@ int main (
 			&(sys.fe),
 			INPUT_FILENAME_ELEM,
 			dir_name,
-			sys.basis.num_integ_points);
+			NUM_INTEG_POINTS);
+
+	BBFE_sys_memory_allocation_basis(
+			&(sys.basis),
+			NUM_INTEG_POINTS,
+			POL_ORDER,
+			sys.fe.local_num_nodes,
+			3);
 
 	memory_allocation_nodal_values(
 			&(sys.vals),
 			sys.fe.total_num_nodes);
 
 	// for manufactured solution
-	BBFE_manusol_overwrite_bc_file(
-			&(sys.fe),
-			BLOCK_SIZE, 
-			INPUT_FILENAME_D_BC,
-			dir_name);
+	switch( sys.fe.local_num_nodes ) {
+		case 4:
+			BBFE_manusol_overwrite_bc_file_tet(
+					&(sys.fe),
+					BLOCK_SIZE, 
+					INPUT_FILENAME_D_BC,
+					dir_name);
+			break;
+
+		case 8:
+			BBFE_manusol_overwrite_bc_file_hex(
+					&(sys.fe),
+					BLOCK_SIZE, 
+					INPUT_FILENAME_D_BC,
+					dir_name);
+			break;
+	}
 
 	BBFE_sys_read_Dirichlet_bc(
 			&(sys.bc),
@@ -208,7 +251,8 @@ int main (
 			sys.fe.total_num_nodes);
 
 	set_basis(
-			&(sys.basis));
+			&(sys.basis),
+			sys.fe.local_num_nodes);
 
 	monolis_initialize(&(sys.monolis));
 	monolis_get_nonzero_pattern(

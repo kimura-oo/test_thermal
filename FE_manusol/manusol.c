@@ -29,7 +29,43 @@ void BBFE_manusol_calc_nodal_error_scalar(
 }
 
 
-void BBFE_manusol_overwrite_bc_file(
+void BBFE_manusol_overwrite_bc_file_hex(
+		FE_DATA*    fe,
+		const int   block_size,
+		const char* filename,
+		const char* directory)
+{
+	bool* node_is_on_surface;
+	node_is_on_surface = BB_std_calloc_1d_bool(node_is_on_surface, fe->total_num_nodes);
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		node_is_on_surface[i] = false;
+	}
+	
+	int num_bcs;
+	num_bcs = BBFE_std_surface_hex1st_get_surface_node(
+			node_is_on_surface, 
+			fe->total_num_nodes, fe->x,
+			fe->total_num_elems, fe->conn);
+
+	FILE* fp;
+	fp = BBFE_sys_write_fopen(fp, filename, directory);
+
+	fprintf(fp, "%d %d\n", block_size*num_bcs, block_size);
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		if(node_is_on_surface[i]) {
+			for(int b=0; b<block_size; b++) {
+				fprintf(fp, "%d %d %e\n", i, b, 0.0);
+			}
+		}
+	}
+
+	fclose(fp);
+
+	BB_std_free_1d_bool(node_is_on_surface, fe->total_num_nodes);
+}
+
+
+void BBFE_manusol_overwrite_bc_file_tet(
 		FE_DATA*    fe,
 		const int   block_size,
 		const char* filename,
