@@ -4,8 +4,8 @@
 
 void BBFE_manusol_calc_nodal_error_scalar(
 		FE_DATA*      fe,
-		double        t,
 		double*       error,
+		double*       theo_sol,
 		const double* val);
 
 void BBFE_manusol_overwrite_bc_file_hex(
@@ -20,26 +20,9 @@ void BBFE_manusol_overwrite_bc_file_tet(
 		const char* filename,
 		const char* directory);
 
-double BBFE_manusol_get_sol_scalar_3d(
-		double x,
-		double y,
-		double z, 
-		double t);
-
-double BBFE_manusol_get_rhs_scalar_3d(
-		double x,
-		double y,
-		double z,
-		double t);
-
 void BBFE_manusol_set_bc_scalar(
 		FE_DATA* fe,
 		BC_DATA* bc,
+		double*  theo_sol,
 		double   t);
 
-
-void BBFE_manusol_add_rhs_scalar(
-		FE_DATA*     fe,
-		FE_3D_BASIS* basis,
-		double       t,
-		double*      rhs);
