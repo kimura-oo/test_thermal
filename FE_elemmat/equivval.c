@@ -144,7 +144,7 @@ double BBFE_elemmat_equivval_relative_L2_error_scalar(
 		L2_abs_error += integ_val_error;
 		L2_abs_theo  += integ_val_theo;
 	}
-	printf("%e, %e\n", L2_abs_error, L2_abs_theo);
+	printf("%e, %e\n", sqrt(L2_abs_error), sqrt(L2_abs_theo));
 
 	BB_std_free_1d_double(val_ip_error, basis->num_integ_points);
 	BB_std_free_1d_double(val_ip_theo,  basis->num_integ_points);

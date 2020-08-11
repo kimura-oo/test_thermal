@@ -13,7 +13,7 @@ double BBFE_elemmat_convdiff_mat_conv(
 		const double  a[3])
 {
 	double val = (  
-			a[0]*  N_i * grad_N_j[0] +
+			a[0] * N_i * grad_N_j[0] +
 			a[1] * N_i * grad_N_j[1] +
 			a[2] * N_i * grad_N_j[2]);
 	

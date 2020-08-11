@@ -12,7 +12,7 @@ double manusol_get_sol(
 		double z,
 		double t)
 {
-	double val = sin( 0.5*x ) * sin( 1.0*y ) * sin( 2.0*z );
+	double val = sin( 0.25*x ) * sin( 0.5*y ) * sin( 1.0*z );
 	
 	return val;
 }
@@ -23,7 +23,7 @@ void manusol_get_conv_vel(
 		double x[3])
 {
 	a[0] = 0.0;
-	a[1] = 100.0;
+	a[1] = 0.0;
 	a[2] = 0.0;
 }
 
@@ -48,13 +48,13 @@ double manusol_get_source(
 	dk_dx[2] = 0.0;
 
 	double val = 
-		a[0]     * ( 0.5*cos( 0.5*x[0] ) * sin( 1.0*x[1] ) *     sin( 2.0*x[2] ) ) + 
-		a[1]     * (     sin( 0.5*x[0] ) * cos( 1.0*x[1] ) *     sin( 2.0*x[2] ) ) + 
-		a[2]     * (     sin( 0.5*x[0] ) * sin( 1.0*x[1] ) * 2.0*cos( 2.0*x[2] ) ) - 
-		dk_dx[0] * ( 0.5*cos( 0.5*x[0] ) * sin( 1.0*x[1] ) *     sin( 2.0*x[2] ) ) - 
-		dk_dx[1] * (     sin( 0.5*x[0] ) * cos( 1.0*x[1] ) *     sin( 2.0*x[2] ) ) - 
-		dk_dx[2] * (     sin( 0.5*x[0] ) * sin( 1.0*x[1] ) * 2.0*cos( 2.0*x[2] ) ) - 
-		k * (-5.25*sin( 0.5*x[0] ) * sin( x[1] ) * sin( 2.0*x[2] ));
+		a[0]     * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) ) + 
+		a[1]     * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) ) + 
+		a[2]     * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) ) - 
+		dk_dx[0] * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) ) - 
+		dk_dx[1] * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) ) - 
+		dk_dx[2] * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) ) - 
+		k * (-(0.25*0.25+0.5*0.5+1.0*1.0)*sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ));
 	
 	return val;
 }
@@ -155,6 +155,10 @@ void output_files(
 			sys->vals.T,
 			manusol_get_sol);
 	printf("L2 error: %e\n", L2_error);
+	FILE* fp;
+	fp = BBFE_sys_write_fopen(fp, "l2_error.txt", sys->cond.directory);
+	fprintf(fp, "%e\n", L2_error);
+	fclose(fp);
 
 	BB_std_free_1d_double(source, sys->fe.total_num_nodes);
 	/***********************************/
@@ -173,7 +177,7 @@ void set_element_mat_vec(
 
 	double** local_x;
 	local_x   = BB_std_calloc_2d_double(local_x  , fe->local_num_nodes, 3);
-
+	
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		BBFE_elemmat_set_Jacobian_array(
 				Jacobian_ip,
@@ -207,13 +211,12 @@ void set_element_mat_vec(
 							local_x,
 							basis->N[p]);
 
-
 					double a_ip[3];  double k_ip;
 					manusol_get_conv_vel(a_ip, x_ip);
 					k_ip = manusol_get_diff_coef(x_ip);
 
 					val_ip[p] += BBFE_elemmat_convdiff_mat_conv(
-							basis->N[i][p],
+							basis->N[p][i],
 							fe->geo[e][p].grad_N[j],
 							a_ip);
 
@@ -228,6 +231,7 @@ void set_element_mat_vec(
 							fe->geo[e][p].grad_N[i],
 							fe->geo[e][p].grad_N[j],
 							a_ip, tau);
+
 				}
 
 				double integ_val = BBFE_std_integ_calc(
@@ -281,7 +285,7 @@ void set_element_mat_vec(
 				k_ip = manusol_get_diff_coef(x_ip);
 				double source_ip = manusol_get_source(x_ip, a_ip, k_ip);
 				val_ip[p] += BBFE_elemmat_convdiff_vec_source(
-						basis->N[i][p],
+						basis->N[p][i],
 						source_ip);
 
 				double tau = BBFE_elemmat_convdiff_stab_coef(
@@ -291,6 +295,7 @@ void set_element_mat_vec(
 						a_ip,
 						tau,
 						source_ip);
+
 			}
 
 			double integ_val = BBFE_std_integ_calc(
@@ -325,6 +330,7 @@ int main (
 			NUM_INTEG_POINTS_EACH_AXIS, true);
 
 	manusol_set_theo_sol(&(sys.fe), sys.vals.theo_sol, 0.0);
+
 	/****************** solver ********************/
 	BBFE_elemmat_set_Jacobi_mat(
 			&(sys.fe),
