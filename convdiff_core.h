@@ -87,3 +87,6 @@ void BBFE_convdiff_set_basis(
 		FE_3D_BASIS*  basis,
 		int           local_num_nodes,
 		int           num_integ_points_each_axis);
+
+void BBFE_convdiff_finalize(
+		FE_SYSTEM* sys);

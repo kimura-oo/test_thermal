@@ -40,12 +40,15 @@ void BBFE_convdiff_pre(
 			sys->cond.directory,
 			n_axis*n_axis*n_axis);
 
-	BBFE_sys_memory_allocation_basis(
+	BBFE_sys_memory_allocation_integ(
 			&(sys->basis),
 			n_axis*n_axis*n_axis,
-			1,
-			sys->fe.local_num_nodes,
 			3);
+	BBFE_sys_memory_allocation_shapefunc(
+			&(sys->basis),
+			sys->fe.local_num_nodes,
+			1,
+			n_axis*n_axis*n_axis);
 
 	BBFE_convdiff_memory_allocation_nodal_values(
 			&(sys->vals),
@@ -127,6 +130,7 @@ void BBFE_convdiff_set_basis(
 						basis->dN_det[i],
 						basis->dN_dze[i]);
 			}
+			printf("%s Element type: 1st-order tetrahedron.\n", CODENAME);
 			break;
 
 		case 8:
@@ -147,6 +151,21 @@ void BBFE_convdiff_set_basis(
 						basis->dN_det[i],
 						basis->dN_dze[i]);
 			}
+			printf("%s Element type: 1st-order hexahedron.\n", CODENAME);
 			break;
 	}
+	printf("%s The number of integration points: %d\n", CODENAME, basis->num_integ_points);
+}
+
+
+void BBFE_convdiff_finalize(
+		FE_SYSTEM* sys)
+{
+	BBFE_sys_memory_free_integ(&(sys->basis), 3);
+	BBFE_sys_memory_free_shapefunc(&(sys->basis));
+
+	BBFE_sys_memory_free_node(&(sys->fe), 3);
+	BBFE_sys_memory_free_elem(&(sys->fe), sys->basis.num_integ_points, 3);
+	
+	BBFE_sys_memory_free_Dirichlet_bc(&(sys->bc), sys->fe.total_num_nodes, BLOCK_SIZE);
 }

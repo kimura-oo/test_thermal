@@ -22,16 +22,17 @@ void manusol_get_conv_vel(
 		double a[3],
 		double x[3])
 {
-	a[0] = 0.0;
-	a[1] = 0.0;
-	a[2] = 0.0;
+	double val = 1.0/sqrt(3) * 0.0;
+	a[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
+	a[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
+	a[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
 }
 
 
 double manusol_get_diff_coef(
 		double x[3])
 {
-	double val = 1.0;
+	double val = (2.0 + sin(1.0*x[0]) * sin(0.5*x[1]) * sin(0.25*x[2]));
 
 	return val;
 }
@@ -43,9 +44,9 @@ double manusol_get_source(
 		double k)
 {
 	double dk_dx[3];
-	dk_dx[0] = 0.0;
-	dk_dx[1] = 0.0;
-	dk_dx[2] = 0.0;
+	dk_dx[0] = 1.0*cos(1.0*x[0]) *     sin(0.5*x[1]) *      sin(0.25*x[2]);
+	dk_dx[1] =     sin(1.0*x[0]) * 0.5*cos(0.5*x[1]) *      sin(0.25*x[2]);
+	dk_dx[2] =     sin(1.0*x[0]) *     sin(0.5*x[1]) * 0.25*cos(0.25*x[2]);
 
 	double val = 
 		a[0]     * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) ) + 
@@ -368,6 +369,7 @@ int main (
 
 	output_files(&sys);
 
+	BBFE_convdiff_finalize(&sys);
 	monolis_finalize(&(sys.monolis));
 	monolis_global_finalize();
 

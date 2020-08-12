@@ -23,6 +23,9 @@ FILE* BBFE_sys_read_fopen(
 				CODENAME, fname);
 		exit(EXIT_FAILURE);
 	}
+	else {
+		printf("%s Reading file \"%s\".\n", CODENAME, fname);
+	}
 
 	return fp;
 }
@@ -35,8 +38,8 @@ FILE* BBFE_sys_read_fopen_without_error(
 {
 	char fname[BUFFER_SIZE];
 	snprintf(fname, BUFFER_SIZE, "%s/%s", directory, filename);
-
 	fp = fopen(fname, "r");
+	printf("%s Reading file \"%s\".\n", CODENAME, fname);
 
 	return fp;
 }

@@ -22,6 +22,9 @@ FILE* BBFE_sys_write_fopen(
 				CODENAME, fname);
 		exit(EXIT_FAILURE);
 	}
+	else {
+		printf("%s Writing file \"%s\".\n", CODENAME, fname);
+	}
 
 	return fp;
 }
@@ -36,6 +39,7 @@ FILE* BBFE_sys_write_fopen_without_error(
 	snprintf(fname, BUFFER_SIZE, "%s/%s", directory, filename);
 
 	fp = fopen(fname, "w");
+	printf("%s Writing file \"%s\".\n", CODENAME, fname);
 
 	return fp;
 }
