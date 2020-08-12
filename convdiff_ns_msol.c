@@ -3,7 +3,7 @@
 
 const int NUM_INTEG_POINTS_EACH_AXIS = 3;
 const double MAT_EPSILON             = 1.0e-10;
-const double MAT_MAX_ITER            = 100000;
+const double MAT_MAX_ITER            = 10000;
 const int BUFFER_SIZE                = 10000;
 
 static const char* OUTPUT_FILENAME_VTK        = "result_%06d.vtk";
@@ -20,7 +20,7 @@ double manusol_get_sol(
 		double z,
 		double t)
 {
-	double val = sin( 0.25*x ) * sin( 0.5*y ) * sin( 1.0*z ) * (2.0 + sin( 1.0*t ));
+	double val = sin( 0.25*x ) * sin( 0.5*y ) * sin( 1.0*z ) * (0.5*t + sin( 1.0*t ));
 
 	return val;
 }
@@ -31,9 +31,9 @@ void manusol_get_conv_vel(
 		double x[3])
 {
 	double val = 1.0/sqrt(3) * 0.0;
-	a[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
-	a[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
-	a[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
+	a[0] = 1.0 + x[0]*x[0];
+	a[1] = 1.0 + x[1]*x[1];
+	a[2] = 1.0 + x[2]*x[2];
 	//a[0] = val;
 	//a[1] = val;
 	//a[2] = val;
@@ -65,14 +65,14 @@ double manusol_get_source(
 	//dk_dx[2] = 0.0;
 
 	double val =
-		sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * cos( 1.0*t ) + 
-		a[0]     * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) + 
-		a[1]     * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) + 
-		a[2]     * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) - 
-		dk_dx[0] * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) - 
-		dk_dx[1] * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) - 
-		dk_dx[2] * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) - 
-		k * (-(0.25*0.25+0.5*0.5+1.0*1.0)*sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) );
+		sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * (0.5 + cos( 1.0*t )) + 
+		a[0]     * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 0.5*t + sin( 1.0*t ) ) ) + 
+		a[1]     * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 0.5*t + sin( 1.0*t ) ) ) + 
+		a[2]     * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) * ( 0.5*t + sin( 1.0*t ) ) ) - 
+		dk_dx[0] * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 0.5*t + sin( 1.0*t ) ) ) - 
+		dk_dx[1] * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 0.5*t + sin( 1.0*t ) ) ) - 
+		dk_dx[2] * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) * ( 0.5*t + sin( 1.0*t ) ) ) - 
+		k * (-(0.25*0.25+0.5*0.5+1.0*1.0)*sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 0.5*t + sin( 1.0*t ) ) );
 
 	return val;
 }
@@ -256,8 +256,8 @@ void set_element_mat(
 							fe->geo[e][p].grad_N[j],
 							k_ip);
 
-					double tau = BBFE_elemmat_convdiff_stab_coef(
-							k_ip, a_ip, h_e);
+					double tau = BBFE_elemmat_convdiff_stab_coef_ns(
+							k_ip, a_ip, 1.0, h_e, DT);
 					val_ip[p] += BBFE_elemmat_convdiff_mat_stab_conv(
 							fe->geo[e][p].grad_N[i],
 							fe->geo[e][p].grad_N[j],
@@ -268,6 +268,13 @@ void set_element_mat(
 								basis->N[p][i],
 								basis->N[p][j],
 								1.0);
+					val_ip[p] += 1.0/DT * 
+						BBFE_elemmat_convdiff_mat_stab_mass(
+								fe->geo[e][p].grad_N[i],
+								basis->N[p][j],
+								1.0,
+								a_ip, tau);
+
 				}
 
 				double integ_val = BBFE_std_integ_calc(
@@ -354,8 +361,8 @@ void set_element_vec(
 						basis->N[p][i],
 						source_ip);
 
-				double tau = BBFE_elemmat_convdiff_stab_coef(
-						k_ip, a_ip, h_e);
+				double tau = BBFE_elemmat_convdiff_stab_coef_ns(
+						k_ip, a_ip, 1.0, h_e, DT);
 				val_ip[p] += BBFE_elemmat_convdiff_vec_stab_source(
 						fe->geo[e][p].grad_N[i],
 						a_ip,
@@ -372,7 +379,12 @@ void set_element_vec(
 						basis->N[p][i],
 						T_ip, 
 						1.0);
-
+				val_ip[p] += 1.0/DT * BBFE_elemmat_convdiff_vec_stab_mass(
+						fe->geo[e][p].grad_N[i],
+						1.0,
+						a_ip,
+						T_ip, 
+						tau);
 			}
 
 			double integ_val = BBFE_std_integ_calc(
@@ -425,6 +437,8 @@ int main (
 	while (t < FIN_T) {
 		monolis_clear(&(sys.monolis));
 
+		t += DT;
+		
 		set_element_mat(
 				&(sys.monolis),
 				&(sys.fe),
@@ -462,7 +476,6 @@ int main (
 
 		output_files(&sys, step, t);
 
-		t += DT;
 		step += 1;
 	}
 

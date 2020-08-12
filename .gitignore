@@ -19,3 +19,4 @@ submodule
 !*plan.txt
 !*rule.txt
 !*.f90
+!docs/verifications/pics/*.pdf
