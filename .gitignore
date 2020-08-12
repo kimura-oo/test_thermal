@@ -8,6 +8,7 @@ submodule
 !*.cpp
 !*.h
 !*.tex
+!out.sh
 !*.py
 !*makefile
 !*makefile.monolis
