@@ -45,6 +45,28 @@ FILE* BBFE_sys_write_fopen_without_error(
 }
 
 
+FILE* BBFE_sys_write_add_fopen(
+		FILE*     fp,
+		const char*  filename,
+		const char*  directory)
+{
+	char fname[BUFFER_SIZE];
+	snprintf(fname, BUFFER_SIZE, "%s/%s", directory, filename);
+
+	fp = fopen(fname, "a");
+	if( fp == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n",
+				CODENAME, fname);
+		exit(EXIT_FAILURE);
+	}
+	else {
+		printf("%s Writing (adding) file \"%s\".\n", CODENAME, fname);
+	}
+
+	return fp;
+}
+
+
 void BBFE_sys_write_vtk_shape(
 		FILE*     fp,
 		FE_DATA*  fe,

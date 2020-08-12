@@ -4,10 +4,14 @@
 const int NUM_INTEG_POINTS_EACH_AXIS = 3;
 const double MAT_EPSILON             = 1.0e-10;
 const double MAT_MAX_ITER            = 100000;
+const int BUFFER_SIZE                = 10000;
 
-static const char* OUTPUT_FILENAME_VTK          = "result.vtk";
-static const char* OUTPUT_FILENAME_ASCII_TEMP   = "temparature.dat";
-static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source.dat";
+static const char* OUTPUT_FILENAME_VTK        = "result_%06d.vtk";
+static const char* OUTPUT_FILENAME_ASCII_TEMP = "temparature_%06d.dat";
+static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source_%06d.dat";
+
+const double DT = 0.1;
+const double FIN_T = 10.0;
 
 
 double manusol_get_sol(
@@ -16,8 +20,8 @@ double manusol_get_sol(
 		double z,
 		double t)
 {
-	double val = sin( 0.25*x ) * sin( 0.5*y ) * sin( 1.0*z );
-	
+	double val = sin( 0.25*x ) * sin( 0.5*y ) * sin( 1.0*z ) * (2.0 + sin( 1.0*t ));
+
 	return val;
 }
 
@@ -30,6 +34,9 @@ void manusol_get_conv_vel(
 	a[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
 	a[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
 	a[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
+	//a[0] = val;
+	//a[1] = val;
+	//a[2] = val;
 }
 
 
@@ -37,6 +44,7 @@ double manusol_get_diff_coef(
 		double x[3])
 {
 	double val = (2.0 + sin(1.0*x[0]) * sin(0.5*x[1]) * sin(0.25*x[2]));
+	//double val = 1.0;
 
 	return val;
 }
@@ -44,6 +52,7 @@ double manusol_get_diff_coef(
 
 double manusol_get_source(
 		double x[3],
+		double t,
 		double a[3],
 		double k)
 {
@@ -51,16 +60,20 @@ double manusol_get_source(
 	dk_dx[0] = 1.0*cos(1.0*x[0]) *     sin(0.5*x[1]) *      sin(0.25*x[2]);
 	dk_dx[1] =     sin(1.0*x[0]) * 0.5*cos(0.5*x[1]) *      sin(0.25*x[2]);
 	dk_dx[2] =     sin(1.0*x[0]) *     sin(0.5*x[1]) * 0.25*cos(0.25*x[2]);
+	//dk_dx[0] = 0.0;
+	//dk_dx[1] = 0.0;
+	//dk_dx[2] = 0.0;
 
-	double val = 
-		a[0]     * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) ) + 
-		a[1]     * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) ) + 
-		a[2]     * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) ) - 
-		dk_dx[0] * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) ) - 
-		dk_dx[1] * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) ) - 
-		dk_dx[2] * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) ) - 
-		k * (-(0.25*0.25+0.5*0.5+1.0*1.0)*sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ));
-	
+	double val =
+		sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * cos( 1.0*t ) + 
+		a[0]     * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) + 
+		a[1]     * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) + 
+		a[2]     * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) - 
+		dk_dx[0] * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) - 
+		dk_dx[1] * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) - 
+		dk_dx[2] * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) ) - 
+		k * (-(0.25*0.25+0.5*0.5+1.0*1.0)*sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ) * ( 2.0 + sin( 1.0*t ) ) );
+
 	return val;
 }
 
@@ -78,13 +91,14 @@ void manusol_set_theo_sol(
 
 void manusol_set_source(
 		FE_DATA* fe,
-		double*  source)
+		double*  source,
+		double   t)
 {
 	for(int i=0; i<(fe->total_num_nodes); i++) {
 		double a[3];  double k;
 		manusol_get_conv_vel(a, fe->x[i]);
 		k = manusol_get_diff_coef(fe->x[i]);
-		source[i] = manusol_get_source(fe->x[i], a, k);
+		source[i] = manusol_get_source(fe->x[i], t, a, k);
 	}
 }
 
@@ -93,7 +107,8 @@ void output_result_file_vtk(
 		FE_DATA*       fe,
 		NODAL_VALUES*  vals,
 		const char*    filename,
-		const char*    directory)
+		const char*    directory,
+		double         t)
 {
 	FILE* fp;
 	fp = BBFE_sys_write_fopen(fp, filename, directory);
@@ -116,10 +131,10 @@ void output_result_file_vtk(
 			fe, vals->error, vals->theo_sol, vals->T);
 	BB_vtk_write_point_vals_scalar(fp, vals->error   , fe->total_num_nodes, "abs_error");
 	BB_vtk_write_point_vals_scalar(fp, vals->theo_sol, fe->total_num_nodes, "theoretical");
-	
+
 	double* source;
 	source = BB_std_calloc_1d_double(source, fe->total_num_nodes);
-	manusol_set_source(fe, source);
+	manusol_set_source(fe, source, t);
 	BB_vtk_write_point_vals_scalar(fp, source, fe->total_num_nodes, "source");
 	BB_std_free_1d_double(source, fe->total_num_nodes);
 
@@ -129,41 +144,50 @@ void output_result_file_vtk(
 
 
 void output_files(
-		FE_SYSTEM* sys)
+		FE_SYSTEM* sys,
+		int file_num,
+		double t)
 {
+	char fname_vtk[BUFFER_SIZE];
+	char fname_tem[BUFFER_SIZE];
+	char fname_sou[BUFFER_SIZE];
+	snprintf(fname_vtk, BUFFER_SIZE, OUTPUT_FILENAME_VTK, file_num);
+	snprintf(fname_tem, BUFFER_SIZE, OUTPUT_FILENAME_ASCII_TEMP, file_num);
+	snprintf(fname_sou, BUFFER_SIZE, OUTPUT_FILENAME_ASCII_SOURCE, file_num);
+
 	output_result_file_vtk(
 			&(sys->fe),
 			&(sys->vals),
-			OUTPUT_FILENAME_VTK,
-			sys->cond.directory);
+			fname_vtk,
+			sys->cond.directory,
+			t);
 
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			sys->vals.T,
-			OUTPUT_FILENAME_ASCII_TEMP,
+			fname_tem,
 			sys->cond.directory);
 
 	/**** for manufactured solution ****/
 	double* source;
 	source = BB_std_calloc_1d_double(source, sys->fe.total_num_nodes);
-	manusol_set_source(&(sys->fe), source);
+	manusol_set_source(&(sys->fe), source, t);
 
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			source,
-			OUTPUT_FILENAME_ASCII_SOURCE,
+			fname_sou,
 			sys->cond.directory);
-
 	double L2_error = BBFE_elemmat_equivval_relative_L2_error_scalar(
 			&(sys->fe),
 			&(sys->basis),
-			0.0,
+			t,
 			sys->vals.T,
 			manusol_get_sol);
 	printf("L2 error: %e\n", L2_error);
 	FILE* fp;
-	fp = BBFE_sys_write_fopen(fp, "l2_error.txt", sys->cond.directory);
-	fprintf(fp, "%e\n", L2_error);
+	fp = BBFE_sys_write_add_fopen(fp, "l2_error.txt", sys->cond.directory);
+	fprintf(fp, "%e %e\n", t, L2_error);
 	fclose(fp);
 
 	BB_std_free_1d_double(source, sys->fe.total_num_nodes);
@@ -171,10 +195,11 @@ void output_files(
 }
 
 
-void set_element_mat_vec(
+void set_element_mat(
 		MONOLIS*     monolis,
 		FE_DATA*     fe,
-		FE_3D_BASIS* basis)
+		FE_3D_BASIS* basis,
+		NODAL_VALUES* vals)
 {
 	double* val_ip;
 	double* Jacobian_ip;
@@ -183,7 +208,7 @@ void set_element_mat_vec(
 
 	double** local_x;
 	local_x   = BB_std_calloc_2d_double(local_x  , fe->local_num_nodes, 3);
-	
+
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		BBFE_elemmat_set_Jacobian_array(
 				Jacobian_ip,
@@ -197,7 +222,7 @@ void set_element_mat_vec(
 				Jacobian_ip);
 
 		double h_e = cbrt(vol);
-		
+
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
 			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
@@ -209,7 +234,7 @@ void set_element_mat_vec(
 
 				for(int p=0; p<(basis->num_integ_points); p++) {
 					val_ip[p] = 0.0;
-					
+
 					double x_ip[3];
 					BBFE_std_mapping_vector_value_integ_point_3d(
 							x_ip,
@@ -238,6 +263,11 @@ void set_element_mat_vec(
 							fe->geo[e][p].grad_N[j],
 							a_ip, tau);
 
+					val_ip[p] += 1.0/DT * 
+						BBFE_elemmat_convdiff_mat_mass(
+								basis->N[p][i],
+								basis->N[p][j],
+								1.0);
 				}
 
 				double integ_val = BBFE_std_integ_calc(
@@ -254,7 +284,35 @@ void set_element_mat_vec(
 		}
 	}
 
-	// for manufactured solution
+	BB_std_free_1d_double(val_ip,     basis->num_integ_points);
+	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
+
+	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
+}
+
+
+void set_element_vec(
+		MONOLIS*     monolis,
+		FE_DATA*     fe,
+		FE_3D_BASIS* basis,
+		NODAL_VALUES* vals,
+		double       t)
+{
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		monolis->mat.B[i] = 0.0;
+	}
+
+	double* val_ip;
+	double* Jacobian_ip;
+	val_ip      = BB_std_calloc_1d_double(val_ip      , basis->num_integ_points);
+	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip , basis->num_integ_points);
+
+	double** local_x;
+	local_x   = BB_std_calloc_2d_double(local_x  , fe->local_num_nodes, 3);
+
+	double* local_T;
+	local_T = BB_std_calloc_1d_double(local_T, fe->local_num_nodes);
+
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		BBFE_elemmat_set_Jacobian_array(
 				Jacobian_ip,
@@ -273,6 +331,8 @@ void set_element_mat_vec(
 			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
 			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
 			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
+
+			local_T[i] = vals->T[ fe->conn[e][i] ];
 		}
 
 		for(int i=0; i<(fe->local_num_nodes); i++) {
@@ -289,7 +349,7 @@ void set_element_mat_vec(
 				double a_ip[3];  double k_ip;
 				manusol_get_conv_vel(a_ip, x_ip);
 				k_ip = manusol_get_diff_coef(x_ip);
-				double source_ip = manusol_get_source(x_ip, a_ip, k_ip);
+				double source_ip = manusol_get_source(x_ip, t, a_ip, k_ip);
 				val_ip[p] += BBFE_elemmat_convdiff_vec_source(
 						basis->N[p][i],
 						source_ip);
@@ -301,6 +361,17 @@ void set_element_mat_vec(
 						a_ip,
 						tau,
 						source_ip);
+
+				double T_ip;
+				T_ip = BBFE_std_mapping_scalar_value_integ_point_3d(
+						fe->local_num_nodes,
+						local_T,
+						basis->N[p]);
+
+				val_ip[p] += 1.0/DT * BBFE_elemmat_convdiff_vec_mass(
+						basis->N[p][i],
+						T_ip, 
+						1.0);
 
 			}
 
@@ -318,7 +389,9 @@ void set_element_mat_vec(
 	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 
 	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
+	BB_std_free_1d_double(local_T, fe->local_num_nodes);
 }
+
 
 
 int main (
@@ -334,45 +407,64 @@ int main (
 
 	BBFE_convdiff_pre(&sys, argc, argv, 
 			NUM_INTEG_POINTS_EACH_AXIS, true);
+	
+	FILE* fp;
+	fp = BBFE_sys_write_fopen(fp, "l2_error.txt", sys.cond.directory);
+	fclose(fp);
 
-	manusol_set_theo_sol(&(sys.fe), sys.vals.theo_sol, 0.0);
-
-	/****************** solver ********************/
 	BBFE_elemmat_set_Jacobi_mat(
 			&(sys.fe),
 			&(sys.basis));
 	BBFE_elemmat_set_shapefunc_derivative(
 			&(sys.fe),
 			&(sys.basis));
-	set_element_mat_vec(
-			&(sys.monolis),
-			&(sys.fe),
-			&(sys.basis));
 
-	// for manufactured solution
-	BBFE_manusol_set_bc_scalar(
-			&(sys.fe),
-			&(sys.bc),
-			sys.vals.theo_sol,
-			0.0);
+	/****************** solver ********************/
+	double t = 0.0;
+	int step = 0;
+	while (t < FIN_T) {
+		monolis_clear(&(sys.monolis));
 
-	BBFE_sys_monowrap_set_Dirichlet_bc(
-			&(sys.monolis),
-			sys.fe.total_num_nodes,
-			BLOCK_SIZE,
-			&(sys.bc),
-			sys.monolis.mat.B);
+		set_element_mat(
+				&(sys.monolis),
+				&(sys.fe),
+				&(sys.basis),
+				&(sys.vals));
+		set_element_vec(
+				&(sys.monolis),
+				&(sys.fe),
+				&(sys.basis),
+				&(sys.vals),
+				t);
+		// for manufactured solution
+		manusol_set_theo_sol(&(sys.fe), sys.vals.theo_sol, t);
+		BBFE_manusol_set_bc_scalar(
+				&(sys.fe),
+				&(sys.bc),
+				sys.vals.theo_sol,
+				t);
 
-	BBFE_sys_monowrap_solve(
-			&(sys.monolis),
-			sys.vals.T,
-			monolis_iter_BiCGSTAB_noprec,
-			monolis_prec_DIAG,
-			MAT_MAX_ITER,
-			MAT_EPSILON);
-	/**********************************************/
+		BBFE_sys_monowrap_set_Dirichlet_bc(
+				&(sys.monolis),
+				sys.fe.total_num_nodes,
+				BLOCK_SIZE,
+				&(sys.bc),
+				sys.monolis.mat.B);
 
-	output_files(&sys);
+		BBFE_sys_monowrap_solve(
+				&(sys.monolis),
+				sys.vals.T,
+				monolis_iter_BiCGSTAB_noprec,
+				monolis_prec_DIAG,
+				MAT_MAX_ITER,
+				MAT_EPSILON);
+		/**********************************************/
+
+		output_files(&sys, step, t);
+
+		t += DT;
+		step += 1;
+	}
 
 	BBFE_convdiff_finalize(&sys);
 	monolis_finalize(&(sys.monolis));

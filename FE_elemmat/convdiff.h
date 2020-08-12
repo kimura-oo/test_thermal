@@ -2,7 +2,9 @@
 
 #include "../FE_sys/FE_dataset.h"
 
-
+/**********************************************************
+ * steady
+ **********************************************************/
 double BBFE_elemmat_convdiff_mat_conv(
 		const double  N_i,
 		const double  grad_N_j[3],
@@ -33,3 +35,16 @@ double BBFE_elemmat_convdiff_vec_stab_source(
 		const double  a[3],
 		const double  tau,
 		const double  f);
+
+/**********************************************************
+ * non-steady
+ **********************************************************/
+double BBFE_elemmat_convdiff_mat_mass(
+		const double  N_i,
+		const double  N_j,
+		const double  a);
+
+double BBFE_elemmat_convdiff_vec_mass(
+		const double  N_i,
+		const double  T,
+		const double  a);

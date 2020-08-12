@@ -14,6 +14,11 @@ FILE* BBFE_sys_write_fopen_without_error(
 		const char*  filename,
 		const char*  directory);
 
+FILE* BBFE_sys_write_add_fopen(
+		FILE*     fp,
+		const char*  filename,
+		const char*  directory);
+
 void BBFE_sys_write_vtk_shape(
 		FILE*     fp,
 		FE_DATA*  fe,
