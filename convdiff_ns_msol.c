@@ -447,7 +447,7 @@ int main (
 		BBFE_sys_monowrap_solve(
 				&(sys.monolis),
 				sys.vals.T,
-				monolis_iter_BiCGSTAB_noprec,
+				monolis_iter_BiCGSTAB,
 				monolis_prec_DIAG,
 				MAT_MAX_ITER,
 				MAT_EPSILON);
