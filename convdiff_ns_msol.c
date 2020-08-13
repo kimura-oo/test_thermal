@@ -10,8 +10,9 @@ static const char* OUTPUT_FILENAME_VTK        = "result_%06d.vtk";
 static const char* OUTPUT_FILENAME_ASCII_TEMP = "temparature_%06d.dat";
 static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source_%06d.dat";
 
-const double DT = 0.1;
+const double DT = 0.01;
 const double FIN_T = 10.0;
+const int OUTPUT_INTERVAL = 10;
 
 
 double manusol_get_sol(
@@ -184,7 +185,7 @@ void output_files(
 			t,
 			sys->vals.T,
 			manusol_get_sol);
-	printf("L2 error: %e\n", L2_error);
+	printf("%s L2 error: %e\n", CODENAME, L2_error);
 	FILE* fp;
 	fp = BBFE_sys_write_add_fopen(fp, "l2_error.txt", sys->cond.directory);
 	fprintf(fp, "%e %e\n", t, L2_error);
@@ -201,100 +202,80 @@ void set_element_mat(
 		FE_3D_BASIS* basis,
 		NODAL_VALUES* vals)
 {
-	double* val_ip;
-	double* Jacobian_ip;
-	val_ip      = BB_std_calloc_1d_double(val_ip      , basis->num_integ_points);
-	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip , basis->num_integ_points);
+	int nl = fe->local_num_nodes;
+	int np = basis->num_integ_points;
+
+	double* val_ip;  double* Jacobian_ip;
+	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
+	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
 
 	double** local_x;
-	local_x   = BB_std_calloc_2d_double(local_x  , fe->local_num_nodes, 3);
+	local_x   = BB_std_calloc_2d_double(local_x, nl, 3);
+
+	double** x_ip;  double** v_ip;  double* k_ip;
+	x_ip = BB_std_calloc_2d_double(x_ip, np, 3);
+	v_ip = BB_std_calloc_2d_double(v_ip, np, 3);
+	k_ip = BB_std_calloc_1d_double(k_ip, np);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
-		BBFE_elemmat_set_Jacobian_array(
-				Jacobian_ip,
-				basis->num_integ_points,
-				e,
-				fe);
+		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
 
-		double vol = BBFE_std_integ_calc_volume(
-				basis->num_integ_points,
-				basis->integ_weight,
-				Jacobian_ip);
-
+		double vol = BBFE_std_integ_calc_volume(np, basis->integ_weight, Jacobian_ip);
 		double h_e = cbrt(vol);
 
-		for(int i=0; i<(fe->local_num_nodes); i++) {
-			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
-			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
-			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
+		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x, e, 3);
+		
+		for(int p=0; p<np; p++) {
+			BBFE_std_mapping_vector_value_integ_point_3d(x_ip[p], nl, local_x, basis->N[p]);
+			manusol_get_conv_vel(v_ip[p], x_ip[p]);
+			k_ip[p] = manusol_get_diff_coef(x_ip[p]);
+
 		}
 
-		for(int i=0; i<(fe->local_num_nodes); i++) {
-			for(int j=0; j<(fe->local_num_nodes); j++) {
+		for(int i=0; i<nl; i++) {
+			for(int j=0; j<nl; j++) {
 
-				for(int p=0; p<(basis->num_integ_points); p++) {
+				for(int p=0; p<np; p++) {
 					val_ip[p] = 0.0;
 
-					double x_ip[3];
-					BBFE_std_mapping_vector_value_integ_point_3d(
-							x_ip,
-							fe->local_num_nodes,
-							local_x,
-							basis->N[p]);
-
-					double a_ip[3];  double k_ip;
-					manusol_get_conv_vel(a_ip, x_ip);
-					k_ip = manusol_get_diff_coef(x_ip);
+					double tau = BBFE_elemmat_convdiff_stab_coef_ns(
+							k_ip[p], v_ip[p], 1.0, h_e, DT);
 
 					val_ip[p] += BBFE_elemmat_convdiff_mat_conv(
-							basis->N[p][i],
-							fe->geo[e][p].grad_N[j],
-							a_ip);
+							basis->N[p][i], fe->geo[e][p].grad_N[j], v_ip[p]);
 
 					val_ip[p] -= BBFE_elemmat_convdiff_mat_diff(
-							fe->geo[e][p].grad_N[i],
-							fe->geo[e][p].grad_N[j],
-							k_ip);
+							fe->geo[e][p].grad_N[i], fe->geo[e][p].grad_N[j], k_ip[p]);
 
-					double tau = BBFE_elemmat_convdiff_stab_coef_ns(
-							k_ip, a_ip, 1.0, h_e, DT);
 					val_ip[p] += BBFE_elemmat_convdiff_mat_stab_conv(
-							fe->geo[e][p].grad_N[i],
-							fe->geo[e][p].grad_N[j],
-							a_ip, tau);
+							fe->geo[e][p].grad_N[i], fe->geo[e][p].grad_N[j], v_ip[p], tau);
 
-					val_ip[p] += 1.0/DT * 
-						BBFE_elemmat_convdiff_mat_mass(
-								basis->N[p][i],
-								basis->N[p][j],
-								1.0);
-					val_ip[p] += 1.0/DT * 
-						BBFE_elemmat_convdiff_mat_stab_mass(
-								fe->geo[e][p].grad_N[i],
-								basis->N[p][j],
-								1.0,
-								a_ip, tau);
+					val_ip[p] += 1.0/DT * BBFE_elemmat_convdiff_mat_mass(
+								basis->N[p][i], basis->N[p][j], 1.0);
+
+					val_ip[p] += 1.0/DT *  BBFE_elemmat_convdiff_mat_stab_mass(
+								fe->geo[e][p].grad_N[i], basis->N[p][j], 1.0, v_ip[p], tau);
 
 				}
 
 				double integ_val = BBFE_std_integ_calc(
-						basis->num_integ_points,
-						val_ip,
-						basis->integ_weight,
-						Jacobian_ip);
+						np, val_ip, basis->integ_weight, Jacobian_ip);
 
 				monolis_add_scalar_to_sparse_matrix(
-						monolis,
-						integ_val,
+						monolis, integ_val,
 						fe->conn[e][i], fe->conn[e][j], 0, 0);
 			}
 		}
 	}
 
-	BB_std_free_1d_double(val_ip,     basis->num_integ_points);
+	BB_std_free_1d_double(val_ip,      basis->num_integ_points);
 	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 
 	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
+	
+	BB_std_free_2d_double(x_ip, np, 3);
+	BB_std_free_2d_double(v_ip, np, 3);
+	BB_std_free_1d_double(k_ip, np);
 }
 
 
@@ -305,20 +286,24 @@ void set_element_vec(
 		NODAL_VALUES* vals,
 		double       t)
 {
-	for(int i=0; i<(fe->total_num_nodes); i++) {
-		monolis->mat.B[i] = 0.0;
-	}
+	int nl = fe->local_num_nodes;
+	int np = basis->num_integ_points;
 
 	double* val_ip;
 	double* Jacobian_ip;
-	val_ip      = BB_std_calloc_1d_double(val_ip      , basis->num_integ_points);
-	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip , basis->num_integ_points);
+	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
+	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
 
-	double** local_x;
-	local_x   = BB_std_calloc_2d_double(local_x  , fe->local_num_nodes, 3);
+	double** local_x;  double* local_T;
+	local_x = BB_std_calloc_2d_double(local_x, nl, 3);
+	local_T = BB_std_calloc_1d_double(local_T, nl);
 
-	double* local_T;
-	local_T = BB_std_calloc_1d_double(local_T, fe->local_num_nodes);
+	double** x_ip;  double** v_ip;  double* k_ip;  double* T_ip;  double* f_ip;
+	x_ip = BB_std_calloc_2d_double(x_ip, np, 3);
+	v_ip = BB_std_calloc_2d_double(v_ip, np, 3);
+	k_ip = BB_std_calloc_1d_double(k_ip, np);
+	T_ip = BB_std_calloc_1d_double(T_ip, np);
+	f_ip = BB_std_calloc_1d_double(f_ip, np);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		BBFE_elemmat_set_Jacobian_array(
@@ -334,74 +319,55 @@ void set_element_vec(
 
 		double h_e = cbrt(vol);
 
-		for(int i=0; i<(fe->local_num_nodes); i++) {
-			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
-			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
-			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
-
-			local_T[i] = vals->T[ fe->conn[e][i] ];
+		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x,   e, 3);
+		BBFE_elemmat_set_local_array_scalar(local_T, fe, vals->T, e);
+		
+		for(int p=0; p<np; p++) {
+			BBFE_std_mapping_vector_value_integ_point_3d(x_ip[p], nl, local_x, basis->N[p]);
+			manusol_get_conv_vel(v_ip[p], x_ip[p]);
+			k_ip[p] = manusol_get_diff_coef(x_ip[p]);
+			T_ip[p] = BBFE_std_mapping_scalar_value_integ_point_3d(nl, local_T, basis->N[p]);
+			f_ip[p] = manusol_get_source(x_ip[p], t, v_ip[p], k_ip[p]);
 		}
 
-		for(int i=0; i<(fe->local_num_nodes); i++) {
-			for(int p=0; p<(basis->num_integ_points); p++) {
+		for(int i=0; i<nl; i++) {
+			for(int p=0; p<np; p++) {
 				val_ip[p] = 0.0;
 
-				double x_ip[3];
-				BBFE_std_mapping_vector_value_integ_point_3d(
-						x_ip,
-						fe->local_num_nodes,
-						local_x,
-						basis->N[p]);
-
-				double a_ip[3];  double k_ip;
-				manusol_get_conv_vel(a_ip, x_ip);
-				k_ip = manusol_get_diff_coef(x_ip);
-				double source_ip = manusol_get_source(x_ip, t, a_ip, k_ip);
-				val_ip[p] += BBFE_elemmat_convdiff_vec_source(
-						basis->N[p][i],
-						source_ip);
-
 				double tau = BBFE_elemmat_convdiff_stab_coef_ns(
-						k_ip, a_ip, 1.0, h_e, DT);
+						k_ip[p], v_ip[p], 1.0, h_e, DT);
+
+				val_ip[p] += BBFE_elemmat_convdiff_vec_source(
+						basis->N[p][i], f_ip[p]);
+
 				val_ip[p] += BBFE_elemmat_convdiff_vec_stab_source(
-						fe->geo[e][p].grad_N[i],
-						a_ip,
-						tau,
-						source_ip);
-
-				double T_ip;
-				T_ip = BBFE_std_mapping_scalar_value_integ_point_3d(
-						fe->local_num_nodes,
-						local_T,
-						basis->N[p]);
-
+						fe->geo[e][p].grad_N[i], v_ip[p], tau, f_ip[p]);
+			
 				val_ip[p] += 1.0/DT * BBFE_elemmat_convdiff_vec_mass(
-						basis->N[p][i],
-						T_ip, 
-						1.0);
+						basis->N[p][i], T_ip[p], 1.0);
+
 				val_ip[p] += 1.0/DT * BBFE_elemmat_convdiff_vec_stab_mass(
-						fe->geo[e][p].grad_N[i],
-						1.0,
-						a_ip,
-						T_ip, 
-						tau);
+						fe->geo[e][p].grad_N[i], 1.0, v_ip[p], T_ip[p], tau);
 			}
 
 			double integ_val = BBFE_std_integ_calc(
-					basis->num_integ_points,
-					val_ip,
-					basis->integ_weight,
-					Jacobian_ip);
+					np, val_ip, basis->integ_weight, Jacobian_ip);
 
 			monolis->mat.B[ fe->conn[e][i] ] += integ_val;
 		}
 	}
 
-	BB_std_free_1d_double(val_ip,     basis->num_integ_points);
+	BB_std_free_1d_double(val_ip,      basis->num_integ_points);
 	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 
-	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
+	BB_std_free_2d_double(local_x, fe->local_num_nodes, 3);
 	BB_std_free_1d_double(local_T, fe->local_num_nodes);
+	
+	BB_std_free_2d_double(x_ip, np, 3);
+	BB_std_free_2d_double(v_ip, np, 3);
+	BB_std_free_1d_double(k_ip, np);
+	BB_std_free_1d_double(T_ip, np);
+	BB_std_free_1d_double(f_ip, np);
 }
 
 
@@ -431,26 +397,39 @@ int main (
 			&(sys.fe),
 			&(sys.basis));
 
+	monolis_initialize(&(sys.monolis0));
+	monolis_get_nonzero_pattern(
+			&(sys.monolis0),
+			sys.fe.total_num_nodes,
+			sys.fe.local_num_nodes,
+			1,
+			sys.fe.total_num_elems,
+			sys.fe.conn);
+	
+	set_element_mat(
+			&(sys.monolis0),
+			&(sys.fe),
+			&(sys.basis),
+			&(sys.vals));
+
 	/****************** solver ********************/
 	double t = 0.0;
 	int step = 0;
+	int file_num = 0;
 	while (t < FIN_T) {
-		monolis_clear(&(sys.monolis));
-
 		t += DT;
-		
-		set_element_mat(
-				&(sys.monolis),
-				&(sys.fe),
-				&(sys.basis),
-				&(sys.vals));
+		step += 1;
+
+		printf("%s ----------------- step %d ----------------\n", CODENAME, step);
+		monolis_copy_all(&(sys.monolis0), &(sys.monolis));
+		monolis_clear_rhs(&(sys.monolis));
 		set_element_vec(
 				&(sys.monolis),
 				&(sys.fe),
 				&(sys.basis),
 				&(sys.vals),
 				t);
-		// for manufactured solution
+
 		manusol_set_theo_sol(&(sys.fe), sys.vals.theo_sol, t);
 		BBFE_manusol_set_bc_scalar(
 				&(sys.fe),
@@ -474,13 +453,18 @@ int main (
 				MAT_EPSILON);
 		/**********************************************/
 
-		output_files(&sys, step, t);
+		if(step%OUTPUT_INTERVAL == 0) {
+			output_files(&sys, file_num, t);
+			file_num += 1;
+		}
 
-		step += 1;
 	}
 
 	BBFE_convdiff_finalize(&sys);
+	
 	monolis_finalize(&(sys.monolis));
+	monolis_finalize(&(sys.monolis0));
+	
 	monolis_global_finalize();
 
 	double t2 = monolis_get_time();

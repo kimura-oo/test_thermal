@@ -61,6 +61,8 @@ typedef struct
 	MONOLIS      monolis;
 	CONDITIONS   cond;
 
+	MONOLIS      monolis0; // for nonsteady analysis
+
 } FE_SYSTEM;
 
 

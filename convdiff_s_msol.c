@@ -198,11 +198,7 @@ void set_element_mat_vec(
 
 		double h_e = cbrt(vol);
 		
-		for(int i=0; i<(fe->local_num_nodes); i++) {
-			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
-			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
-			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
-		}
+		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x, e, 3);
 
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			for(int j=0; j<(fe->local_num_nodes); j++) {
@@ -269,11 +265,7 @@ void set_element_mat_vec(
 
 		double h_e = cbrt(vol);
 
-		for(int i=0; i<(fe->local_num_nodes); i++) {
-			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
-			local_x[i][1] = fe->x[ fe->conn[e][i] ][1];
-			local_x[i][2] = fe->x[ fe->conn[e][i] ][2];
-		}
+		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x, e, 3);
 
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			for(int p=0; p<(basis->num_integ_points); p++) {

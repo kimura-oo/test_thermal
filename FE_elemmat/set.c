@@ -17,6 +17,33 @@ void BBFE_elemmat_set_Jacobian_array(
 }
 
 
+void BBFE_elemmat_set_local_array_scalar(
+		double*       local_val,
+		FE_DATA*      fe,
+		const double* val,
+		const int     elem_num)
+{
+	for(int i=0; i<(fe->local_num_nodes); i++) {
+		local_val[i] = val[ fe->conn[elem_num][i] ];
+	}
+}
+
+
+void BBFE_elemmat_set_local_array_vector(
+		double**       local_val,
+		FE_DATA*       fe,
+		double**       val,
+		const int      elem_num,
+		const int      dimension)
+{
+	for(int i=0; i<(fe->local_num_nodes); i++) {
+		for(int d=0; d<dimension; d++) {
+			local_val[i][d] = val[ fe->conn[elem_num][i] ][d];
+		}
+	}
+}
+
+
 void BBFE_elemmat_set_Jacobi_mat(
 		FE_DATA*     fe,
 		FE_3D_BASIS* basis)
