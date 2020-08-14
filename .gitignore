@@ -18,4 +18,10 @@
 !*plan.txt
 !*rule.txt
 !*.f90
+!install.sh
+!monolis_update.sh
+!monolis_install.sh
 !docs/verifications/pics/*.pdf
+
+lib/
+include/

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 // Information of polynomials and numerical integration in normalized space
 // Instance of this structure is made for each types of FE
 typedef struct
