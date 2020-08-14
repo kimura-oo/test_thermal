@@ -26,7 +26,7 @@ void BBFE_sys_monowrap_set_Dirichlet_bc(
 		MONOLIS*      monolis,
 		int           num_nodes,
 		int           num_dofs_on_node,
-		BC_DATA*      bc,
+		BBFE_BC*      bc,
 		double*       g_rhs)
 	{
 	for(int i=0; i<num_nodes; i++) {

@@ -10,6 +10,35 @@ static const char* OUTPUT_FILENAME_ASCII_TEMP   = "temparature.dat";
 static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source.dat";
 
 
+typedef struct
+{
+	double* T;
+	double* error;
+	double* theo_sol;
+
+} VALUES;
+
+
+typedef struct
+{
+	const char* directory;
+
+} CONDITIONS;
+
+
+typedef struct
+{
+	BBFE_BASIS   basis;
+	BBFE_DATA    fe;
+	BBFE_BC      bc;
+	MONOLIS      monolis;
+	
+	CONDITIONS   cond;
+	VALUES       vals;
+
+} FE_SYSTEM;
+
+
 double manusol_get_sol(
 		double x,
 		double y,
@@ -66,7 +95,7 @@ double manusol_get_source(
 
 
 void manusol_set_theo_sol(
-		FE_DATA* fe,
+		BBFE_DATA* fe,
 		double*  theo_sol,
 		double   t)
 {
@@ -77,7 +106,7 @@ void manusol_set_theo_sol(
 
 
 void manusol_set_source(
-		FE_DATA* fe,
+		BBFE_DATA* fe,
 		double*  source)
 {
 	for(int i=0; i<(fe->total_num_nodes); i++) {
@@ -89,9 +118,19 @@ void manusol_set_source(
 }
 
 
+void memory_allocation_nodal_values(
+		VALUES*         vals,
+		const int       total_num_nodes)
+{
+	vals->T        = BB_std_calloc_1d_double(vals->T,     total_num_nodes);
+	vals->error    = BB_std_calloc_1d_double(vals->error, total_num_nodes);
+	vals->theo_sol = BB_std_calloc_1d_double(vals->error, total_num_nodes);
+}
+
+
 void output_result_file_vtk(
-		FE_DATA*       fe,
-		NODAL_VALUES*  vals,
+		BBFE_DATA*       fe,
+		VALUES*        vals,
 		const char*    filename,
 		const char*    directory)
 {
@@ -173,8 +212,8 @@ void output_files(
 
 void set_element_mat_vec(
 		MONOLIS*     monolis,
-		FE_DATA*     fe,
-		FE_3D_BASIS* basis)
+		BBFE_DATA*     fe,
+		BBFE_BASIS* basis)
 {
 	int nl = fe->local_num_nodes;
 	int np = basis->num_integ_points;
@@ -278,9 +317,18 @@ int main (
 
 	monolis_global_initialize();
 	double t1 = monolis_get_time();
+	
+	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);	
 
-	BBFE_convdiff_pre(&sys, argc, argv, 
-			NUM_INTEG_POINTS_EACH_AXIS, true);
+	BBFE_convdiff_pre(
+			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
+			argc, argv, sys.cond.directory,
+			NUM_INTEG_POINTS_EACH_AXIS, 
+			true);
+	
+	memory_allocation_nodal_values(
+			&(sys.vals),
+			sys.fe.total_num_nodes);
 
 	manusol_set_theo_sol(&(sys.fe), sys.vals.theo_sol, 0.0);
 
@@ -321,7 +369,8 @@ int main (
 
 	output_files(&sys);
 
-	BBFE_convdiff_finalize(&sys);
+	BBFE_convdiff_finalize(&(sys.fe), &(sys.basis), &(sys.bc));
+
 	monolis_finalize(&(sys.monolis));
 	monolis_global_finalize();
 

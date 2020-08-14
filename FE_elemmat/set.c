@@ -9,7 +9,7 @@ void BBFE_elemmat_set_Jacobian_array(
 		double*    Jacobian_ip,
 		const int  num_integ_points,
 		const int  elem_num,
-		FE_DATA*   fe)
+		BBFE_DATA* fe)
 {
 	for(int p=0; p<num_integ_points; p++) {
 		Jacobian_ip[p] = fe->geo[ elem_num ][p].Jacobian;
@@ -19,7 +19,7 @@ void BBFE_elemmat_set_Jacobian_array(
 
 void BBFE_elemmat_set_local_array_scalar(
 		double*       local_val,
-		FE_DATA*      fe,
+		BBFE_DATA*    fe,
 		const double* val,
 		const int     elem_num)
 {
@@ -31,7 +31,7 @@ void BBFE_elemmat_set_local_array_scalar(
 
 void BBFE_elemmat_set_local_array_vector(
 		double**       local_val,
-		FE_DATA*       fe,
+		BBFE_DATA*     fe,
 		double**       val,
 		const int      elem_num,
 		const int      dimension)
@@ -45,8 +45,8 @@ void BBFE_elemmat_set_local_array_vector(
 
 
 void BBFE_elemmat_set_Jacobi_mat(
-		FE_DATA*     fe,
-		FE_3D_BASIS* basis)
+		BBFE_DATA*  fe,
+		BBFE_BASIS* basis)
 {
 	double** local_x;
 	local_x = BB_std_calloc_2d_double(local_x, fe->local_num_nodes, 3);
@@ -78,8 +78,8 @@ void BBFE_elemmat_set_Jacobi_mat(
 
 
 void BBFE_elemmat_set_shapefunc_derivative(
-		FE_DATA*      fe,
-		FE_3D_BASIS*  basis)
+		BBFE_DATA*   fe,
+		BBFE_BASIS*  basis)
 {
 	double J_inv[3][3];
 

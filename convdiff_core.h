@@ -36,56 +36,28 @@ static const char* INPUT_FILENAME_ELEM        = "elem.dat";
 static const char* INPUT_FILENAME_D_BC        = "D_bc.dat";
 
 
-typedef struct
-{
-	double* T;
-	double* error;
-	double* theo_sol;
-
-} NODAL_VALUES;
-
-
-typedef struct
-{
-	const char* directory;
-
-} CONDITIONS;
-
-
-typedef struct
-{
-	FE_3D_BASIS  basis;
-	FE_DATA      fe;
-	NODAL_VALUES vals;
-	BC_DATA      bc;
-	MONOLIS      monolis;
-	CONDITIONS   cond;
-
-	MONOLIS      monolis0; // for nonsteady analysis
-
-} FE_SYSTEM;
-
-
 const char* BBFE_convdiff_get_directory_name(
 		int         argc,
 		char*       argv[],
 		const char* codename);
 
 void BBFE_convdiff_pre(
-		FE_SYSTEM* sys,
-		int        argc,
-		char*      argv[],
-		int        num_integ_points_each_axis,
-		bool       manufactured_solution);
-
-void BBFE_convdiff_memory_allocation_nodal_values(
-		NODAL_VALUES*   vals,
-		const int       total_num_nodes);
+		BBFE_DATA*    fe,
+		BBFE_BASIS*   basis,
+		BBFE_BC*      bc,
+		MONOLIS*      monolis,
+		int           argc,
+		char*         argv[],
+		const char*   directory,
+		int           num_integ_points_each_axis,
+		bool          manufactured_solution);
 
 void BBFE_convdiff_set_basis(
-		FE_3D_BASIS*  basis,
+		BBFE_BASIS*   basis,
 		int           local_num_nodes,
 		int           num_integ_points_each_axis);
 
 void BBFE_convdiff_finalize(
-		FE_SYSTEM* sys);
+		BBFE_DATA*   fe,
+		BBFE_BASIS*  basis,
+		BBFE_BC*     bc);

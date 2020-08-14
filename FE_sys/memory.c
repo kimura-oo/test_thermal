@@ -7,7 +7,7 @@
 
 
 void BBFE_sys_memory_allocation_integ(
-		FE_3D_BASIS*    basis,
+		BBFE_BASIS*     basis,
 		const int       num_integ_points,
 		const int       dimension)
 {
@@ -21,7 +21,7 @@ void BBFE_sys_memory_allocation_integ(
 
 
 void BBFE_sys_memory_free_integ(
-		FE_3D_BASIS*    basis,
+		BBFE_BASIS*     basis,
 		const int       dimension)
 {
 	int num = basis->num_integ_points;
@@ -32,7 +32,7 @@ void BBFE_sys_memory_free_integ(
 
 
 void BBFE_sys_memory_allocation_shapefunc(
-		FE_3D_BASIS*    basis,
+		BBFE_BASIS*     basis,
 		const int       num_nodes_in_elem,
 		const int       pol_order,
 		const int       num_integ_points)
@@ -51,7 +51,7 @@ void BBFE_sys_memory_allocation_shapefunc(
 
 
 void BBFE_sys_memory_free_shapefunc(
-		FE_3D_BASIS*    basis)
+		BBFE_BASIS*    basis)
 {
 	int nn = basis->num_nodes;
 	int ni = basis->num_integ_points;
@@ -64,31 +64,31 @@ void BBFE_sys_memory_free_shapefunc(
 
 
 void BBFE_sys_memory_allocation_node(
-		FE_DATA*  fe,
-		const int dimension)
+		BBFE_DATA*  fe,
+		const int   dimension)
 {
 	fe->x = BB_std_calloc_2d_double(fe->x, fe->total_num_nodes, dimension);
 }
 
 
 void BBFE_sys_memory_free_node(
-		FE_DATA*  fe,
-		const int dimension)
+		BBFE_DATA*  fe,
+		const int   dimension)
 {
 	BB_std_free_2d_double(fe->x, fe->total_num_nodes, dimension);
 }
 
 
 void BBFE_sys_memory_allocation_elem(
-		FE_DATA*  fe,
-		const int num_integ_points,
-		const int dimension)
+		BBFE_DATA*  fe,
+		const int   num_integ_points,
+		const int   dimension)
 {
 	fe->conn = BB_std_calloc_2d_int(fe->conn, fe->total_num_elems, fe->local_num_nodes);
 	
-	fe->geo  = (FE_3D_GEO**)calloc(fe->total_num_elems, sizeof(FE_3D_GEO*));
+	fe->geo  = (BBFE_GEO**)calloc(fe->total_num_elems, sizeof(BBFE_GEO*));
 	for(int e=0; e<(fe->total_num_elems); e++) {
-		fe->geo[e]  = (FE_3D_GEO*)calloc(num_integ_points, sizeof(FE_3D_GEO));
+		fe->geo[e]  = (BBFE_GEO*)calloc(num_integ_points, sizeof(BBFE_GEO));
 
 		for(int p=0; p<num_integ_points; p++) {
 			fe->geo[e][p].grad_N = BB_std_calloc_2d_double(fe->geo[e][p].grad_N, fe->local_num_nodes, dimension);
@@ -98,9 +98,9 @@ void BBFE_sys_memory_allocation_elem(
 
 
 void BBFE_sys_memory_free_elem(
-		FE_DATA*  fe,
-		const int num_integ_points,
-		const int dimension)
+		BBFE_DATA*  fe,
+		const int   num_integ_points,
+		const int   dimension)
 {
 	BB_std_free_2d_int(fe->conn, fe->total_num_elems, fe->local_num_nodes);
 	
@@ -115,7 +115,7 @@ void BBFE_sys_memory_free_elem(
 
 
 void BBFE_sys_memory_allocation_Dirichlet_bc(
-		BC_DATA*   bc,
+		BBFE_BC*   bc,
 		const int  total_num_nodes,
 		const int  block_size)
 {
@@ -127,7 +127,7 @@ void BBFE_sys_memory_allocation_Dirichlet_bc(
 
 
 void BBFE_sys_memory_free_Dirichlet_bc(
-		BC_DATA*   bc,
+		BBFE_BC*   bc,
 		const int  total_num_nodes,
 		const int  block_size)
 {

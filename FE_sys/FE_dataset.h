@@ -19,7 +19,7 @@ typedef struct
 	                     // [num_integ_points][local_num_nodes]
 	double** dN_det;     // (eta)
 	double** dN_dze;     // (zeta)
-} FE_3D_BASIS;
+} BBFE_BASIS;
 
 
 // geometric
@@ -29,7 +29,7 @@ typedef struct
 
 	double J[3][3];
 	double Jacobian;
-} FE_3D_GEO;
+} BBFE_GEO;
 
 
 typedef struct
@@ -40,9 +40,9 @@ typedef struct
 	int         total_num_elems;
 	int         local_num_nodes;
 	int**       conn;
-	FE_3D_GEO** geo;  //[total_num_elems][num_integ_points]
+	BBFE_GEO**  geo;  //[total_num_elems][num_integ_points]
 
-} FE_DATA;
+} BBFE_DATA;
 
 
 
@@ -58,4 +58,4 @@ typedef struct
 	int num_N_bcs;
 	bool*   N_bc_exists;
 	double* imposed_N_val;
-} BC_DATA;
+} BBFE_BC;

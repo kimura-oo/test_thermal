@@ -19,95 +19,82 @@ const char* BBFE_convdiff_get_directory_name(
 
 
 void BBFE_convdiff_pre(
-		FE_SYSTEM* sys,
-		int        argc,
-		char*      argv[],
-		int        num_integ_points_each_axis,
-		bool       manufactured_solution)
+		BBFE_DATA*    fe,
+		BBFE_BASIS*   basis,
+		BBFE_BC*      bc,
+		MONOLIS*      monolis,
+		int           argc,
+		char*         argv[],
+		const char*   directory,
+		int           num_integ_points_each_axis,
+		bool          manufactured_solution)
 {
-	sys->cond.directory = 
-		BBFE_convdiff_get_directory_name(argc, argv, CODENAME);	
-
 	int n_axis = num_integ_points_each_axis;
 
 	BBFE_sys_read_node(
-			&(sys->fe),
+			fe,
 			INPUT_FILENAME_NODE,
-			sys->cond.directory);
+			directory);
 	BBFE_sys_read_elem(
-			&(sys->fe),
+			fe,
 			INPUT_FILENAME_ELEM,
-			sys->cond.directory,
+			directory,
 			n_axis*n_axis*n_axis);
 
 	BBFE_sys_memory_allocation_integ(
-			&(sys->basis),
+			basis,
 			n_axis*n_axis*n_axis,
 			3);
 	BBFE_sys_memory_allocation_shapefunc(
-			&(sys->basis),
-			sys->fe.local_num_nodes,
+			basis,
+			fe->local_num_nodes,
 			1,
 			n_axis*n_axis*n_axis);
 
-	BBFE_convdiff_memory_allocation_nodal_values(
-			&(sys->vals),
-			sys->fe.total_num_nodes);
-
 	if(manufactured_solution) {
-		switch( sys->fe.local_num_nodes ) {
+		switch( fe->local_num_nodes ) {
 			case 4:
 				BBFE_manusol_overwrite_bc_file_tet(
-						&(sys->fe),
+						fe,
 						BLOCK_SIZE, 
 						INPUT_FILENAME_D_BC,
-						sys->cond.directory);
+						directory);
 				break;
 
 			case 8:
 				BBFE_manusol_overwrite_bc_file_hex(
-						&(sys->fe),
+						fe,
 						BLOCK_SIZE, 
 						INPUT_FILENAME_D_BC,
-						sys->cond.directory);
+						directory);
 				break;
 		}
 	}
 
 	BBFE_sys_read_Dirichlet_bc(
-			&(sys->bc),
+			bc,
 			INPUT_FILENAME_D_BC,
-			sys->cond.directory,
-			sys->fe.total_num_nodes);
+			directory,
+			fe->total_num_nodes);
 
 	BBFE_convdiff_set_basis(
-			&(sys->basis),
-			sys->fe.local_num_nodes,
+			basis,
+			fe->local_num_nodes,
 			n_axis);
 
-	monolis_initialize(&(sys->monolis));
+	monolis_initialize(monolis);
 	monolis_get_nonzero_pattern(
-			&(sys->monolis),
-			sys->fe.total_num_nodes,
-			sys->fe.local_num_nodes,
+			monolis,
+			fe->total_num_nodes,
+			fe->local_num_nodes,
 			1,
-			sys->fe.total_num_elems,
-			sys->fe.conn);
-}
-
-
-void BBFE_convdiff_memory_allocation_nodal_values(
-		NODAL_VALUES*   vals,
-		const int       total_num_nodes)
-{
-	vals->T        = BB_std_calloc_1d_double(vals->T,     total_num_nodes);
-	vals->error    = BB_std_calloc_1d_double(vals->error, total_num_nodes);
-	vals->theo_sol = BB_std_calloc_1d_double(vals->error, total_num_nodes);
+			fe->total_num_elems,
+			fe->conn);
 }
 
 
 void BBFE_convdiff_set_basis(
-		FE_3D_BASIS*  basis,
+		BBFE_BASIS*   basis,
 		int           local_num_nodes,
 		int           num_integ_points_each_axis)
 {
@@ -159,13 +146,15 @@ void BBFE_convdiff_set_basis(
 
 
 void BBFE_convdiff_finalize(
-		FE_SYSTEM* sys)
+		BBFE_DATA*   fe,
+		BBFE_BASIS*  basis,
+		BBFE_BC*     bc)
 {
-	BBFE_sys_memory_free_integ(&(sys->basis), 3);
-	BBFE_sys_memory_free_shapefunc(&(sys->basis));
+	BBFE_sys_memory_free_integ(basis, 3);
+	BBFE_sys_memory_free_shapefunc(basis);
 
-	BBFE_sys_memory_free_node(&(sys->fe), 3);
-	BBFE_sys_memory_free_elem(&(sys->fe), sys->basis.num_integ_points, 3);
+	BBFE_sys_memory_free_node(fe, 3);
+	BBFE_sys_memory_free_elem(fe, basis->num_integ_points, 3);
 	
-	BBFE_sys_memory_free_Dirichlet_bc(&(sys->bc), sys->fe.total_num_nodes, BLOCK_SIZE);
+	BBFE_sys_memory_free_Dirichlet_bc(bc, fe->total_num_nodes, BLOCK_SIZE);
 }

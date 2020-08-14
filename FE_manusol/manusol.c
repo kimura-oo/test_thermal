@@ -12,7 +12,7 @@ static const char* CODENAME = "FE_manusol/manusol >";
 
 
 void BBFE_manusol_calc_nodal_error_scalar(
-		FE_DATA*      fe,
+		BBFE_DATA*    fe,
 		double*       error,
 		double*       theo_sol,
 		const double* val)
@@ -25,7 +25,7 @@ void BBFE_manusol_calc_nodal_error_scalar(
 
 
 void BBFE_manusol_overwrite_bc_file_hex(
-		FE_DATA*    fe,
+		BBFE_DATA*  fe,
 		const int   block_size,
 		const char* filename,
 		const char* directory)
@@ -61,7 +61,7 @@ void BBFE_manusol_overwrite_bc_file_hex(
 
 
 void BBFE_manusol_overwrite_bc_file_tet(
-		FE_DATA*    fe,
+		BBFE_DATA*  fe,
 		const int   block_size,
 		const char* filename,
 		const char* directory)
@@ -97,10 +97,10 @@ void BBFE_manusol_overwrite_bc_file_tet(
 
 
 void BBFE_manusol_set_bc_scalar(
-		FE_DATA* fe,
-		BC_DATA* bc,
-		double*  theo_sol,
-		double   t)
+		BBFE_DATA* fe,
+		BBFE_BC*   bc,
+		double*    theo_sol,
+		double     t)
 {
 	for(int i=0; i<(fe->total_num_nodes); i++) {
 		if( bc->D_bc_exists[i] ) {
