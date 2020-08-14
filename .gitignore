@@ -1,7 +1,6 @@
 # ignore all
 *
 !*/
-submodule
 
 # allow any
 !*.c
