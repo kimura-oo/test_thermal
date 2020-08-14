@@ -60,7 +60,7 @@ int main(
 		exit(EXIT_FAILURE);
 	}
 
-	fp = BB_std_read_file_search_line(fp, buf, filename, ID_NODE, BUFFER_SIZE);
+	fp = BB_std_read_file_search_line(fp, buf, ID_NODE, BUFFER_SIZE);
 	if( fp == NULL ) {
 		printf("%s ERROR: Identifier \"%s\" cannot be found.\n\n", CODENAME, ID_NODE);
 		exit(EXIT_FAILURE);
@@ -80,7 +80,7 @@ int main(
 	/*********************************************************/
 	
 	/********************* element data **********************/
-	fp = BB_std_read_file_search_line(fp, buf, filename, ID_ELEM, BUFFER_SIZE);
+	fp = BB_std_read_file_search_line(fp, buf, ID_ELEM, BUFFER_SIZE);
 	if( fp == NULL ) {
 		printf("%s ERROR: Identifier \"%s\" cannot be found.\n\n", CODENAME, ID_ELEM);
 		exit(EXIT_FAILURE);
@@ -116,7 +116,7 @@ int main(
 	printf("%s The total number of elements: %d\n", CODENAME, total_num_elems);
 	fprintf(fp_elem, "%d %d\n", total_num_elems, L_NUM_NODES);
 
-	fp = BB_std_read_file_search_line(fp, buf, filename, ID_ELEM, BUFFER_SIZE);
+	fp = BB_std_read_file_search_line(fp, buf, ID_ELEM, BUFFER_SIZE);
 	sscanf(buf, "%s %d %s", buf2, &total_num_cells, buf2);
 	for(int c=0; c<total_num_cells; c++) {
 		int nl;

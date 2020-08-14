@@ -180,7 +180,6 @@ bool BB_std_read_file_return_char(
 FILE* BB_std_read_file_search_line(
 		FILE*       fp,
 		char*       char_line,
-		const char* filename, 
 		const char* identifier,
 		const int   buffer_size)
 {
