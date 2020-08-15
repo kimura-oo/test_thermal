@@ -76,6 +76,33 @@ FILE* BB_std_read_file_search_line(
 		const char* identifier,
 		const int   buffer_size);
 
+int BB_std_read_file_get_val_double(
+		double*     val,
+		const char* filename,
+		const char* identifier,
+		const int   buffer_size);
+
+int BB_std_read_file_get_val_int(
+		int*        val,
+		const char* filename,
+		const char* identifier,
+		const int   buffer_size);
+
+// p means print
+int BB_std_read_file_get_val_double_p(
+		double*     val,
+		const char* filename,
+		const char* identifier,
+		const int   buffer_size,
+		const char* codename);
+
+int BB_std_read_file_get_val_int_p(
+		int*        val,
+		const char* filename,
+		const char* identifier,
+		const int   buffer_size,
+		const char* codename);
+
 /**********************************************************
  * functions for treating commandline arguments
  **********************************************************/

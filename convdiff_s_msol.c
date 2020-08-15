@@ -1,12 +1,18 @@
 
 #include "convdiff_core.h"
 
-const int NUM_INTEG_POINTS_EACH_AXIS = 3;
-const double MAT_EPSILON             = 1.0e-10;
-const double MAT_MAX_ITER            = 100000;
+const char* ID_NUM_IP_EACH_AXIS = "#num_ip_each_axis";
+const int DVAL_NUM_IP_EACH_AXIS = 3;
+const char*     ID_MAT_EPSILON   = "#mat_epsilon";
+const double  DVAL_MAT_EPSILON   = 1.0e-8;
+const char*    ID_MAT_MAX_ITER  = "#mat_max_iter";
+const int    DVAL_MAT_MAX_ITER  = 10000;
 
-const double DELTA = 1.0E-06;
 
+static const double DELTA    = 1.0E-06;
+static const int BUFFER_SIZE = 10000;
+
+static const char* INPUT_FILENAME_COND          = "cond.dat";
 static const char* OUTPUT_FILENAME_VTK          = "result.vtk";
 static const char* OUTPUT_FILENAME_ASCII_TEMP   = "temparature.dat";
 static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source.dat";
@@ -14,6 +20,10 @@ static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source.dat";
 
 typedef struct
 {
+	int    num_ip_each_axis;
+	double mat_epsilon;
+	int    mat_max_iter;
+
 	double* T;
 	double* error;
 	double* theo_sol;
@@ -146,6 +156,67 @@ void manusol_set_source(
 		k = manusol_get_diff_coef(fe->x[i]);
 		source[i] = manusol_get_source(fe->x[i], 1.0, v, k);
 	}
+}
+
+
+void assign_default_values(
+		VALUES*     vals)
+{
+	vals->num_ip_each_axis = DVAL_NUM_IP_EACH_AXIS;
+	vals->mat_epsilon      = DVAL_MAT_EPSILON;
+	vals->mat_max_iter     = DVAL_MAT_MAX_ITER;
+}
+
+
+void print_all_values(
+		VALUES*  vals)
+{
+
+	printf("\n%s ---------- Calculation condition ----------\n", CODENAME);
+
+	printf("%s %s: %d\n", CODENAME, ID_NUM_IP_EACH_AXIS, vals->num_ip_each_axis);
+	printf("%s %s: %e\n", CODENAME, ID_MAT_EPSILON,      vals->mat_epsilon);
+	printf("%s %s: %d\n", CODENAME, ID_MAT_MAX_ITER,     vals->mat_max_iter);
+
+	printf("%s -------------------------------------------\n\n", CODENAME);
+}
+
+
+void read_calc_conditions(
+		VALUES*     vals,
+		const char* directory)
+{
+	printf("\n");
+
+	assign_default_values(vals);
+
+	char filename[BUFFER_SIZE];
+	snprintf(filename, BUFFER_SIZE, "%s/%s", directory, INPUT_FILENAME_COND);
+
+	FILE* fp;
+	fp = fopen(filename, "r");
+	if( fp == NULL ) {
+		printf("%s Calc condition file \"%s\" is not found.\n", CODENAME, filename);
+		printf("%s Default values are used in this calculation.\n", CODENAME);
+	}
+	else {
+		printf("%s Reading conditon file \"%s\".\n", CODENAME, filename);
+		int num;
+		num = BB_std_read_file_get_val_int_p(
+				&(vals->num_ip_each_axis), filename, ID_NUM_IP_EACH_AXIS, BUFFER_SIZE, CODENAME);
+
+		num = BB_std_read_file_get_val_double_p(
+				&(vals->mat_epsilon), filename, ID_MAT_EPSILON, BUFFER_SIZE, CODENAME);
+
+		num = BB_std_read_file_get_val_int_p(
+				&(vals->mat_max_iter), filename, ID_MAT_MAX_ITER, BUFFER_SIZE, CODENAME);
+	}
+	
+	print_all_values(vals);
+	
+	fclose(fp);
+	
+	printf("\n");
 }
 
 
@@ -349,12 +420,13 @@ int main (
 	monolis_global_initialize();
 	double t1 = monolis_get_time();
 	
-	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);	
+	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);
+	read_calc_conditions(&(sys.vals), sys.cond.directory);
 
 	BBFE_convdiff_pre(
 			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
 			argc, argv, sys.cond.directory,
-			NUM_INTEG_POINTS_EACH_AXIS, 
+			sys.vals.num_ip_each_axis, 
 			true);
 	
 	memory_allocation_nodal_values(
@@ -394,8 +466,8 @@ int main (
 			sys.vals.T,
 			monolis_iter_BiCGSTAB,
 			monolis_prec_DIAG,
-			MAT_MAX_ITER,
-			MAT_EPSILON);
+			sys.vals.mat_max_iter,
+			sys.vals.mat_epsilon);
 	/**********************************************/
 
 	output_files(&sys);

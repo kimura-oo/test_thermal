@@ -1,24 +1,39 @@
 
 #include "convdiff_core.h"
 
-const int NUM_INTEG_POINTS_EACH_AXIS = 3;
-const double MAT_EPSILON             = 1.0e-10;
-const double MAT_MAX_ITER            = 10000;
-const int BUFFER_SIZE                = 10000;
+const char* ID_NUM_IP_EACH_AXIS = "#num_ip_each_axis";
+const int DVAL_NUM_IP_EACH_AXIS = 3;
+const char*     ID_MAT_EPSILON  = "#mat_epsilon";
+const double  DVAL_MAT_EPSILON  = 1.0e-8;
+const char*    ID_MAT_MAX_ITER  = "#mat_max_iter";
+const int    DVAL_MAT_MAX_ITER  = 10000;
+const char*              ID_DT  = "#time_spacing";
+const double           DVAL_DT  = 0.01;
+const char*     ID_FINISH_TIME  = "#finish_time";
+const double  DVAL_FINISH_TIME  = 1.0;
+const char* ID_OUTPUT_INTERVAL  = "#output_interval";
+const int DVAL_OUTPUT_INTERVAL  = 1;
 
-const double DELTA = 1.0E-06;
 
+const double DELTA    = 1.0E-06;
+const int BUFFER_SIZE = 10000;
+
+static const char* INPUT_FILENAME_COND          = "cond.dat";
 static const char* OUTPUT_FILENAME_VTK        = "result_%06d.vtk";
 static const char* OUTPUT_FILENAME_ASCII_TEMP = "temparature_%06d.dat";
 static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source_%06d.dat";
 
-const double DT = 0.01;
-const double FIN_T = 10.0;
-const int OUTPUT_INTERVAL = 10;
-
 
 typedef struct
 {
+	int    num_ip_each_axis;
+	double mat_epsilon;
+	int    mat_max_iter;
+
+	double dt;
+	double finish_time;
+	int    output_interval;
+
 	double* T;
 	double* error;
 	double* theo_sol;
@@ -172,6 +187,84 @@ void memory_allocation_nodal_values(
 }
 
 
+void assign_default_values(
+		VALUES*     vals)
+{
+	vals->num_ip_each_axis = DVAL_NUM_IP_EACH_AXIS;
+	vals->mat_epsilon      = DVAL_MAT_EPSILON;
+	vals->mat_max_iter     = DVAL_MAT_MAX_ITER;
+	
+	vals->dt               = DVAL_DT;
+	vals->finish_time      = DVAL_FINISH_TIME;
+	vals->output_interval  = DVAL_OUTPUT_INTERVAL;
+}
+
+
+void print_all_values(
+		VALUES*  vals)
+{
+	printf("\n%s ---------- Calculation condition ----------\n", CODENAME);
+	
+	printf("%s %s: %d\n", CODENAME, ID_NUM_IP_EACH_AXIS, vals->num_ip_each_axis);
+	printf("%s %s: %e\n", CODENAME, ID_MAT_EPSILON,      vals->mat_epsilon);
+	printf("%s %s: %d\n", CODENAME, ID_MAT_MAX_ITER,     vals->mat_max_iter);
+	
+	printf("%s %s: %e\n", CODENAME, ID_DT,               vals->dt);
+	printf("%s %s: %e\n", CODENAME, ID_FINISH_TIME,      vals->finish_time);
+	printf("%s %s: %d\n", CODENAME, ID_OUTPUT_INTERVAL,  vals->output_interval);
+	
+	printf("%s -------------------------------------------\n\n", CODENAME);
+}
+
+
+void read_calc_conditions(
+		VALUES*     vals,
+		const char* directory)
+{
+	printf("\n");
+
+	assign_default_values(vals);
+
+	char filename[BUFFER_SIZE];
+	snprintf(filename, BUFFER_SIZE, "%s/%s", directory, INPUT_FILENAME_COND);
+
+	FILE* fp;
+	fp = fopen(filename, "r");
+	if( fp == NULL ) {
+		printf("%s Calc condition file \"%s\" is not found.\n", CODENAME, filename);
+		printf("%s Default values are used in this calculation.\n", CODENAME);
+	}
+	else {
+		printf("%s Reading conditon file \"%s\".\n", CODENAME, filename);
+		int num;
+		num = BB_std_read_file_get_val_int_p(
+				&(vals->num_ip_each_axis), filename, ID_NUM_IP_EACH_AXIS, BUFFER_SIZE, CODENAME);
+
+		num = BB_std_read_file_get_val_double_p(
+				&(vals->mat_epsilon), filename, ID_MAT_EPSILON, BUFFER_SIZE, CODENAME);
+
+		num = BB_std_read_file_get_val_int_p(
+				&(vals->mat_max_iter), filename, ID_MAT_MAX_ITER, BUFFER_SIZE, CODENAME);
+
+		num = BB_std_read_file_get_val_double_p(
+				&(vals->dt), filename, ID_DT, BUFFER_SIZE, CODENAME);
+
+		num = BB_std_read_file_get_val_double_p(
+				&(vals->finish_time), filename, ID_FINISH_TIME, BUFFER_SIZE, CODENAME);
+
+		num = BB_std_read_file_get_val_int_p(
+				&(vals->output_interval), filename, ID_OUTPUT_INTERVAL, BUFFER_SIZE, CODENAME);
+	}
+	
+	print_all_values(vals);
+	
+	fclose(fp);
+	
+	printf("\n");
+}
+
+
+
 void output_result_file_vtk(
 		BBFE_DATA*       fe,
 		VALUES*        vals,
@@ -307,7 +400,7 @@ void set_element_mat(
 					val_ip[p] = 0.0;
 
 					double tau = BBFE_elemmat_convdiff_stab_coef_ns(
-							k_ip[p], v_ip[p], 1.0, h_e, DT);
+							k_ip[p], v_ip[p], 1.0, h_e, vals->dt);
 
 					val_ip[p] += BBFE_elemmat_convdiff_mat_conv(
 							basis->N[p][i], fe->geo[e][p].grad_N[j], v_ip[p]);
@@ -318,10 +411,10 @@ void set_element_mat(
 					val_ip[p] += BBFE_elemmat_convdiff_mat_stab_conv(
 							fe->geo[e][p].grad_N[i], fe->geo[e][p].grad_N[j], v_ip[p], tau);
 
-					val_ip[p] += 1.0/DT * BBFE_elemmat_convdiff_mat_mass(
+					val_ip[p] += 1.0/(vals->dt) * BBFE_elemmat_convdiff_mat_mass(
 								basis->N[p][i], basis->N[p][j], 1.0);
 
-					val_ip[p] += 1.0/DT *  BBFE_elemmat_convdiff_mat_stab_mass(
+					val_ip[p] += 1.0/(vals->dt) *  BBFE_elemmat_convdiff_mat_stab_mass(
 								fe->geo[e][p].grad_N[i], basis->N[p][j], 1.0, v_ip[p], tau);
 
 				}
@@ -403,7 +496,7 @@ void set_element_vec(
 				val_ip[p] = 0.0;
 
 				double tau = BBFE_elemmat_convdiff_stab_coef_ns(
-						k_ip[p], v_ip[p], 1.0, h_e, DT);
+						k_ip[p], v_ip[p], 1.0, h_e, vals->dt);
 
 				val_ip[p] += BBFE_elemmat_convdiff_vec_source(
 						basis->N[p][i], f_ip[p]);
@@ -411,10 +504,10 @@ void set_element_vec(
 				val_ip[p] += BBFE_elemmat_convdiff_vec_stab_source(
 						fe->geo[e][p].grad_N[i], v_ip[p], tau, f_ip[p]);
 			
-				val_ip[p] += 1.0/DT * BBFE_elemmat_convdiff_vec_mass(
+				val_ip[p] += 1.0/(vals->dt) * BBFE_elemmat_convdiff_vec_mass(
 						basis->N[p][i], T_ip[p], 1.0);
 
-				val_ip[p] += 1.0/DT * BBFE_elemmat_convdiff_vec_stab_mass(
+				val_ip[p] += 1.0/(vals->dt) * BBFE_elemmat_convdiff_vec_stab_mass(
 						fe->geo[e][p].grad_N[i], 1.0, v_ip[p], T_ip[p], tau);
 			}
 
@@ -452,11 +545,12 @@ int main (
 	double t1 = monolis_get_time();
 	
 	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);	
+	read_calc_conditions(&(sys.vals), sys.cond.directory);
 
 	BBFE_convdiff_pre(
 			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
 			argc, argv, sys.cond.directory,
-			NUM_INTEG_POINTS_EACH_AXIS, 
+			sys.vals.num_ip_each_axis, 
 			true);
 	
 	memory_allocation_nodal_values(
@@ -493,11 +587,11 @@ int main (
 	double t = 0.0;
 	int step = 0;
 	int file_num = 0;
-	while (t < FIN_T) {
-		t += DT;
+	while (t < sys.vals.finish_time) {
+		t += sys.vals.dt;
 		step += 1;
 
-		printf("%s ----------------- step %d ----------------\n", CODENAME, step);
+		printf("\n%s ----------------- step %d ----------------\n", CODENAME, step);
 		monolis_copy_all(&(sys.monolis0), &(sys.monolis));
 		monolis_clear_rhs(&(sys.monolis));
 		set_element_vec(
@@ -526,11 +620,11 @@ int main (
 				sys.vals.T,
 				monolis_iter_BiCGSTAB,
 				monolis_prec_DIAG,
-				MAT_MAX_ITER,
-				MAT_EPSILON);
+				sys.vals.mat_max_iter,
+				sys.vals.mat_epsilon);
 		/**********************************************/
 
-		if(step%OUTPUT_INTERVAL == 0) {
+		if(step%sys.vals.output_interval == 0) {
 			output_files(&sys, file_num, t);
 			file_num += 1;
 		}

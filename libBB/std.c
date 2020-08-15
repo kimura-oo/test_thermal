@@ -199,6 +199,122 @@ FILE* BB_std_read_file_search_line(
 }
 
 
+int BB_std_read_file_get_val_double(
+		double*     val,
+		const char* filename,
+		const char* identifier,
+		const int   buffer_size)
+{
+	FILE* fp = fopen(filename, "r");
+
+	char buf[ buffer_size];
+	char buf2[buffer_size];
+	fp = BB_std_read_file_search_line(
+			fp, 
+			buf,
+			identifier,
+			buffer_size);
+	if(fp == NULL) { return 0; }
+
+	int val_num = 0;
+	sscanf(buf, "%s %d", buf2, &val_num);
+	if( strcmp(buf2, identifier) != 0 ) { return 0;}
+	
+	if(val_num <= 0) { return val_num; }
+
+	for(int i=0; i<val_num; i++) {
+		BB_std_scan_line(&fp, buffer_size, "%lf", &val[i]);
+	}
+	
+	return val_num;
+}
+
+
+int BB_std_read_file_get_val_int(
+		int*        val,
+		const char* filename,
+		const char* identifier,
+		const int   buffer_size)
+{
+	FILE* fp = fopen(filename, "r");
+
+	char buf[ buffer_size];
+	char buf2[buffer_size];
+	fp = BB_std_read_file_search_line(
+			fp, 
+			buf,
+			identifier,
+			buffer_size);
+	if(fp == NULL) { return 0; }
+
+	int val_num = 0;
+	sscanf(buf, "%s %d", buf2, &val_num);
+	if( strcmp(buf2, identifier) != 0 ) { return 0;}
+	
+	if(val_num <= 0) { return val_num; }
+
+	for(int i=0; i<val_num; i++) {
+		BB_std_scan_line(&fp, buffer_size, "%d", &val[i]);
+	}
+	
+	return val_num;
+}
+
+
+int BB_std_read_file_get_val_double_p(
+		double*     val,
+		const char* filename,
+		const char* identifier,
+		const int   buffer_size,
+		const char* codename)
+{
+	int val_num;
+	val_num = BB_std_read_file_get_val_double(
+			val, filename, identifier, buffer_size);
+
+	printf("%s %s", codename, identifier);
+	if(val_num <= 0 ) {
+		printf(" is not specified.\n");
+	}
+	else {
+		printf(": ");
+		for(int i=0; i<val_num; i++) {
+			printf("%e ", val[i]);
+		}
+		printf("\n");
+	}
+
+	return val_num;
+}
+
+
+int BB_std_read_file_get_val_int_p(
+		int*        val,
+		const char* filename,
+		const char* identifier,
+		const int   buffer_size,
+		const char* codename)
+{
+	int val_num;
+	val_num = BB_std_read_file_get_val_int(
+			val, filename, identifier, buffer_size);
+
+	printf("%s %s", codename, identifier);
+	if(val_num <= 0 ) {
+		printf(" is not specified.\n");
+	}
+	else {
+		printf(": ");
+		for(int i=0; i<val_num; i++) {
+			printf("%d ", val[i]);
+		}
+		printf("\n");
+	}
+
+	return val_num;
+}
+
+
 /**********************************************************
  * functions for treating commandline arguments
  **********************************************************/
