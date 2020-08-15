@@ -5,6 +5,8 @@ const int NUM_INTEG_POINTS_EACH_AXIS = 3;
 const double MAT_EPSILON             = 1.0e-10;
 const double MAT_MAX_ITER            = 100000;
 
+const double DELTA = 1.0E-06;
+
 static const char* OUTPUT_FILENAME_VTK          = "result.vtk";
 static const char* OUTPUT_FILENAME_ASCII_TEMP   = "temparature.dat";
 static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source.dat";
@@ -52,13 +54,13 @@ double manusol_get_sol(
 
 
 void manusol_get_conv_vel(
-		double a[3],
+		double v[3],
 		double x[3])
 {
 	double val = 1.0/sqrt(3) * 0.0;
-	a[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
-	a[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
-	a[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
+	v[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
+	v[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
+	v[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
 }
 
 
@@ -73,22 +75,51 @@ double manusol_get_diff_coef(
 
 double manusol_get_source(
 		double x[3],
-		double a[3],
+		double a,
+		double v[3],
 		double k)
 {
+	double invD  = 1.0/DELTA;
+	double invD2 = invD*invD;
+
 	double dk_dx[3];
-	dk_dx[0] = 1.0*cos(1.0*x[0]) *     sin(0.5*x[1]) *      sin(0.25*x[2]);
-	dk_dx[1] =     sin(1.0*x[0]) * 0.5*cos(0.5*x[1]) *      sin(0.25*x[2]);
-	dk_dx[2] =     sin(1.0*x[0]) *     sin(0.5*x[1]) * 0.25*cos(0.25*x[2]);
+	double x_p[3];  double x_m[3];
+	x_p[0] = x[0]+DELTA;  x_p[1] = x[1];  x_p[2] = x[2];
+	x_m[0] = x[0]-DELTA;  x_m[1] = x[1];  x_m[2] = x[2];
+	dk_dx[0] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) ) * (invD/2.0);
+	x_p[0] = x[0];  x_p[1] = x[1]+DELTA;  x_p[2] = x[2];
+	x_m[0] = x[0];  x_m[1] = x[1]-DELTA;  x_m[2] = x[2];
+	dk_dx[1] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) ) * (invD/2.0);	
+	x_p[0] = x[0];  x_p[1] = x[1];  x_p[2] = x[2]+DELTA;
+	x_m[0] = x[0];  x_m[1] = x[1];  x_m[2] = x[2]-DELTA;
+	dk_dx[2] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) )* (invD/2.0);
+
+	double dT_dx[3];
+	dT_dx[0] =  ( manusol_get_sol(x[0]+DELTA, x[1], x[2], 0.0) -  
+		manusol_get_sol(x[0]-DELTA, x[1], x[2], 0.0) ) * (invD/2.0);
+	dT_dx[1] =  ( manusol_get_sol(x[0], x[1]+DELTA, x[2], 0.0) -  
+		manusol_get_sol(x[0], x[1]-DELTA, x[2], 0.0) ) * (invD/2.0);
+	dT_dx[2] =  ( manusol_get_sol(x[0], x[1], x[2]+DELTA, 0.0) -  
+		manusol_get_sol(x[0], x[1], x[2]-DELTA, 0.0) ) * (invD/2.0);
+
+	double d2T_dx2[3];
+	d2T_dx2[0] = ( 
+			    manusol_get_sol(x[0]+DELTA, x[1], x[2], 0.0) + 
+			    manusol_get_sol(x[0]-DELTA, x[1], x[2], 0.0) -
+			2.0*manusol_get_sol(x[0]      , x[1], x[2], 0.0) ) * invD2;
+	d2T_dx2[1] = ( 
+			    manusol_get_sol(x[0], x[1]+DELTA, x[2], 0.0) + 
+			    manusol_get_sol(x[0], x[1]-DELTA, x[2], 0.0) -
+			2.0*manusol_get_sol(x[0], x[1]      , x[2], 0.0) ) * invD2;
+	d2T_dx2[2] = ( 
+			    manusol_get_sol(x[0], x[1], x[2]+DELTA, 0.0) + 
+			    manusol_get_sol(x[0], x[1], x[2]-DELTA, 0.0) -
+			2.0*manusol_get_sol(x[0], x[1], x[2]      , 0.0) ) * invD2;
 
 	double val = 
-		a[0]     * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) ) + 
-		a[1]     * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) ) + 
-		a[2]     * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) ) - 
-		dk_dx[0] * ( 0.25*cos( 0.25*x[0] ) *     sin( 0.5*x[1] ) * sin( 1.0*x[2] ) ) - 
-		dk_dx[1] * (      sin( 0.25*x[0] ) * 0.5*cos( 0.5*x[1] ) * sin( 1.0*x[2] ) ) - 
-		dk_dx[2] * (      sin( 0.25*x[0] ) *     sin( 0.5*x[1] ) * cos( 1.0*x[2] ) ) - 
-		k * (-(0.25*0.25+0.5*0.5+1.0*1.0)*sin( 0.25*x[0] ) * sin( 0.5*x[1] ) * sin( 1.0*x[2] ));
+		a * (v[0]*dT_dx[0] + v[1]*dT_dx[1] + v[2]*dT_dx[2]) - 
+		(dk_dx[0]*dT_dx[0] + dk_dx[1]*dT_dx[1] + dk_dx[2]*dT_dx[2]) - 
+		k * (d2T_dx2[0] + d2T_dx2[1] + d2T_dx2[2]);
 	
 	return val;
 }
@@ -110,10 +141,10 @@ void manusol_set_source(
 		double*  source)
 {
 	for(int i=0; i<(fe->total_num_nodes); i++) {
-		double a[3];  double k;
-		manusol_get_conv_vel(a, fe->x[i]);
+		double v[3];  double k;
+		manusol_get_conv_vel(v, fe->x[i]);
 		k = manusol_get_diff_coef(fe->x[i]);
-		source[i] = manusol_get_source(fe->x[i], a, k);
+		source[i] = manusol_get_source(fe->x[i], 1.0, v, k);
 	}
 }
 
@@ -243,7 +274,7 @@ void set_element_mat_vec(
 			BBFE_std_mapping_vector_value_integ_point_3d(x_ip[p], nl, local_x, basis->N[p]);
 			manusol_get_conv_vel(v_ip[p], x_ip[p]);
 			k_ip[p] = manusol_get_diff_coef(x_ip[p]);
-			f_ip[p] = manusol_get_source(x_ip[p], v_ip[p], k_ip[p]);
+			f_ip[p] = manusol_get_source(x_ip[p], 1.0, v_ip[p], k_ip[p]);
 		}
 
 		for(int i=0; i<nl; i++) {
