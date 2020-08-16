@@ -1,9 +1,9 @@
 
 #include "manusol.h"
-#include "../libBB/std.h"
-#include "../FE_std/surface.h"
-#include "../FE_sys/write.h"
-#include "../FE_elemmat/equivval.h"
+#include "BB/std.h"
+#include "BBFE/std/surface.h"
+#include "BBFE/sys/write.h"
+#include "BBFE/elemmat/equivval.h"
 
 #include <stdio.h>
 #include <math.h>

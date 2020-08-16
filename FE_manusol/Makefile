@@ -2,10 +2,10 @@
 CC = mpic++
 CFLAGS = -Wall -Wextra -pedantic -O3
 LDFLAGS =
-INCLUDES = -I/usr/local/include
-LIBS = -L/usr/local/lib -lm
+INCLUDES = -I/usr/local/include -I../include
+LIBS = -L/usr/local/lib -lm -L../lib/BB -lBB -lBBFE_std -lBBFE_sys -lBBFE_elemmat
 
-TARGET_LIB = ../lib/libBBFE_manusol.a
+TARGET_LIB = libBBFE_manusol.a
 #OBJS = debug_main.o
 OBJS = manusol.o
 

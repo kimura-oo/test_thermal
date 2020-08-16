@@ -1,7 +1,7 @@
 
 #include "read.h"
 #include "memory.h"
-#include "../libBB/std.h"
+#include "BB/std.h"
 
 #include <stdlib.h>
 

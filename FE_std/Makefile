@@ -2,10 +2,10 @@
 CC = mpic++
 CFLAGS = -Wall -Wextra -pedantic -O3
 LDFLAGS =
-INCLUDES = -I/usr/local/include
-LIBS = -L/usr/local/lib -lm
+INCLUDES = -I/usr/local/include -I../include
+LIBS = -L/usr/local/lib -lm -L../lib/BB -lBB
 
-TARGET_LIB = ../lib/libBBFE_std.a
+TARGET_LIB = libBBFE_std.a
 #OBJS = debug_main.o
 OBJS = integ.o shapefunc.o mapping.o surface.o
 
@@ -16,7 +16,7 @@ clean:
 		-rm -f $(OBJS) $(TARGET_LIB)
 
 .cpp.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $^ $(INCLUDES)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $^ $(LIBS)
 
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $^ $(INCLUDES)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $^ $(LIBS)

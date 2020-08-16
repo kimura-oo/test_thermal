@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "../libBB/std.h"
+#include "BB/std.h"
 
 static const char* CODENAME = "FE_std/integ >";
 static const double EPSILON_INTEG = 1.0e-12;

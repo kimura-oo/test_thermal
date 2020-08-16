@@ -1,6 +1,6 @@
 
 #include "convdiff.h"
-#include "../libBB/calc.h"
+#include "BB/calc.h"
 
 #include <math.h>
 

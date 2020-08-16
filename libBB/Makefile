@@ -5,7 +5,7 @@ LDFLAGS =
 INCLUDES = -I/usr/local/include
 LIBS = -L/usr/local/lib -lm
 
-TARGET_LIB = ../lib/libBB.a
+TARGET_LIB = libBB.a
 #OBJS = debug_main.o
 OBJS = std.o calc.o vtk.o
 

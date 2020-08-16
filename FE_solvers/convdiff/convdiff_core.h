@@ -2,26 +2,26 @@
 
 #include "monolis.h"
 
-#include "libBB/std.h"
-#include "libBB/calc.h"
-#include "libBB/vtk.h"
+#include "BB/std.h"
+#include "BB/calc.h"
+#include "BB/vtk.h"
 
-#include "FE_std/integ.h"
-#include "FE_std/shapefunc.h"
-#include "FE_std/mapping.h"
-#include "FE_std/surface.h"
+#include "BBFE/std/integ.h"
+#include "BBFE/std/shapefunc.h"
+#include "BBFE/std/mapping.h"
+#include "BBFE/std/surface.h"
 
-#include "FE_sys/FE_dataset.h"
-#include "FE_sys/memory.h"
-#include "FE_sys/read.h"
-#include "FE_sys/write.h"
-#include "FE_sys/monowrap.h"
+#include "BBFE/sys/FE_dataset.h"
+#include "BBFE/sys/memory.h"
+#include "BBFE/sys/read.h"
+#include "BBFE/sys/write.h"
+#include "BBFE/sys/monowrap.h"
 
-#include "FE_elemmat/set.h"
-#include "FE_elemmat/equivval.h"
-#include "FE_elemmat/convdiff.h"
+#include "BBFE/elemmat/set.h"
+#include "BBFE/elemmat/equivval.h"
+#include "BBFE/elemmat/convdiff.h"
 
-#include "FE_manusol/manusol.h"
+#include "BBFE/manusol/manusol.h"
 
 #include <math.h>
 #include <stdlib.h>

@@ -1,7 +1,7 @@
 
 #include "shapefunc.h"
-#include "../libBB/std.h"
-#include "../libBB/calc.h"
+#include "BB/std.h"
+#include "BB/calc.h"
 
 
 int BBFE_std_surface_hex1st_get_surface_node(

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "memory.h"
-#include "../libBB/std.h"
+#include "BB/std.h"
 
 
 void BBFE_sys_memory_allocation_integ(

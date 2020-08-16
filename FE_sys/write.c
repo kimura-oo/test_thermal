@@ -1,6 +1,6 @@
 
 #include "write.h"
-#include "../libBB/vtk.h"
+#include "BB/vtk.h"
 
 #include <stdlib.h>
 

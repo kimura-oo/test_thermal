@@ -1,9 +1,9 @@
 
 #include "set.h"
-#include "../libBB/std.h"
-#include "../libBB/calc.h"
-#include "../FE_std/integ.h"
-#include "../FE_std/mapping.h"
+#include "BB/std.h"
+#include "BB/calc.h"
+#include "BBFE/std/integ.h"
+#include "BBFE/std/mapping.h"
 
 void BBFE_elemmat_set_Jacobian_array(
 		double*    Jacobian_ip,

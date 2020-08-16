@@ -1,9 +1,9 @@
 
 #include "equivval.h"
-#include "../libBB/std.h"
+#include "BB/std.h"
 #include "set.h"
-#include "../FE_std/mapping.h"
-#include "../FE_std/integ.h"
+#include "BBFE/std/mapping.h"
+#include "BBFE/std/integ.h"
 
 #include <math.h>
 
