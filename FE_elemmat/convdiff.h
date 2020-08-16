@@ -8,6 +8,7 @@
 double BBFE_elemmat_convdiff_mat_conv(
 		const double  N_i,
 		const double  grad_N_j[3],
+		const double  a,
 		const double  v[3]);
 
 double BBFE_elemmat_convdiff_mat_diff(
@@ -21,17 +22,20 @@ double BBFE_elemmat_convdiff_vec_source(
 
 double BBFE_elemmat_convdiff_stab_coef(
 		const double k,
+		const double a,
 		const double v[3],
 		const double h_e);
 
 double BBFE_elemmat_convdiff_mat_stab_conv(
 		const double  grad_N_i[3],
 		const double  grad_N_j[3],
+		const double  a,
 		const double  v[3],
 		const double  tau);
 
 double BBFE_elemmat_convdiff_vec_stab_source(
 		const double  grad_N_i[3],
+		const double  a,
 		const double  v[3],
 		const double  tau,
 		const double  f);

@@ -63,11 +63,19 @@ double manusol_get_sol(
 }
 
 
+double manusol_get_mass_coef(
+		double x[3])
+{
+	double val = 1.0;
+	
+	return val;
+}
+
+
 void manusol_get_conv_vel(
 		double v[3],
 		double x[3])
 {
-	double val = 1.0/sqrt(3) * 0.0;
 	v[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
 	v[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
 	v[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
@@ -151,10 +159,11 @@ void manusol_set_source(
 		double*  source)
 {
 	for(int i=0; i<(fe->total_num_nodes); i++) {
-		double v[3];  double k;
+		double a; double v[3];  double k;
+		a = manusol_get_mass_coef(fe->x[i]);
 		manusol_get_conv_vel(v, fe->x[i]);
 		k = manusol_get_diff_coef(fe->x[i]);
-		source[i] = manusol_get_source(fe->x[i], 1.0, v, k);
+		source[i] = manusol_get_source(fe->x[i], a, v, k);
 	}
 }
 
@@ -327,9 +336,10 @@ void set_element_mat_vec(
 	double** local_x;
 	local_x   = BB_std_calloc_2d_double(local_x, nl, 3);
 	
-	double** x_ip;  double** v_ip;  double* k_ip;  double* f_ip;
+	double** x_ip;  double* a_ip;  double** v_ip;  double* k_ip;  double* f_ip;
 	x_ip = BB_std_calloc_2d_double(x_ip, np, 3);
 	v_ip = BB_std_calloc_2d_double(v_ip, np, 3);
+	a_ip = BB_std_calloc_1d_double(a_ip, np);
 	k_ip = BB_std_calloc_1d_double(k_ip, np);
 	f_ip = BB_std_calloc_1d_double(f_ip, np);
 
@@ -344,8 +354,9 @@ void set_element_mat_vec(
 		for(int p=0; p<np; p++) {
 			BBFE_std_mapping_vector_value_integ_point_3d(x_ip[p], nl, local_x, basis->N[p]);
 			manusol_get_conv_vel(v_ip[p], x_ip[p]);
+			a_ip[p] = manusol_get_mass_coef(x_ip[p]);
 			k_ip[p] = manusol_get_diff_coef(x_ip[p]);
-			f_ip[p] = manusol_get_source(x_ip[p], 1.0, v_ip[p], k_ip[p]);
+			f_ip[p] = manusol_get_source(x_ip[p], a_ip[p], v_ip[p], k_ip[p]);
 		}
 
 		for(int i=0; i<nl; i++) {
@@ -355,16 +366,16 @@ void set_element_mat_vec(
 					val_ip[p] = 0.0;
 
 					double tau = BBFE_elemmat_convdiff_stab_coef(
-							k_ip[p], v_ip[p], h_e);
+							k_ip[p], a_ip[p], v_ip[p], h_e);
 
 					val_ip[p] += BBFE_elemmat_convdiff_mat_conv(
-							basis->N[p][i], fe->geo[e][p].grad_N[j], v_ip[p]);
+							basis->N[p][i], fe->geo[e][p].grad_N[j], a_ip[p], v_ip[p]);
 
 					val_ip[p] -= BBFE_elemmat_convdiff_mat_diff(
 							fe->geo[e][p].grad_N[i], fe->geo[e][p].grad_N[j], k_ip[p]);
 
 					val_ip[p] += BBFE_elemmat_convdiff_mat_stab_conv(
-							fe->geo[e][p].grad_N[i], fe->geo[e][p].grad_N[j], v_ip[p], tau);
+							fe->geo[e][p].grad_N[i], fe->geo[e][p].grad_N[j], a_ip[p], v_ip[p], tau);
 				}
 
 				double integ_val = BBFE_std_integ_calc(
@@ -381,13 +392,13 @@ void set_element_mat_vec(
 				val_ip[p] = 0.0;
 		
 				double tau = BBFE_elemmat_convdiff_stab_coef(
-						k_ip[p], v_ip[p], h_e);
+						k_ip[p], a_ip[p], v_ip[p], h_e);
 				
 				val_ip[p] += BBFE_elemmat_convdiff_vec_source(
 						basis->N[p][i], f_ip[p]);
 
 				val_ip[p] += BBFE_elemmat_convdiff_vec_stab_source(
-						fe->geo[e][p].grad_N[i], v_ip[p], tau, f_ip[p]);
+						fe->geo[e][p].grad_N[i], a_ip[p], v_ip[p], tau, f_ip[p]);
 
 			}
 			double integ_val = BBFE_std_integ_calc(
@@ -404,6 +415,7 @@ void set_element_mat_vec(
 
 	BB_std_free_2d_double(x_ip, np, 3);
 	BB_std_free_2d_double(v_ip, np, 3);
+	BB_std_free_1d_double(a_ip, np);
 	BB_std_free_1d_double(k_ip, np);
 	BB_std_free_1d_double(f_ip, np);
 }

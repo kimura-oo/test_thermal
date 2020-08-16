@@ -10,9 +10,10 @@ const double ZERO_CRITERION  = 1.0e-8;
 double BBFE_elemmat_convdiff_mat_conv(
 		const double  N_i,
 		const double  grad_N_j[3],
+		const double  a,
 		const double  v[3])
 {
-	double val = (  
+	double val = a*(  
 			v[0] * N_i * grad_N_j[0] +
 			v[1] * N_i * grad_N_j[1] +
 			v[2] * N_i * grad_N_j[2]);
@@ -47,11 +48,12 @@ double BBFE_elemmat_convdiff_vec_source(
 
 double BBFE_elemmat_convdiff_stab_coef(
 		const double k,
+		const double a,
 		const double v[3],
 		const double h_e)
 {
 	
-	double l_v = BB_calc_vec3d_length(v);
+	double l_v = a * BB_calc_vec3d_length(v);
 	
 	if( l_v < ZERO_CRITERION) { return 0.0; }
 
@@ -65,10 +67,11 @@ double BBFE_elemmat_convdiff_stab_coef(
 double BBFE_elemmat_convdiff_mat_stab_conv(
 		const double  grad_N_i[3],
 		const double  grad_N_j[3],
+		const double  a,
 		const double  v[3],
 		const double  tau)
 {
-	double val = tau*(
+	double val = tau*a*a*(
 			v[0]*grad_N_i[0] * (v[0]*grad_N_j[0] + v[1]*grad_N_j[1] + v[2]*grad_N_j[2]) +
 			v[1]*grad_N_i[1] * (v[0]*grad_N_j[0] + v[1]*grad_N_j[1] + v[2]*grad_N_j[2]) +
 			v[2]*grad_N_i[2] * (v[0]*grad_N_j[0] + v[1]*grad_N_j[1] + v[2]*grad_N_j[2]) 
@@ -80,11 +83,12 @@ double BBFE_elemmat_convdiff_mat_stab_conv(
 
 double BBFE_elemmat_convdiff_vec_stab_source(
 		const double  grad_N_i[3],
+		const double  a,
 		const double  v[3],
 		const double  tau,
 		const double  f)
 {
-	double val = tau * (v[0]*grad_N_i[0] + v[1]*grad_N_i[1] + v[2]*grad_N_i[2]) * f;
+	double val = a*tau*(v[0]*grad_N_i[0] + v[1]*grad_N_i[1] + v[2]*grad_N_i[2]) * f;
 
 	return val;
 }
