@@ -120,3 +120,9 @@ int BB_std_read_args_return_char_num(
 		int argc,
 		char* argv[],
 		const char* c_option);
+
+int BB_std_read_args_search_num(
+		int         argc,
+		char*       argv[],
+		int         start_num,
+		const char* identifier);

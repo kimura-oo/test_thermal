@@ -376,3 +376,19 @@ int BB_std_read_args_return_char_num(
 		return num;
 	}
 }
+
+
+int BB_std_read_args_search_num(
+		int         argc,
+		char*       argv[],
+		int         start_num,
+		const char* identifier)
+{	
+	for(int i=start_num; i<argc; i++) {
+		if( strstr(argv[i], identifier) != NULL ) {
+			return i;
+		}
+	}
+
+	return -1;
+}

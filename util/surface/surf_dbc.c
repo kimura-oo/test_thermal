@@ -1,0 +1,187 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#include <BB/std.h>
+#include <BBFE/std/surface.h>
+#include <BBFE/sys/FE_dataset.h>
+#include <BBFE/sys/read.h>
+#include <BBFE/sys/write.h>
+
+static const char* CODENAME            = "surf_dbc >";
+static const char* VOIDNAME            = "          ";
+
+static const char* INPUT_FILENAME_NODE = "node.dat";
+static const char* INPUT_FILENAME_ELEM = "elem.dat";
+static const char* INPUT_FILENAME_D_BC = "D_bc.dat";
+
+static const char* OPTION_DIRECTORY    = "-o";
+static const char* DEFAULT_DIRECTORY   = ".";
+
+
+typedef struct {
+	const char* directory;
+	int         block_size;
+
+} SETTINGS;
+
+
+typedef struct {
+	int   num_bc_nodes;
+	bool* node_is_on_surface;
+
+} SURFACE;
+
+
+void read_fe_data(
+		BBFE_DATA*  fe,
+		const char* directory)
+{
+	BBFE_sys_read_node(
+			fe,
+			INPUT_FILENAME_NODE,
+			directory);
+	BBFE_sys_read_elem(
+			fe,
+			INPUT_FILENAME_ELEM,
+			directory,
+			1);
+}
+
+
+void get_surface_nodes(
+		BBFE_DATA* fe,
+		SURFACE*   surf)
+{
+	int num_bcs = 0;
+
+	switch(fe->local_num_nodes) {
+		case 4:
+		case 10:
+			printf("%s Element type: tetrahedron\n", CODENAME);
+			num_bcs = BBFE_std_surface_tet1st_get_surface_node(
+					surf->node_is_on_surface, 
+					fe->total_num_nodes, fe->x,
+					fe->total_num_elems, fe->conn);
+			break;
+
+		case 8:
+		case 27:
+			printf("%s Element type: hexahedron\n", CODENAME);
+			num_bcs = BBFE_std_surface_hex1st_get_surface_node(
+					surf->node_is_on_surface, 
+					fe->total_num_nodes, fe->x,
+					fe->total_num_elems, fe->conn);
+			break;
+
+		default:
+			printf("%s ERROR: unknown element type (num. nodes in element: %d\n)", 
+					CODENAME, fe->local_num_nodes);
+			exit(EXIT_FAILURE);
+	}
+
+	surf->num_bc_nodes = num_bcs;
+}
+	
+
+
+void memory_allocation_surface(
+		SURFACE*  surf,
+		const int total_num_nodes)
+{
+	surf->node_is_on_surface = 
+		BB_std_calloc_1d_bool(surf->node_is_on_surface, total_num_nodes);
+
+	for(int i=0; i<total_num_nodes; i++) {
+		surf->node_is_on_surface[i] = false;
+	}
+}
+
+
+void write_Dirichlet_bc_data(
+		BBFE_DATA*  fe,
+		SURFACE*    surf,
+		const int   block_size,
+		const char* directory)
+{
+	FILE* fp;
+	fp = BBFE_sys_write_fopen(fp, INPUT_FILENAME_D_BC, directory);
+
+	printf("\n%s Writing Dirichlet B.C. data\n", CODENAME);
+	printf("%s     Num. B.C. nodes: %d\n", CODENAME, surf->num_bc_nodes);
+	printf("%s     Block size     : %d\n", CODENAME, block_size);
+
+	fprintf(fp, "%d %d\n", block_size*(surf->num_bc_nodes), block_size);
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		if( surf->node_is_on_surface[i] ) {
+			for(int b=0; b<block_size; b++) {
+				fprintf(fp, "%d %d %e\n", i, b, 0.0);
+			}
+		}
+	}
+
+	fclose(fp);
+}
+
+
+void cmd_args_reader(
+		SETTINGS* sets,
+		int       argc,
+		char*     argv[])
+{
+	if(argc < 2) {
+		printf("%s Please specify parameters.\n", CODENAME);
+		printf("%s Format: \n", VOIDNAME);
+		printf("%s     ./surf_dbc [block size]\n\n", VOIDNAME);
+		printf("%s Options: \n", VOIDNAME);
+		printf("%s     %s [input & output directory]\n", VOIDNAME, OPTION_DIRECTORY);
+		printf("\n");
+
+		exit(0);
+	}
+
+	sets->block_size = atoi(argv[1]);
+	printf("%s Block size: %d\n", CODENAME, sets->block_size);
+
+	int num = BB_std_read_args_return_char_num(
+			argc, argv, OPTION_DIRECTORY);
+	if(num == -1) {
+		printf("%s Input & output directory is not specified.\n", CODENAME);
+		sets->directory = DEFAULT_DIRECTORY;
+		printf("%s Input & output directory: %s (default)\n", CODENAME, sets->directory);
+	}
+	else {
+		sets->directory = argv[num];
+		printf("%s Input & output directory: %s\n", CODENAME, sets->directory);
+	}
+	
+	printf("\n");
+}
+
+
+int main(
+		int   argc,
+		char* argv[])
+{
+	printf("\n");
+
+	BBFE_DATA fe;
+	SETTINGS  sets;
+	SURFACE   surf;
+
+	cmd_args_reader(&sets, argc, argv);
+
+	read_fe_data(&fe, sets.directory);
+	memory_allocation_surface(&surf, fe.total_num_nodes);
+
+	get_surface_nodes(&fe, &surf);
+
+	// function for higher order elements should be implemented!!!
+	
+	write_Dirichlet_bc_data(&fe, &surf, sets.block_size, sets.directory);
+
+	printf("\n");
+
+	return 0;
+}

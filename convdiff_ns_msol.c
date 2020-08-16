@@ -19,8 +19,8 @@ const double DELTA    = 1.0E-06;
 const int BUFFER_SIZE = 10000;
 
 static const char* INPUT_FILENAME_COND          = "cond.dat";
-static const char* OUTPUT_FILENAME_VTK        = "result_%06d.vtk";
-static const char* OUTPUT_FILENAME_ASCII_TEMP = "temparature_%06d.dat";
+static const char* OUTPUT_FILENAME_VTK          = "result_%06d.vtk";
+static const char* OUTPUT_FILENAME_ASCII_TEMP   = "temparature_%06d.dat";
 static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source_%06d.dat";
 
 
