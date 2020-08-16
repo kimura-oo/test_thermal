@@ -152,7 +152,7 @@ void cmd_args_reader(
 		printf("%s Input & output directory: %s (default)\n", CODENAME, sets->directory);
 	}
 	else {
-		sets->directory = argv[num];
+		sets->directory = argv[num+1];
 		printf("%s Input & output directory: %s\n", CODENAME, sets->directory);
 	}
 	

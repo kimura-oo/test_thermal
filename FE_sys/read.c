@@ -99,16 +99,12 @@ void BBFE_sys_read_Dirichlet_bc(
 		BBFE_BC*     bc,
 		const char*  filename,
 		const char*  directory,
-		const int    total_num_nodes)
+		const int    total_num_nodes,
+		const int    block_size)
 {
-	FILE* fp;
-	fp = BBFE_sys_read_fopen(fp, filename, directory);
 
 	bc->total_num_nodes = total_num_nodes;
-
-	BB_std_scan_line(&fp, BUFFER_SIZE,
-			"%d %d", &(bc->num_D_bcs), &(bc->block_size));
-	printf("%s Num. Dirichlet B.C.: %d\n", CODENAME, bc->num_D_bcs);
+	bc->block_size      = block_size;
 
 	BBFE_sys_memory_allocation_Dirichlet_bc(bc, total_num_nodes, bc->block_size);
 	int n = total_num_nodes * bc->block_size;
@@ -117,6 +113,19 @@ void BBFE_sys_read_Dirichlet_bc(
 		bc->D_bc_exists[i]   = false;
 		bc->imposed_D_val[i] = 0.0;
 	}
+
+	FILE* fp;
+	fp = BBFE_sys_read_fopen_without_error(fp, filename, directory);
+	if( fp == NULL ) {
+		printf("%s WARNING: Dirichlet B.C. file, \"%s\", is not found.\n",
+				CODENAME, filename);
+		return;
+	}
+
+
+	BB_std_scan_line(&fp, BUFFER_SIZE,
+			"%d %d", &(bc->num_D_bcs), &(bc->block_size));
+	printf("%s Num. Dirichlet B.C.: %d\n", CODENAME, bc->num_D_bcs);
 
 	for(int i=0; i<(bc->num_D_bcs); i++) {
 		int node_id;  int block_id;  double val;

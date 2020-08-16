@@ -51,31 +51,12 @@ void BBFE_convdiff_pre(
 			1,
 			n_axis*n_axis*n_axis);
 
-	if(manufactured_solution) {
-		switch( fe->local_num_nodes ) {
-			case 4:
-				BBFE_manusol_overwrite_bc_file_tet(
-						fe,
-						BLOCK_SIZE, 
-						INPUT_FILENAME_D_BC,
-						directory);
-				break;
-
-			case 8:
-				BBFE_manusol_overwrite_bc_file_hex(
-						fe,
-						BLOCK_SIZE, 
-						INPUT_FILENAME_D_BC,
-						directory);
-				break;
-		}
-	}
-
 	BBFE_sys_read_Dirichlet_bc(
 			bc,
 			INPUT_FILENAME_D_BC,
 			directory,
-			fe->total_num_nodes);
+			fe->total_num_nodes,
+			BLOCK_SIZE);
 
 	BBFE_convdiff_set_basis(
 			basis,
