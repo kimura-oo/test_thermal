@@ -33,6 +33,11 @@ bool* BB_std_calloc_1d_bool(
 		bool*     array,
 		const int size);
 
+bool** BB_std_calloc_2d_bool(
+		bool**     array,
+		const int  size1,
+		const int  size2);
+
 void BB_std_free_1d_double(
 		double*   array,
 		const int size);
@@ -54,6 +59,11 @@ void BB_std_free_2d_int(
 void BB_std_free_1d_bool(
 		bool*     array,
 		const int size);
+
+void BB_std_free_2d_bool(
+		bool**     array,
+		const int  size1,
+		const int  size2);
 
 /**********************************************************
  * functions for file IO

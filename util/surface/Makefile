@@ -6,13 +6,18 @@ INCLUDES = -I/usr/local/include -I../../include
 LIBS = -L/usr/local/lib -lm -L../../lib -lBB -lBBFE_std -lBBFE_sys
 
 TARGET1 = surf_dbc
-OBJS1 = surf_dbc.o
+OBJS1 = surf_dbc.o surf_core.o
+TARGET2 = surf_nbc_eq
+OBJS2 = surf_nbc_eq.o surf_core.o
 
 .SUFFIXES: .c .cpp .o
 
 all: $(TARGET1) $(TARGET2)
 
 $(TARGET1): $(OBJS1)
+	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $^ $(LIBS) 
+
+$(TARGET2): $(OBJS2)
 	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $^ $(LIBS) 
 
 clean:

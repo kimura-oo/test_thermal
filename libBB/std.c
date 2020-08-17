@@ -62,6 +62,20 @@ bool* BB_std_calloc_1d_bool(
 }
 
 
+bool** BB_std_calloc_2d_bool(
+		bool**     array,
+		const int  size1,
+		const int  size2)
+{
+	array = (bool**)calloc(size1, sizeof(bool*));
+	for(int i=0; i<size1; i++) {
+		array[i] = (bool*)calloc(size2, sizeof(bool));
+	}
+
+	return array;
+}
+
+
 void BB_std_free_1d_double(
 		double*   array,
 		const int size)
@@ -114,6 +128,21 @@ void BB_std_free_1d_bool(
 		bool*     array,
 		const int size)
 {
+	free(array);
+	array = NULL;
+}
+
+
+void BB_std_free_2d_bool(
+		bool**     array,
+		const int  size1,
+		const int  size2)
+{
+	for(int i=0; i<size1; i++) {
+		free(array[i]);
+		array[i] = NULL;
+	}
+
 	free(array);
 	array = NULL;
 }

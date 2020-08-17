@@ -8,18 +8,6 @@ void BBFE_manusol_calc_nodal_error_scalar(
 		double*       theo_sol,
 		const double* val);
 
-void BBFE_manusol_overwrite_bc_file_hex(
-		BBFE_DATA*  fe,
-		const int   block_size,
-		const char* filename,
-		const char* directory);
-
-void BBFE_manusol_overwrite_bc_file_tet(
-		BBFE_DATA*  fe,
-		const int   block_size,
-		const char* filename,
-		const char* directory);
-
 void BBFE_manusol_set_bc_scalar(
 		BBFE_DATA* fe,
 		BBFE_BC*   bc,

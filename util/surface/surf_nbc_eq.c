@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
 #include <BB/std.h>
+#include <BBFE/std/shapefunc.h>
 #include <BBFE/std/surface.h>
 #include <BBFE/sys/FE_dataset.h>
 #include <BBFE/sys/read.h>
@@ -11,8 +11,8 @@
 
 #include "surf_core.h"
 
-static const char* CODENAME            = "surf_dbc >";
-static const char* VOIDNAME            = "          ";
+static const char* CODENAME            = "surf_nbc_eq >";
+static const char* VOIDNAME            = "             ";
 
 static const char* OPTION_DIRECTORY    = "-o";
 static const char* DEFAULT_DIRECTORY   = ".";
@@ -20,7 +20,9 @@ static const char* DEFAULT_DIRECTORY   = ".";
 
 void memory_allocation_surface(
 		SURFACE*  surf,
-		const int total_num_nodes)
+		const int total_num_nodes,
+		const int total_num_elems,
+		const int local_num_nodes)
 {
 	surf->node_is_on_surface = 
 		BB_std_calloc_1d_bool(surf->node_is_on_surface, total_num_nodes);
@@ -28,32 +30,26 @@ void memory_allocation_surface(
 	for(int i=0; i<total_num_nodes; i++) {
 		surf->node_is_on_surface[i] = false;
 	}
-}
+	
+	int num_surfs;
+	switch(local_num_nodes) {
+		case 4:
+		case 10:
+			num_surfs = 4;
+			break;
 
+		case 8:
+		case 27:
+			num_surfs = 6;
+			break;
 
-void write_Dirichlet_bc_data(
-		BBFE_DATA*  fe,
-		SURFACE*    surf,
-		const int   block_size,
-		const char* directory)
-{
-	FILE* fp;
-	fp = BBFE_sys_write_fopen(fp, INPUT_FILENAME_D_BC, directory);
-
-	printf("\n%s Writing Dirichlet B.C. data\n", CODENAME);
-	printf("%s     Num. B.C. nodes: %d\n", CODENAME, surf->num_bc_nodes);
-	printf("%s     Block size     : %d\n", CODENAME, block_size);
-
-	fprintf(fp, "%d %d\n", block_size*(surf->num_bc_nodes), block_size);
-	for(int i=0; i<(fe->total_num_nodes); i++) {
-		if( surf->node_is_on_surface[i] ) {
-			for(int b=0; b<block_size; b++) {
-				fprintf(fp, "%d %d %e\n", i, b, 0.0);
-			}
-		}
+		default:
+			printf("%s ERROR: unknown element type (num. nodes in element: %d\n)", 
+					CODENAME, local_num_nodes);
+			exit(EXIT_FAILURE);
 	}
-
-	fclose(fp);
+	surf->surf_is_on_surface = BB_std_calloc_2d_bool(
+			surf->surf_is_on_surface, total_num_elems, num_surfs);
 }
 
 
@@ -65,7 +61,7 @@ void cmd_args_reader(
 	if(argc < 2) {
 		printf("%s Please specify parameters.\n", CODENAME);
 		printf("%s Format: \n", VOIDNAME);
-		printf("%s     ./surf_dbc [block size]\n\n", VOIDNAME);
+		printf("%s     ./surf_nbc_eq [block size]\n\n", VOIDNAME);
 		printf("%s Options: \n", VOIDNAME);
 		printf("%s     %s [input & output directory]\n", VOIDNAME, OPTION_DIRECTORY);
 		printf("\n");
@@ -105,15 +101,17 @@ int main(
 	cmd_args_reader(&sets, argc, argv);
 
 	read_fe_data(&fe, sets.directory);
-	memory_allocation_surface(&surf, fe.total_num_nodes);
+	memory_allocation_surface(&surf, 
+			fe.total_num_nodes, fe.total_num_elems, fe.local_num_nodes);
 
 	get_surface_nodes(&fe, &surf, CODENAME);
 
-	// function for higher order elements should be implemented!!!
-	
-	write_Dirichlet_bc_data(&fe, &surf, sets.block_size, sets.directory);
+	get_surface_info( &fe, &surf, CODENAME);
 
+	printf("%d\n", surf.num_bc_surfs);
+	
 	printf("\n");
 
 	return 0;
+
 }

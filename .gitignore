@@ -16,6 +16,7 @@
 !*Macfile
 !.gitignore
 !*plan.txt
+!*tasks.txt
 !*rule.txt
 !*.f90
 !install.sh

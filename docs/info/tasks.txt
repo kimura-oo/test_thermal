@@ -1,0 +1,6 @@
+- 2次要素への対応
+  - FE_std/shapefunc への実装
+  - FE_std/surface における中間節点データ抽出ルーチン実装
+    - BBFE_std_surface_get_surface_node_3d 等の wrapper の条件分岐追加
+	- 高次 tet と hex の中間節点抽出
+

@@ -1,7 +1,85 @@
 
+#include "surface.h"
 #include "shapefunc.h"
 #include "BB/std.h"
 #include "BB/calc.h"
+
+
+int BBFE_std_surface_get_surface_node_3d(
+		bool*    node_is_on_surface,
+		int      total_num_nodes,
+		double** x,
+		int      total_num_elems,
+		int      local_num_nodes,
+		int**    conn)
+{
+	int num_surface_nodes = 0;
+	int num_nodes_on_surf = 0;
+	
+	switch(local_num_nodes) {
+		case 4 : // tet 1st
+		case 10: // tet 2nd
+			num_nodes_on_surf = 3;
+			num_surface_nodes =
+				BBFE_std_surface_tet1st_get_surface_node(
+						node_is_on_surface,
+						total_num_nodes,
+						x,
+						total_num_elems,
+						conn);
+			break;
+
+		case 8 : // tet 1st
+		case 27: // tet 2nd
+			num_nodes_on_surf = 4;
+			num_surface_nodes = 
+				BBFE_std_surface_hex1st_get_surface_node(
+						node_is_on_surface,
+						total_num_nodes,
+						x,
+						total_num_elems,
+						conn);
+			break;
+
+	}
+
+	return num_surface_nodes;
+}
+
+
+int BBFE_std_surface_get_surface(
+		bool**   surf_is_on_surface, //[total_num_elems][num_surfs]
+		bool*    node_is_on_surface,
+		int      total_num_elems,
+		int      local_num_nodes,
+		int**    conn)
+{
+	int num_surfs = 0;
+
+	switch(local_num_nodes) {
+		case 4:
+		case 10:
+			num_surfs = BBFE_std_surface_tet1st_get_surface(
+					surf_is_on_surface,
+					node_is_on_surface,
+					total_num_elems,
+					conn);
+
+			break;
+
+		case 8:
+		case 27:
+			num_surfs = BBFE_std_surface_hex1st_get_surface(
+					surf_is_on_surface,
+					node_is_on_surface,
+					total_num_elems,
+					conn);
+
+			break;
+	}
+
+	return num_surfs;
+}
 
 
 int BBFE_std_surface_hex1st_get_surface_node(
@@ -105,4 +183,233 @@ int BBFE_std_surface_tet1st_get_surface_node(
 	BB_std_free_2d_double(norm, total_num_nodes, 3);
 
 	return num_surface_nodes;
+}
+
+
+int BBFE_std_surface_tet1st_get_surface(
+		bool**   surf_is_on_surface, //[total_num_elems][num_surfs]
+		bool*    node_is_on_surface,
+		int      total_num_elems,
+		int**    conn)
+{
+	int total_num_surfs = 0;
+
+	const int num_surf_nodes = 3;
+	const int num_surfs = 4;
+
+	for(int e=0; e<total_num_elems; e++) {
+
+		for(int s=0; s<num_surfs; s++) {
+			int loc_conn[ num_surf_nodes ];
+			int nid[ num_surf_nodes ];
+			
+			BBFE_std_shapefunc_tet1st_get_surface(loc_conn, s);
+			for(int i=0; i<num_surf_nodes; i++) {
+				nid[i] = conn[e][ loc_conn[i] ];
+			}
+
+			int count = 0;
+			for(int i=0; i<num_surf_nodes; i++) {
+				if( node_is_on_surface[ nid[i] ] ) {
+					count++;
+				}
+			}
+
+			printf("%d: %d %d\n", count, e, s);
+			if(count == num_surf_nodes) {
+				surf_is_on_surface[e][s] = true;
+			}
+			else {
+				surf_is_on_surface[e][s] = false;
+			}
+		}
+
+	}
+
+	for(int e=0; e<total_num_elems; e++) {
+
+		for(int s=0; s<num_surfs; s++) {
+
+			if( surf_is_on_surface[e][s] ) {
+				int loc_conn[ num_surf_nodes ];
+				int nid[ num_surf_nodes ];
+				
+				BBFE_std_shapefunc_tet1st_get_surface(loc_conn, s);
+				for(int i=0; i<num_surf_nodes; i++) {
+					nid[i] = conn[e][ loc_conn[i] ];
+				}
+
+				if( BBFE_std_surface_tet1st_search_identical_surface(
+						nid, total_num_elems, conn, e) ) {
+					surf_is_on_surface[e][s] = false;
+				}
+				else {
+					surf_is_on_surface[e][s] = true;
+					total_num_surfs++;
+				}
+			}
+
+		}
+	}
+
+	return total_num_surfs;
+}
+
+
+int BBFE_std_surface_hex1st_get_surface(
+		bool**   surf_is_on_surface, //[total_num_elems][num_surfs]
+		bool*    node_is_on_surface,
+		int      total_num_elems,
+		int**    conn)
+{
+	int total_num_surfs = 0;
+
+	const int num_surf_nodes = 4;
+	const int num_surfs = 6;
+
+	for(int e=0; e<total_num_elems; e++) {
+
+		for(int s=0; s<num_surfs; s++) {
+			int loc_conn[ num_surf_nodes ];
+			int nid[ num_surf_nodes ];
+			
+			BBFE_std_shapefunc_hex1st_get_surface(loc_conn, s);
+			for(int i=0; i<num_surf_nodes; i++) {
+				nid[i] = conn[e][ loc_conn[i] ];
+			}
+
+			int count = 0;
+			for(int i=0; i<num_surf_nodes; i++) {
+				if( node_is_on_surface[ nid[i] ] ) {
+					count++;
+				}
+			}
+
+			printf("%d: %d %d\n", count, e, s);
+			if(count == num_surf_nodes) {
+				surf_is_on_surface[e][s] = true;
+			}
+			else {
+				surf_is_on_surface[e][s] = false;
+			}
+		}
+
+	}
+
+	for(int e=0; e<total_num_elems; e++) {
+
+		for(int s=0; s<num_surfs; s++) {
+
+			if( surf_is_on_surface[e][s] ) {
+				int loc_conn[ num_surf_nodes ];
+				int nid[ num_surf_nodes ];
+				
+				BBFE_std_shapefunc_hex1st_get_surface(loc_conn, s);
+				for(int i=0; i<num_surf_nodes; i++) {
+					nid[i] = conn[e][ loc_conn[i] ];
+				}
+
+				if( BBFE_std_surface_hex1st_search_identical_surface(
+						nid, total_num_elems, conn, e) ) {
+					surf_is_on_surface[e][s] = false;
+				}
+				else {
+					surf_is_on_surface[e][s] = true;
+					total_num_surfs++;
+				}
+			}
+
+		}
+	}
+
+	return total_num_surfs;
+}
+
+
+static bool identical_elements(
+		int* n1,
+		int* n2,
+		int  num)
+{
+	bool identical[num];
+
+	for(int i=0; i<num; i++) {
+		identical[i] = false;
+	}
+
+	for(int i=0; i<num; i++) {
+		for(int j=0; j<num; j++) {
+			if( n1[i] == n2[j] ) {
+				identical[i] = true;
+			}
+		}
+	}
+
+	for(int i=0; i<num; i++) {
+		if(!identical[i]) { return false;}
+	}
+
+	return true;
+}
+
+
+bool BBFE_std_surface_tet1st_search_identical_surface(
+		int*  surf_nodes,
+		int   total_num_elems,
+		int** conn,
+		int   elem_num)
+{
+	const int num_surf_nodes = 3;
+	const int num_surfs = 4;
+	
+	for(int e=0; e<total_num_elems; e++) {
+		if( e == elem_num) { continue; }
+
+		for(int s=0; s<num_surfs; s++) {
+			int loc_conn[ num_surf_nodes ];
+			int nid[ num_surf_nodes ];
+			
+			BBFE_std_shapefunc_tet1st_get_surface(loc_conn, s);
+			for(int i=0; i<num_surf_nodes; i++) {
+				nid[i] = conn[e][ loc_conn[i] ];
+			}
+			
+			if( identical_elements(surf_nodes, nid, num_surf_nodes) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+bool BBFE_std_surface_hex1st_search_identical_surface(
+		int*  surf_nodes,
+		int   total_num_elems,
+		int** conn,
+		int   elem_num)
+{
+	const int num_surf_nodes = 4;
+	const int num_surfs = 6;
+	
+	for(int e=0; e<total_num_elems; e++) {
+		if( e == elem_num) { continue; }
+
+		for(int s=0; s<num_surfs; s++) {
+			int loc_conn[ num_surf_nodes ];
+			int nid[ num_surf_nodes ];
+			
+			BBFE_std_shapefunc_hex1st_get_surface(loc_conn, s);
+			for(int i=0; i<num_surf_nodes; i++) {
+				nid[i] = conn[e][ loc_conn[i] ];
+			}
+			
+			if( identical_elements(surf_nodes, nid, num_surf_nodes) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
