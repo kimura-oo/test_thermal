@@ -20,11 +20,11 @@ void read_fe_data(
 {
 	BBFE_sys_read_node(
 			fe,
-			INPUT_FILENAME_NODE,
+			FILENAME_NODE,
 			directory);
 	BBFE_sys_read_elem(
 			fe,
-			INPUT_FILENAME_ELEM,
+			FILENAME_ELEM,
 			directory,
 			1);
 }

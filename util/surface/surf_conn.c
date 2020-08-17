@@ -53,6 +53,26 @@ void cmd_args_reader(
 }
 
 
+void write_surface_conn(
+		BBFE_DATA*  fe,
+		SURFACE*    surf,
+		const char* directory)
+{
+	FILE* fp;
+	fp = BBFE_sys_write_fopen(fp, FILENAME_SURF, directory);
+
+	fprintf(fp, "%d %d\n", surf->num_bc_surfs, surf->num_nodes_on_surf);
+	for(int s=0; s<(surf->num_bc_surfs); s++) {
+		for(int i=0; i<(surf->num_nodes_on_surf); i++) {
+			fprintf(fp, "%d ", surf->conn_surf[s][i]);
+		}
+		fprintf(fp, "\n");
+	}
+
+	fclose(fp);
+}
+
+
 int main(
 		int   argc,
 		char* argv[])
@@ -78,6 +98,8 @@ int main(
 	set_surface_conn(&fe, &surf);
 
 	write_surface_vtk(&fe, &surf, sets.directory);
+
+	write_surface_conn(&fe, &surf, sets.directory);
 	
 	printf("\n");
 

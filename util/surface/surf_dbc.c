@@ -25,7 +25,7 @@ void write_Dirichlet_bc_data(
 		const char* directory)
 {
 	FILE* fp;
-	fp = BBFE_sys_write_fopen(fp, INPUT_FILENAME_D_BC, directory);
+	fp = BBFE_sys_write_fopen(fp, FILENAME_D_BC, directory);
 
 	printf("\n%s Writing Dirichlet B.C. data\n", CODENAME);
 	printf("%s     Num. B.C. nodes: %d\n", CODENAME, surf->num_bc_nodes);

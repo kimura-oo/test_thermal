@@ -1,10 +1,11 @@
 
 #include <BBFE/sys/FE_dataset.h>
 
-static const char* INPUT_FILENAME_NODE = "node.dat";
-static const char* INPUT_FILENAME_ELEM = "elem.dat";
-static const char* INPUT_FILENAME_D_BC = "D_bc.dat";
-static const char* INPUT_FILENAME_N_BC = "N_bc.dat";
+static const char* FILENAME_NODE = "node.dat";
+static const char* FILENAME_ELEM = "elem.dat";
+static const char* FILENAME_D_BC = "D_bc.dat";
+static const char* FILENAME_N_BC = "N_bc.dat";
+static const char* FILENAME_SURF = "surf.dat";
 
 static const char* OUTPUT_FILENAME_SURF_VTK = "surf.vtk";
 
@@ -16,14 +17,17 @@ typedef struct {
 
 
 typedef struct {
+	// node related data
 	int    num_bc_nodes;
 	bool*  node_is_on_surface;
 
+	// surface related data (basic)
 	int    num_bc_surfs;
 	int    num_nodes_on_surf;
+	int**  conn_surf;
+	// surface related data (additional)
 	int*   orig_elem_num;
 	int*   orig_surf_num;
-	int**  conn_surf;
 	bool** surf_is_on_surface;
 	int    num_surfs_in_elem;
 
