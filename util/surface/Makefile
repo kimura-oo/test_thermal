@@ -7,8 +7,8 @@ LIBS = -L/usr/local/lib -lm -L../../lib -lBB -lBBFE_std -lBBFE_sys
 
 TARGET1 = surf_dbc
 OBJS1 = surf_dbc.o surf_core.o
-TARGET2 = surf_nbc_eq
-OBJS2 = surf_nbc_eq.o surf_core.o
+TARGET2 = surf_conn
+OBJS2 = surf_conn.o surf_core.o
 
 .SUFFIXES: .c .cpp .o
 
