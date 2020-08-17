@@ -185,6 +185,16 @@ void manusol_set_source(
 }
 
 
+void manusol_set_init_value(
+		BBFE_DATA* fe,
+		double* T)
+{
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		T[i] = manusol_get_sol(fe->x[i][0], fe->x[i][1], fe->x[i][2], 0.0);
+	}
+}
+
+
 void memory_allocation_nodal_values(
 		VALUES*         vals,
 		const int       total_num_nodes)
@@ -570,6 +580,7 @@ int main (
 	memory_allocation_nodal_values(
 			&(sys.vals),
 			sys.fe.total_num_nodes);
+	manusol_set_init_value(&(sys.fe), sys.vals.T);
 
 	FILE* fp;
 	fp = BBFE_sys_write_fopen(fp, "l2_error.txt", sys.cond.directory);
