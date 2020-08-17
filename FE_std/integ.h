@@ -22,6 +22,22 @@ int BBFE_std_integ_line_set_arbitrary_points(
 		double* integ_weight );    // array of integration weight
 
 /**********************************************************
+ * 2D rectangle
+ **********************************************************/
+int BBFE_std_integ_rec_set_arbitrary_points(
+		int     num_points_in_each_axis,  // the number of integration points
+		double** integ_point,       
+		double*  integ_weight);
+
+/**********************************************************
+ * 2D triangle
+ **********************************************************/
+int BBFE_std_integ_tri_set_arbitrary_points(
+		int      num_points_in_each_axis,  // the number of integration points
+		double** integ_point,       
+		double*  integ_weight );
+
+/**********************************************************
  * 3D hexahedron
  **********************************************************/
 int BBFE_std_integ_hex_set_arbitrary_points(

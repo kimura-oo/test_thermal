@@ -140,6 +140,125 @@ int BBFE_std_integ_line_set_arbitrary_points(
 
 
 /**********************************************************
+ * 2D rectangle
+ **********************************************************/
+static int index_rec2d(
+		const int i_x,
+		const int i_y,
+		const int num_points)
+{
+	return (num_points*i_y + i_x);
+}
+
+
+int BBFE_std_integ_rec_set_arbitrary_points(
+		int     num_points_in_each_axis,  // the number of integration points
+		double** integ_point,       
+		double*  integ_weight)
+{
+	int n = num_points_in_each_axis;
+	int num_integ_points = n*n;
+
+	double* point_1d;  double* weight_1d;
+	point_1d  = BB_std_calloc_1d_double(point_1d , n);
+	weight_1d = BB_std_calloc_1d_double(weight_1d, n);
+
+	BBFE_std_integ_line_set_arbitrary_points(n, point_1d, weight_1d);
+
+	for(int i_y=0; i_y<n; i_y++) {
+		for(int i_x=0; i_x<n; i_x++) {
+			int g = index_rec2d(i_x, i_y, n);
+			integ_point[g][0] = point_1d[i_x];
+			integ_point[g][1] = point_1d[i_y];
+
+			integ_weight[g] = weight_1d[i_x] * weight_1d[i_y];
+		}
+	}
+
+	BB_std_free_1d_double(point_1d , n);
+	BB_std_free_1d_double(weight_1d, n);
+
+	return num_integ_points;
+}
+
+
+/**********************************************************
+ * 2D triangle
+ **********************************************************/
+static void set_shapefunc_rec1st(
+		double       N[4],
+		const double xi[2])
+{
+	double coef = 1.0/4.0;
+	N[0] = coef * (1.0-xi[0]) * (1.0-xi[1]);
+	N[1] = coef * (1.0+xi[0]) * (1.0-xi[1]);
+	N[2] = coef * (1.0+xi[0]) * (1.0+xi[1]);
+	N[3] = coef * (1.0-xi[0]) * (1.0+xi[1]);
+}
+
+
+static void set_degeneration_nodes_2d(
+		double     x[4][2])
+{
+	// Degeneration rules:
+	//   tri3 = rec3 = rec4
+	x[0][0] = 0.0;  x[0][1] = 0.0; 
+	x[1][0] = 1.0;  x[1][1] = 0.0; 
+	x[2][0] = 0.0;  x[2][1] = 1.0; 
+	x[3][0] = 0.0;  x[3][1] = 1.0; 
+}
+
+
+static void mapping_rec_to_tri(
+		double       xi_tri[2],
+		const double xi_rec[2])
+{
+	double x[4][2];
+	set_degeneration_nodes_2d(x);
+
+	double N[4];
+	set_shapefunc_rec1st(N, xi_rec);
+
+	for(int d=0; d<2; d++) {
+		xi_tri[d] = 0.0;
+	}
+
+	for(int i=0; i<4; i++) {
+		for(int d=0; d<2; d++) {
+			xi_tri[d] += N[i] * x[i][d];
+		}
+	}	
+}
+
+
+int BBFE_std_integ_tri_set_arbitrary_points(
+		int      num_points_in_each_axis,  // the number of integration points
+		double** integ_point,       
+		double*  integ_weight )
+{
+	int n = num_points_in_each_axis;
+
+	int num_integ_points = BBFE_std_integ_rec_set_arbitrary_points(
+			n, integ_point, integ_weight);
+
+	double w=0.0;
+	for(int g=0; g<num_integ_points; g++) {
+		double tri_ip[2];
+		mapping_rec_to_tri(tri_ip, integ_point[g]);
+
+		for(int d=0; d<2; d++) {
+			integ_point[g][d] = tri_ip[d];
+		}
+
+		integ_weight[g] = integ_weight[g]/(4.0*2.0);
+	}
+
+	return num_integ_points;
+
+}
+
+
+/**********************************************************
  * 3D hexahedron
  **********************************************************/
 static int index_hex3d(
@@ -159,7 +278,7 @@ int BBFE_std_integ_hex_set_arbitrary_points(
 {
 	int n = num_points_in_each_axis;
 	int num_integ_points = n*n*n;
-	
+
 	double* point_1d;  double* weight_1d;
 	point_1d  = BB_std_calloc_1d_double(point_1d , n);
 	weight_1d = BB_std_calloc_1d_double(weight_1d, n);
@@ -189,8 +308,6 @@ int BBFE_std_integ_hex_set_arbitrary_points(
 /**********************************************************
  * 3D tetrahedron
  **********************************************************/
-
-
 static void set_shapefunc_hex1st(
 		double       N[8],
 		const double xi[3])
@@ -207,7 +324,7 @@ static void set_shapefunc_hex1st(
 }
 
 
-static void set_degeneration_nodes(
+static void set_degeneration_nodes_3d(
 		double     x[8][3])
 {
 	// Degeneration rules:
@@ -229,7 +346,7 @@ static void mapping_hex_to_tet(
 		const double xi_hex[3])
 {
 	double x[8][3];
-	set_degeneration_nodes(x);
+	set_degeneration_nodes_3d(x);
 
 	double N[8];
 	set_shapefunc_hex1st(N, xi_hex);

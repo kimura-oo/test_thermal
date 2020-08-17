@@ -19,8 +19,10 @@ typedef struct {
 	bool*  node_is_on_surface;
 
 	int    num_bc_surfs;
+	int    num_nodes_on_surf;
 	int**  conn_surf;
 	bool** surf_is_on_surface;
+	int    num_surfs_in_elem;
 
 } SURFACE;
 

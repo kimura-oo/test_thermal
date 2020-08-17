@@ -31,16 +31,21 @@ void memory_allocation_surface(
 		surf->node_is_on_surface[i] = false;
 	}
 	
-	int num_surfs;
 	switch(local_num_nodes) {
 		case 4:
-		case 10:
-			num_surfs = 4;
+			surf->num_surfs_in_elem = 4;
+			surf->num_nodes_on_surf = 3;
 			break;
-
+		case 10:
+			surf->num_surfs_in_elem = 4;
+			surf->num_nodes_on_surf = 6;
+			break;
 		case 8:
+			surf->num_surfs_in_elem = 6;
+			surf->num_nodes_on_surf = 6;
+			break;
 		case 27:
-			num_surfs = 6;
+			surf->num_surfs_in_elem = 6;
 			break;
 
 		default:

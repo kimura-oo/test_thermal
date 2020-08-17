@@ -5,6 +5,24 @@
 #include "BB/calc.h"
 
 
+int BBFE_std_surface_get_surface_info(
+		int  local_num_nodes)
+{
+		switch(local_num_nodes) {
+		case 4 : // tet 1st
+		case 10: // tet 2nd
+		
+			break;
+
+		case 8 : // tet 1st
+		case 27: // tet 2nd
+			
+			break;
+
+	}
+}
+
+
 int BBFE_std_surface_get_surface_node_3d(
 		bool*    node_is_on_surface,
 		int      total_num_nodes,
