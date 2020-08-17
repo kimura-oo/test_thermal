@@ -1,4 +1,60 @@
 
+/**********************************************************
+ * 2D rectangle, 1st order
+ **********************************************************/
+void BBFE_std_shapefunc_rec1st_get_val(
+		const double    xi[2],
+		double*         N)
+{
+	double coef = 1.0/4.0;
+	N[0] = coef * (1.0-xi[0]) * (1.0-xi[1]);
+	N[1] = coef * (1.0+xi[0]) * (1.0-xi[1]);
+	N[2] = coef * (1.0+xi[0]) * (1.0+xi[1]);
+	N[3] = coef * (1.0-xi[0]) * (1.0+xi[1]);
+}
+
+
+void BBFE_std_shapefunc_rec1st_get_derivative(
+		const double    xi[2],
+		double*         dN_dxi,
+		double*         dN_det)
+{
+	double coef = 1.0/4.0;
+	dN_dxi[0] = -coef               * (1.0-xi[1]);
+	dN_dxi[1] =  coef               * (1.0-xi[1]);
+	dN_dxi[2] =  coef               * (1.0+xi[1]);
+	dN_dxi[3] = -coef               * (1.0+xi[1]);
+	
+	dN_det[0] = -coef * (1.0-xi[0])              ;
+	dN_det[1] = -coef * (1.0+xi[0])              ;
+	dN_det[2] =  coef * (1.0+xi[0])              ;
+	dN_det[3] =  coef * (1.0-xi[0])              ;
+}
+
+
+/**********************************************************
+ * 2D triangle, 1st order
+ **********************************************************/
+void BBFE_std_shapefunc_tri1st_get_val(
+		const double    xi[2],
+		double*         N)
+{
+	N[0] = 1.0 - xi[0] - xi[1] - xi[2];
+	N[1] = xi[0];
+	N[2] = xi[1];
+}
+
+
+void BBFE_std_shapefunc_tri1st_get_derivative(
+		const double    xi[2],
+		double*         dN_dxi,
+		double*         dN_det)
+{
+	dN_dxi[0] = -1.0;  dN_det[0] = -1.0;  
+	dN_dxi[1] =  1.0;  dN_det[1] =  0.0;  
+	dN_dxi[2] =  0.0;  dN_det[2] =  1.0;  
+}
+
 
 /**********************************************************
  * 3D hexahedron, 1st order

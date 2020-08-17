@@ -510,7 +510,7 @@ void set_element_vec(
 			manusol_get_conv_vel(v_ip[p], x_ip[p]);
 			a_ip[p] = manusol_get_mass_coef(x_ip[p]);
 			k_ip[p] = manusol_get_diff_coef(x_ip[p]);
-			T_ip[p] = BBFE_std_mapping_scalar_value_integ_point_3d(nl, local_T, basis->N[p]);
+			T_ip[p] = BBFE_std_mapping_scalar_value_integ_point(nl, local_T, basis->N[p]);
 			f_ip[p] = manusol_get_source(x_ip[p], t, a_ip[p], v_ip[p], k_ip[p]);
 		}
 

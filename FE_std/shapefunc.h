@@ -2,6 +2,30 @@
 
 
 /**********************************************************
+ * 2D rectangle, 1st order
+ **********************************************************/
+void BBFE_std_shapefunc_rec1st_get_val(
+		const double    xi[3],
+		double*         N);
+
+void BBFE_std_shapefunc_rec1st_get_derivative(
+		const double    xi[3],
+		double*         dN_dxi,
+		double*         dN_det);
+
+/**********************************************************
+ * 2D triangle, 1st order
+ **********************************************************/
+void BBFE_std_shapefunc_tri1st_get_val(
+		const double    xi[2],
+		double*         N);
+
+void BBFE_std_shapefunc_tri1st_get_derivative(
+		const double    xi[2],
+		double*         dN_dxi,
+		double*         dN_det);
+
+/**********************************************************
  * 3D hexahedron, 1st order
  **********************************************************/
 void BBFE_std_shapefunc_hex1st_get_val(

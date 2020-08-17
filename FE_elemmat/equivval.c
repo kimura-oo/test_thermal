@@ -112,7 +112,7 @@ double BBFE_elemmat_equivval_relative_L2_error_scalar(
 
 		for(int p=0; p<(basis->num_integ_points); p++) {
 			double val_ip;
-			val_ip = BBFE_std_mapping_scalar_value_integ_point_3d(
+			val_ip = BBFE_std_mapping_scalar_value_integ_point(
 					fe->local_num_nodes,
 					local_val,
 					basis->N[p]);

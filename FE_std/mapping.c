@@ -23,7 +23,7 @@ void BBFE_std_mapping_calc_Jacobi_mat_3d(
 }
 
 
-double BBFE_std_mapping_scalar_value_integ_point_3d(
+double BBFE_std_mapping_scalar_value_integ_point(
 		const int     local_num_nodes,
 		double*       local_val,
 		double*       N)
