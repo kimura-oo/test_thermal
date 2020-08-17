@@ -18,19 +18,6 @@ static const char* OPTION_DIRECTORY    = "-o";
 static const char* DEFAULT_DIRECTORY   = ".";
 
 
-void memory_allocation_surface(
-		SURFACE*  surf,
-		const int total_num_nodes)
-{
-	surf->node_is_on_surface = 
-		BB_std_calloc_1d_bool(surf->node_is_on_surface, total_num_nodes);
-
-	for(int i=0; i<total_num_nodes; i++) {
-		surf->node_is_on_surface[i] = false;
-	}
-}
-
-
 void write_Dirichlet_bc_data(
 		BBFE_DATA*  fe,
 		SURFACE*    surf,
@@ -105,7 +92,8 @@ int main(
 	cmd_args_reader(&sets, argc, argv);
 
 	read_fe_data(&fe, sets.directory);
-	memory_allocation_surface(&surf, fe.total_num_nodes);
+	memory_allocation_surface(&surf, 
+			fe.total_num_nodes, fe.total_num_elems, fe.local_num_nodes, CODENAME);
 
 	get_surface_nodes(&fe, &surf, CODENAME);
 

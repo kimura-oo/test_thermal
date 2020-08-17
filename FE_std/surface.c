@@ -5,21 +5,47 @@
 #include "BB/calc.h"
 
 
-int BBFE_std_surface_get_surface_info(
+int BBFE_std_surface_get_num_surfs_in_elem(
 		int  local_num_nodes)
 {
-		switch(local_num_nodes) {
+	int num_surfs_in_elem = 0;
+	switch(local_num_nodes) {
 		case 4 : // tet 1st
 		case 10: // tet 2nd
-		
+			num_surfs_in_elem = 4;
 			break;
 
 		case 8 : // tet 1st
 		case 27: // tet 2nd
-			
+			num_surfs_in_elem = 6;
+			break;
+	}
+
+	return num_surfs_in_elem;
+}
+
+
+int BBFE_std_surface_get_num_nodes_on_surf(
+		int  local_num_nodes)
+{
+	int num_nodes_in_surf = 0;
+	switch(local_num_nodes) {
+		case 4 : // tet 1st
+			num_nodes_in_surf = 3;
+			break;
+		case 10: // tet 2nd
+			num_nodes_in_surf = 6;
 			break;
 
+		case 8 : // tet 1st
+			num_nodes_in_surf = 4;
+			break;
+		case 27: // tet 2nd
+			num_nodes_in_surf = 9;
+			break;
 	}
+
+	return num_nodes_in_surf;
 }
 
 
@@ -233,7 +259,6 @@ int BBFE_std_surface_tet1st_get_surface(
 				}
 			}
 
-			printf("%d: %d %d\n", count, e, s);
 			if(count == num_surf_nodes) {
 				surf_is_on_surface[e][s] = true;
 			}
@@ -303,7 +328,6 @@ int BBFE_std_surface_hex1st_get_surface(
 				}
 			}
 
-			printf("%d: %d %d\n", count, e, s);
 			if(count == num_surf_nodes) {
 				surf_is_on_surface[e][s] = true;
 			}

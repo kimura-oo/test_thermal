@@ -18,46 +18,6 @@ static const char* OPTION_DIRECTORY    = "-o";
 static const char* DEFAULT_DIRECTORY   = ".";
 
 
-void memory_allocation_surface(
-		SURFACE*  surf,
-		const int total_num_nodes,
-		const int total_num_elems,
-		const int local_num_nodes)
-{
-	surf->node_is_on_surface = 
-		BB_std_calloc_1d_bool(surf->node_is_on_surface, total_num_nodes);
-
-	for(int i=0; i<total_num_nodes; i++) {
-		surf->node_is_on_surface[i] = false;
-	}
-	
-	switch(local_num_nodes) {
-		case 4:
-			surf->num_surfs_in_elem = 4;
-			surf->num_nodes_on_surf = 3;
-			break;
-		case 10:
-			surf->num_surfs_in_elem = 4;
-			surf->num_nodes_on_surf = 6;
-			break;
-		case 8:
-			surf->num_surfs_in_elem = 6;
-			surf->num_nodes_on_surf = 6;
-			break;
-		case 27:
-			surf->num_surfs_in_elem = 6;
-			break;
-
-		default:
-			printf("%s ERROR: unknown element type (num. nodes in element: %d\n)", 
-					CODENAME, local_num_nodes);
-			exit(EXIT_FAILURE);
-	}
-	surf->surf_is_on_surface = BB_std_calloc_2d_bool(
-			surf->surf_is_on_surface, total_num_elems, num_surfs);
-}
-
-
 void cmd_args_reader(
 		SETTINGS* sets,
 		int       argc,
@@ -107,13 +67,17 @@ int main(
 
 	read_fe_data(&fe, sets.directory);
 	memory_allocation_surface(&surf, 
-			fe.total_num_nodes, fe.total_num_elems, fe.local_num_nodes);
+			fe.total_num_nodes, fe.total_num_elems, fe.local_num_nodes, CODENAME);
 
 	get_surface_nodes(&fe, &surf, CODENAME);
 
 	get_surface_info( &fe, &surf, CODENAME);
 
-	printf("%d\n", surf.num_bc_surfs);
+	memory_allocation_surface_conn(&surf);
+
+	set_surface_conn(&fe, &surf);
+
+	write_surface_vtk(&fe, &surf, sets.directory);
 	
 	printf("\n");
 
