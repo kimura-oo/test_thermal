@@ -44,7 +44,7 @@ void BBFE_elemmat_equivval_volume_smooth_function(
 
 			for(int p=0; p<(basis->num_integ_points); p++) {
 				double x_ip[3];
-				BBFE_std_mapping_vector_value_integ_point_3d(
+				BBFE_std_mapping_vector3d(
 						x_ip,
 						fe->local_num_nodes,
 						local_x,
@@ -112,13 +112,13 @@ double BBFE_elemmat_equivval_relative_L2_error_scalar(
 
 		for(int p=0; p<(basis->num_integ_points); p++) {
 			double val_ip;
-			val_ip = BBFE_std_mapping_scalar_value_integ_point(
+			val_ip = BBFE_std_mapping_scalar(
 					fe->local_num_nodes,
 					local_val,
 					basis->N[p]);
 
 			double x_ip[3];
-			BBFE_std_mapping_vector_value_integ_point_3d(
+			BBFE_std_mapping_vector3d(
 					x_ip,
 					fe->local_num_nodes,
 					local_x,

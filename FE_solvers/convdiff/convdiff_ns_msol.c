@@ -406,7 +406,7 @@ void set_element_mat(
 		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x, e, 3);
 		
 		for(int p=0; p<np; p++) {
-			BBFE_std_mapping_vector_value_integ_point_3d(x_ip[p], nl, local_x, basis->N[p]);
+			BBFE_std_mapping_vector3d(x_ip[p], nl, local_x, basis->N[p]);
 			a_ip[p] = manusol_get_mass_coef(x_ip[p]);
 			manusol_get_conv_vel(v_ip[p], x_ip[p]);
 			k_ip[p] = manusol_get_diff_coef(x_ip[p]);
@@ -506,11 +506,11 @@ void set_element_vec(
 		BBFE_elemmat_set_local_array_scalar(local_T, fe, vals->T, e);
 		
 		for(int p=0; p<np; p++) {
-			BBFE_std_mapping_vector_value_integ_point_3d(x_ip[p], nl, local_x, basis->N[p]);
+			BBFE_std_mapping_vector3d(x_ip[p], nl, local_x, basis->N[p]);
 			manusol_get_conv_vel(v_ip[p], x_ip[p]);
 			a_ip[p] = manusol_get_mass_coef(x_ip[p]);
 			k_ip[p] = manusol_get_diff_coef(x_ip[p]);
-			T_ip[p] = BBFE_std_mapping_scalar_value_integ_point(nl, local_T, basis->N[p]);
+			T_ip[p] = BBFE_std_mapping_scalar(nl, local_T, basis->N[p]);
 			f_ip[p] = manusol_get_source(x_ip[p], t, a_ip[p], v_ip[p], k_ip[p]);
 		}
 

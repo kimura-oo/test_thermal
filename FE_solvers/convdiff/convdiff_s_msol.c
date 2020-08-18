@@ -352,7 +352,7 @@ void set_element_mat_vec(
 		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x, e, 3);
 
 		for(int p=0; p<np; p++) {
-			BBFE_std_mapping_vector_value_integ_point_3d(x_ip[p], nl, local_x, basis->N[p]);
+			BBFE_std_mapping_vector3d(x_ip[p], nl, local_x, basis->N[p]);
 			manusol_get_conv_vel(v_ip[p], x_ip[p]);
 			a_ip[p] = manusol_get_mass_coef(x_ip[p]);
 			k_ip[p] = manusol_get_diff_coef(x_ip[p]);
