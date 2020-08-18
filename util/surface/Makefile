@@ -5,8 +5,8 @@ LDFLAGS =
 INCLUDES = -I/usr/local/include -I../../include
 LIBS = -L/usr/local/lib -lm -L../../lib -lBB -lBBFE_std -lBBFE_sys -lBBFE_elemmat
 
-TARGET1 = surf_dbc
-OBJS1 = surf_dbc.o surf_core.o
+TARGET1 = surf_dbc_all
+OBJS1 = surf_dbc_all.o surf_core.o
 TARGET2 = surf_conn
 OBJS2 = surf_conn.o surf_core.o
 TARGET3 = surf_nbc

@@ -59,9 +59,8 @@ typedef struct
 	BBFE_BC      bc_v;
 	BBFE_BC      bc_p;
 
-	MONOLIS      mono_pred;
-	MONOLIS      mono_ppe;
-	MONOLIS      mono_corr;
+	MONOLIS      mono_v;
+	MONOLIS      mono_p;
 
 } FE_SYSTEM;
 
@@ -319,7 +318,7 @@ int main(
 	BBFE_elemmat_set_Jacobi_mat(&(sys.fe), &(sys.basis));
 	BBFE_elemmat_set_shapefunc_derivative(&(sys.fe), &(sys.basis));
 
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe), &(sys.fe), 1);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_p), &(sys.fe), 1);
 
 	/****************** solver ********************/
 	double t = 0.0;
@@ -330,10 +329,10 @@ int main(
 		step += 1;
 
 		printf("\n%s ----------------- step %d ----------------\n", CODENAME, step);
-		monolis_clear_rhs(&(sys.mono_ppe));
+		monolis_clear_rhs(&(sys.mono_p));
 	
 		set_element_mat_ppe(
-				&(sys.mono_ppe),
+				&(sys.mono_p),
 				&(sys.fe),
 				&(sys.basis),
 				&(sys.vals));
@@ -349,20 +348,20 @@ int main(
 		}
 
 		set_element_vec_ppe(
-				&(sys.mono_ppe),
+				&(sys.mono_p),
 				&(sys.fe),
 				&(sys.basis),
 				&(sys.vals));
 		
 		BBFE_sys_monowrap_set_Dirichlet_bc(
-				&(sys.mono_ppe),
+				&(sys.mono_p),
 				sys.fe.total_num_nodes,
 				BLOCK_SIZE,
 				&(sys.bc_p),
-				sys.mono_ppe.mat.B);
+				sys.mono_p.mat.B);
 
 		BBFE_sys_monowrap_solve(
-				&(sys.mono_ppe),
+				&(sys.mono_p),
 				sys.vals.p,
 				monolis_iter_BiCGSTAB,
 				monolis_prec_DIAG,
@@ -379,7 +378,7 @@ int main(
 
 	BBFE_fluid_finalize(&(sys.fe), &(sys.basis), &(sys.bc_p));
 	
-	monolis_finalize(&(sys.mono_ppe));
+	monolis_finalize(&(sys.mono_p));
 	monolis_global_finalize();
 
 	double t2 = monolis_get_time();
