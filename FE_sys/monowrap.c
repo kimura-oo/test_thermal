@@ -2,6 +2,23 @@
 #include "monowrap.h"
 
 
+void BBFE_sys_monowrap_init_monomat(
+		MONOLIS*   monolis,
+		BBFE_DATA* fe,
+		const int  block_size)
+{
+	monolis_initialize(monolis);
+	
+	monolis_get_nonzero_pattern(
+			monolis,
+			fe->total_num_nodes,
+			fe->local_num_nodes,
+			block_size,
+			fe->total_num_elems,
+			fe->conn);
+}
+
+
 void BBFE_sys_monowrap_solve(
 		MONOLIS*      monolis,
 		double*       ans_vec,

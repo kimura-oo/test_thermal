@@ -3,6 +3,10 @@
 #include "FE_dataset.h"
 #include "monolis.h"
 
+void BBFE_sys_monowrap_init_monomat(
+		MONOLIS*   monolis,
+		BBFE_DATA* fe,
+		const int  block_size);
 
 void BBFE_sys_monowrap_solve(
 		MONOLIS*      monolis,
