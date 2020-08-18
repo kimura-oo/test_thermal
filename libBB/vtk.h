@@ -49,3 +49,9 @@ void BB_vtk_write_point_vals_scalar(
 		double*      val,
 		const int    num_points,
 		const char*  label);
+
+void BB_vtk_write_point_vals_vector(
+		FILE*        fp,
+		double**     val,
+		const int    num_points,
+		const char*  label);

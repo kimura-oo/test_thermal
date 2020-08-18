@@ -1,0 +1,328 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#include <BB/std.h>
+#include <BB/calc.h>
+#include <BB/vtk.h>
+#include <BBFE/std/integ.h>
+#include <BBFE/std/shapefunc.h>
+#include <BBFE/std/mapping.h>
+#include <BBFE/std/surface.h>
+#include <BBFE/sys/FE_dataset.h>
+#include <BBFE/sys/read.h>
+#include <BBFE/sys/write.h>
+#include <BBFE/sys/memory.h>
+
+#include <BBFE/elemmat/set.h>
+
+#include "surf_core.h"
+
+static const char* CODENAME            = "surf_nbc_eq >";
+static const char* VOIDNAME            = "             ";
+
+static const char* OPTION_DIRECTORY    = "-o";
+static const char* DEFAULT_DIRECTORY   = ".";
+
+void cmd_args_reader(
+		SETTINGS* sets,
+		int       argc,
+		char*     argv[])
+{
+	if(argc < 2) {
+		printf("%s Please specify parameters.\n", CODENAME);
+		printf("%s Format: \n", VOIDNAME);
+		printf("%s     ./surf_nbc_eq [block size]\n\n", VOIDNAME);
+		printf("%s Options: \n", VOIDNAME);
+		printf("%s     %s [input & output directory]\n", VOIDNAME, OPTION_DIRECTORY);
+		printf("\n");
+
+		exit(0);
+	}
+
+	sets->block_size = atoi(argv[1]);
+	printf("%s Block size: %d\n", CODENAME, sets->block_size);
+
+	int num = BB_std_read_args_return_char_num(
+			argc, argv, OPTION_DIRECTORY);
+	if(num == -1) {
+		printf("%s Input & output directory is not specified.\n", CODENAME);
+		sets->directory = DEFAULT_DIRECTORY;
+		printf("%s Input & output directory: %s (default)\n", CODENAME, sets->directory);
+	}
+	else {
+		sets->directory = argv[num+1];
+		printf("%s Input & output directory: %s\n", CODENAME, sets->directory);
+	}
+
+	printf("\n");
+}
+
+
+void set_basis(
+		BBFE_BASIS*   basis,
+		int           local_num_nodes,
+		int           num_integ_points_each_axis)
+{
+	switch( local_num_nodes ) {
+		case 3:
+			basis->num_integ_points = 
+				BBFE_std_integ_tri_set_arbitrary_points(
+						num_integ_points_each_axis,
+						basis->integ_point,
+						basis->integ_weight);
+
+			for(int i=0; i<(basis->num_integ_points); i++) {
+				BBFE_std_shapefunc_tri1st_get_val(
+						basis->integ_point[i],
+						basis->N[i]);
+
+				BBFE_std_shapefunc_tri1st_get_derivative(
+						basis->integ_point[i],
+						basis->dN_dxi[i],
+						basis->dN_det[i]);
+			}
+			printf("%s Element type: 1st-order triangle.\n", CODENAME);
+			break;
+
+		case 4:
+			basis->num_integ_points = 
+				BBFE_std_integ_rec_set_arbitrary_points(
+						num_integ_points_each_axis,
+						basis->integ_point,
+						basis->integ_weight);
+
+			for(int i=0; i<(basis->num_integ_points); i++) {
+				BBFE_std_shapefunc_rec1st_get_val(
+						basis->integ_point[i],
+						basis->N[i]);
+
+				BBFE_std_shapefunc_rec1st_get_derivative(
+						basis->integ_point[i],
+						basis->dN_dxi[i],
+						basis->dN_det[i]);
+			}
+			printf("%s Element type: 1st-order rectangle.\n", CODENAME);
+			break;
+
+		case 6:
+		case 9:
+			// should be implemented for higher order elements
+			break;
+	}
+	printf("%s The number of integration points: %d\n", CODENAME, basis->num_integ_points);
+}
+
+
+void equivval_surface(
+		double*     equiv_val,
+		BBFE_DATA*  surf,
+		BBFE_BASIS* basis,
+		double      n_val)
+{
+	double* val_ip;
+	double* cross_ip;
+	val_ip   = BB_std_calloc_1d_double(val_ip  , basis->num_integ_points);
+	cross_ip = BB_std_calloc_1d_double(cross_ip, basis->num_integ_points);
+
+	double** local_x;
+	local_x = BB_std_calloc_2d_double(local_x, surf->local_num_nodes, 3);
+
+	for(int e=0; e<(surf->total_num_elems); e++) {
+		BBFE_elemmat_set_local_array_vector(local_x, surf, surf->x, e, 3);
+
+		for(int p=0; p<(basis->num_integ_points); p++) {
+			double dx_dxi[3];  double dx_det[3];
+			BBFE_std_mapping_vector_value_integ_point_3d(
+					dx_dxi, surf->local_num_nodes, local_x, basis->dN_dxi[p]);
+			BBFE_std_mapping_vector_value_integ_point_3d(
+					dx_det, surf->local_num_nodes, local_x, basis->dN_det[p]);
+
+			double cross[3];
+			BB_calc_vec3d_cross(cross, dx_dxi, dx_det);
+			cross_ip[p] = BB_calc_vec3d_length(cross);
+		}
+
+		for(int i=0; i<(surf->local_num_nodes); i++) {
+			for(int p=0; p<(basis->num_integ_points); p++) {
+				val_ip[p] = basis->N[p][i] * n_val;
+			}
+
+			double integ_val = BBFE_std_integ_calc(
+					basis->num_integ_points,
+					val_ip,
+					basis->integ_weight,
+					cross_ip);
+
+			equiv_val[ surf->conn[e][i] ] += integ_val;
+		}
+
+	}
+	BB_std_free_1d_double(val_ip,   basis->num_integ_points);
+	BB_std_free_1d_double(cross_ip, basis->num_integ_points);
+	BB_std_free_2d_double(local_x,  surf->local_num_nodes, 3);
+}
+
+
+void equivval_surface_vector(
+		double**    equiv_val,
+		BBFE_DATA*  surf,
+		BBFE_BASIS* basis,
+		double      n_val)
+{
+	double** val_ip;
+	double**  cross_ip;
+	val_ip   = BB_std_calloc_2d_double(val_ip  , 3, basis->num_integ_points);
+	cross_ip = BB_std_calloc_2d_double(cross_ip, 3, basis->num_integ_points);
+
+	double** local_x;
+	local_x = BB_std_calloc_2d_double(local_x, surf->local_num_nodes, 3);
+
+	for(int e=0; e<(surf->total_num_elems); e++) {
+		BBFE_elemmat_set_local_array_vector(local_x, surf, surf->x, e, 3);
+
+		for(int p=0; p<(basis->num_integ_points); p++) {
+			double dx_dxi[3];  double dx_det[3];
+			BBFE_std_mapping_vector_value_integ_point_3d(
+					dx_dxi, surf->local_num_nodes, local_x, basis->dN_dxi[p]);
+			BBFE_std_mapping_vector_value_integ_point_3d(
+					dx_det, surf->local_num_nodes, local_x, basis->dN_det[p]);
+
+			double cross[3];
+			BB_calc_vec3d_cross(cross, dx_dxi, dx_det);
+			
+			BB_calc_vec3d_normal_vec(cross);
+			for(int d=0; d<3; d++) {
+				cross_ip[d][p] = cross[d];
+			}
+		}
+
+		for(int i=0; i<(surf->local_num_nodes); i++) {
+			for(int p=0; p<(basis->num_integ_points); p++) {
+				for(int d=0; d<3; d++) {
+					val_ip[d][p] = basis->N[p][i] * n_val;
+				}
+			}
+
+			double integ_val[3];
+			for(int d=0; d<3; d++) {
+				integ_val[d] = BBFE_std_integ_calc(
+					basis->num_integ_points,
+					val_ip[d],
+					basis->integ_weight,
+					cross_ip[d]);
+				equiv_val[ surf->conn[e][i] ][d] += integ_val[d];
+			}
+
+		}
+
+	}
+	BB_std_free_2d_double(val_ip,   3, basis->num_integ_points);
+	BB_std_free_2d_double(cross_ip, 3, basis->num_integ_points);
+
+	BB_std_free_2d_double(local_x,  surf->local_num_nodes, 3);
+}
+
+
+void write_surface_data_vtk(
+		BBFE_DATA*  surf,
+		double*     equiv_val,
+		double**    norm_vec,
+		const char* directory)
+{
+	FILE* fp;
+	fp = BBFE_sys_write_fopen(fp, "surf_N_bc.vtk", directory);
+
+	BB_vtk_write_header(fp);
+	fprintf(fp, "DATASET UNSTRUCTURED_GRID\n");
+
+	BB_vtk_write_points_3d(fp, surf->total_num_nodes, surf->x);
+	BB_vtk_write_cells(fp, surf->total_num_elems, 
+			surf->local_num_nodes, surf->conn);
+
+	int cell_type;
+	switch(surf->local_num_nodes) {
+		case 4:
+		case 10:
+			cell_type = TYPE_VTK_TRIANGLE;
+			break;
+		case 8:
+		case 27:
+			cell_type = TYPE_VTK_QUAD;
+			break;
+	}
+
+	BB_vtk_write_cell_types(fp, surf->total_num_elems, cell_type);
+
+	fprintf(fp, "POINT_DATA %d\n", surf->total_num_nodes);	
+
+	BB_vtk_write_point_vals_vector(fp, norm_vec, surf->total_num_nodes, "Normal_vector");
+
+	fclose(fp);
+}
+
+
+int main(
+		int   argc,
+		char* argv[])
+{
+	printf("\n");
+
+	double n_val = 1.0;
+	int n_axis   = 2;
+
+	BBFE_BASIS basis;
+	BBFE_DATA  surf;
+	SETTINGS   sets;
+
+	cmd_args_reader(&sets, argc, argv);
+
+	BBFE_sys_read_node(
+			&surf,
+			FILENAME_NODE,
+			sets.directory);
+	BBFE_sys_read_elem(
+			&surf,
+			FILENAME_SURF,
+			sets.directory,
+			1);
+
+	BBFE_sys_memory_allocation_integ(
+			&basis,
+			n_axis*n_axis,
+			2);
+	BBFE_sys_memory_allocation_shapefunc(
+			&basis,
+			surf.local_num_nodes,
+			1,
+			n_axis*n_axis);
+
+	set_basis(&basis, surf.local_num_nodes, n_axis);
+
+	double* equiv_val;
+	equiv_val = BB_std_calloc_1d_double(equiv_val, surf.total_num_nodes);
+	double** norm_vec;
+	norm_vec = BB_std_calloc_2d_double(norm_vec, surf.total_num_nodes, 3);
+	
+	equivval_surface(equiv_val, &surf, &basis, n_val);
+	equivval_surface_vector(norm_vec, &surf, &basis, n_val);
+
+	for(int i=0; i<surf.total_num_nodes; i++) {
+		printf("%d: %e %e %e\n", i, 
+				norm_vec[i][0],
+				norm_vec[i][1],
+				norm_vec[i][2]);
+	}
+	
+	write_surface_data_vtk(&surf, equiv_val, norm_vec, sets.directory);
+
+	BB_std_free_1d_double(equiv_val, surf.total_num_nodes);
+	BB_std_free_2d_double(norm_vec,  surf.total_num_nodes, 3);
+
+
+	printf("\n");
+
+	return 0;
+
+}

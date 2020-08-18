@@ -69,3 +69,17 @@ void BB_vtk_write_point_vals_scalar(
 	}
 }
 
+
+void BB_vtk_write_point_vals_vector(
+		FILE*        fp,
+		double**     val,
+		const int    num_points,
+		const char*  label)
+{
+	fprintf(fp, "VECTORS %s float\n", label);
+
+	for(int i=0; i<num_points; i++) {
+		fprintf(fp, "%e %e %e\n", val[i][0], val[i][1], val[i][2]);
+	}
+}
+

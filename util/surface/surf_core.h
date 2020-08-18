@@ -9,6 +9,9 @@ static const char* FILENAME_SURF = "surf.dat";
 
 static const char* OUTPUT_FILENAME_SURF_VTK = "surf.vtk";
 
+static int BUFFER_SIZE = 10000;
+
+
 typedef struct {
 	const char* directory;
 	int         block_size;
