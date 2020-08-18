@@ -236,28 +236,6 @@ void set_element_mat_ppe(
 }
 
 
-double BBFE_std_mapping_vector_div(
-		const int     local_num_nodes,
-		double**      local_val,
-		double**      grad_N)
-{
-	double val_ip;
-	
-	double dval_dx[3];
-
-	for(int d=0; d<3; d++) {
-		dval_dx[d] = 0.0;
-		for(int i=0; i<local_num_nodes; i++) {
-			dval_dx[d] += local_val[i][d] * grad_N[i][d];
-		}
-	}
-
-	val_ip = dval_dx[0] + dval_dx[1] + dval_dx[2];
-
-	return val_ip;
-}
-
-
 void set_element_vec_ppe(
 		MONOLIS*     monolis,
 		BBFE_DATA*   fe,
@@ -282,7 +260,7 @@ void set_element_vec_ppe(
 		
 		BBFE_elemmat_set_local_array_vector(local_v, fe, vals->v, e, 3);
 		for(int p=0; p<np; p++) {
-			div_v_ip[p] = BBFE_std_mapping_vector_div(nl, local_v, fe->geo[e][p].grad_N);
+			div_v_ip[p] = BBFE_std_mapping_vector3d_div(nl, local_v, fe->geo[e][p].grad_N);
 		}
 
 		for(int i=0; i<nl; i++) {

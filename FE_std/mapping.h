@@ -19,3 +19,8 @@ void BBFE_std_mapping_vector3d(
 		const int     local_num_nodes,
 		double**      local_val,
 		double*       N);
+
+double BBFE_std_mapping_vector3d_div(
+		const int     local_num_nodes,
+		double**      local_val,
+		double**      grad_N);

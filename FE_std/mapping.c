@@ -54,3 +54,27 @@ void BBFE_std_mapping_vector3d(
 		}
 	}
 }
+
+
+double BBFE_std_mapping_vector3d_div(
+		const int     local_num_nodes,
+		double**      local_val,
+		double**      grad_N)
+{
+	double val_ip;
+	
+	double dval_dx[3];
+
+	for(int d=0; d<3; d++) {
+		dval_dx[d] = 0.0;
+		for(int i=0; i<local_num_nodes; i++) {
+			dval_dx[d] += local_val[i][d] * grad_N[i][d];
+		}
+	}
+
+	val_ip = dval_dx[0] + dval_dx[1] + dval_dx[2];
+
+	return val_ip;
+}
+
+
