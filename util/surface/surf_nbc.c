@@ -134,9 +134,9 @@ void equivval_surface(
 
 		for(int p=0; p<(basis->num_integ_points); p++) {
 			double dx_dxi[3];  double dx_det[3];
-			BBFE_std_mapping_vector_value_integ_point_3d(
+			BBFE_std_mapping_vector3d(
 					dx_dxi, surf->local_num_nodes, local_x, basis->dN_dxi[p]);
-			BBFE_std_mapping_vector_value_integ_point_3d(
+			BBFE_std_mapping_vector3d(
 					dx_det, surf->local_num_nodes, local_x, basis->dN_det[p]);
 
 			double cross[3];
@@ -184,9 +184,9 @@ void equivval_surface_vector(
 
 		for(int p=0; p<(basis->num_integ_points); p++) {
 			double dx_dxi[3];  double dx_det[3];
-			BBFE_std_mapping_vector_value_integ_point_3d(
+			BBFE_std_mapping_vector3d(
 					dx_dxi, surf->local_num_nodes, local_x, basis->dN_dxi[p]);
-			BBFE_std_mapping_vector_value_integ_point_3d(
+			BBFE_std_mapping_vector3d(
 					dx_det, surf->local_num_nodes, local_x, basis->dN_det[p]);
 
 			double cross[3];

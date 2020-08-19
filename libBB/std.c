@@ -28,6 +28,25 @@ double** BB_std_calloc_2d_double(
 }
 
 
+double*** BB_std_calloc_3d_double(
+		double***  array,
+		const int  size1,
+		const int  size2,
+		const int  size3)
+{
+	array = (double***)calloc(size1, sizeof(double**));
+	for(int i=0; i<size1; i++) {
+		array[i] = (double**)calloc(size2, sizeof(double*));
+		
+		for(int j=0; j<size2; j++) {
+			array[i][j] = (double*)calloc(size3, sizeof(double));
+		}
+	}
+
+	return array;
+}
+
+
 int* BB_std_calloc_1d_int(
 		int*      array,
 		const int size)
@@ -91,6 +110,26 @@ void BB_std_free_2d_double(
 		const int  size2)
 {
 	for(int i=0; i<size1; i++) {
+		free(array[i]);
+		array[i] = NULL;
+	}
+
+	free(array);
+	array = NULL;
+}
+
+
+void BB_std_free_3d_double(
+		double***  array,
+		const int  size1,
+		const int  size2,
+		const int  size3)
+{
+	for(int i=0; i<size1; i++) {
+		for(int j=0; j<size2; j++) {
+			free(array[i][j]);
+			array[i][j] = NULL;
+		}
 		free(array[i]);
 		array[i] = NULL;
 	}

@@ -8,6 +8,10 @@ void BBFE_sys_monowrap_init_monomat(
 		BBFE_DATA* fe,
 		const int  block_size);
 
+void BBFE_sys_monowrap_copy_mat(
+		MONOLIS* in,
+		MONOLIS* out);
+
 void BBFE_sys_monowrap_solve(
 		MONOLIS*      monolis,
 		double*       ans_vec,

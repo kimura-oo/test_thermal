@@ -3,6 +3,14 @@
 /**********************************************************
  * 3D vector
  **********************************************************/
+double BB_calc_vec3d_dot(
+		const double  vec_1[3],
+		const double  vec_2[3])
+{
+	return( vec_1[0]*vec_2[0] + vec_1[1]*vec_2[1] + vec_1[2]*vec_2[2] );
+}
+
+
 void BB_calc_vec3d_cross(
 		double        ans[3],
 		const double  vec_1[3],

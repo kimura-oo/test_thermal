@@ -56,13 +56,49 @@ void BBFE_std_mapping_vector3d(
 }
 
 
+void BBFE_std_mapping_scalar_grad(
+		double        val_ip[3],
+		const int     local_num_nodes,
+		double*       local_val,
+		double**      grad_N)
+{
+
+	for(int i=0; i<3; i++) {
+		val_ip[i] = 0.0;
+
+		for(int k=0; k<local_num_nodes; k++) {
+			val_ip[i] += local_val[k] * grad_N[k][i];
+		}
+	}
+}
+
+
+void BBFE_std_mapping_vector3d_grad(
+		double**      val_ip,
+		const int     local_num_nodes,
+		double**      local_val,
+		double**      grad_N)
+{
+
+	for(int i=0; i<3; i++) {
+		for(int j=0; j<3; j++) {
+			val_ip[i][j] = 0.0;
+
+			for(int k=0; k<local_num_nodes; k++) {
+				val_ip[i][j] += local_val[k][i] * grad_N[k][j];
+			}
+		}
+	}
+}
+
+
 double BBFE_std_mapping_vector3d_div(
 		const int     local_num_nodes,
 		double**      local_val,
 		double**      grad_N)
 {
 	double val_ip;
-	
+
 	double dval_dx[3];
 
 	for(int d=0; d<3; d++) {

@@ -19,6 +19,18 @@ void BBFE_sys_monowrap_init_monomat(
 }
 
 
+void BBFE_sys_monowrap_copy_mat(
+		MONOLIS* in,
+		MONOLIS* out)
+{
+	int num_nonzeros = (in->mat.NDOF) * (in->mat.NDOF) * (in->mat.NZ);
+
+	for(int i=0; i<num_nonzeros; i++) {
+		out->mat.A[i] = in->mat.A[i];
+	}
+}
+
+
 void BBFE_sys_monowrap_solve(
 		MONOLIS*      monolis,
 		double*       ans_vec,

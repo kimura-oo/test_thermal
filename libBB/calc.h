@@ -4,6 +4,10 @@
  * 3D vector
  **********************************************************/
 // rule: BB_calc_vec3d_
+double BB_calc_vec3d_dot(
+		const double  vec_1[3],
+		const double  vec_2[3]);
+
 void BB_calc_vec3d_cross(
 		double        ans[3],
 		const double  vec_1[3],

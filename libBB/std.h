@@ -20,6 +20,12 @@ double** BB_std_calloc_2d_double(
 		const int  size1,
 		const int  size2);
 
+double*** BB_std_calloc_3d_double(
+		double***  array,
+		const int  size1,
+		const int  size2,
+		const int  size3);
+
 int* BB_std_calloc_1d_int(
 		int*      array,
 		const int size);
@@ -46,6 +52,12 @@ void BB_std_free_2d_double(
 		double**   array,
 		const int  size1,
 		const int  size2);
+
+void BB_std_free_3d_double(
+		double***  array,
+		const int  size1,
+		const int  size2,
+		const int  size3);
 
 void BB_std_free_1d_int(
 		int*      array,

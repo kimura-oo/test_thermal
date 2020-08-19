@@ -11,7 +11,7 @@
 
 #include "surf_core.h"
 
-static const char* CODENAME            = "surf_dbc >";
+static const char* CODENAME            = "surf_dbc_all >";
 static const char* VOIDNAME            = "          ";
 
 static const char* OPTION_DIRECTORY    = "-o";
