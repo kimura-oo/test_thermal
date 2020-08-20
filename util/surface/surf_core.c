@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include <BB/std.h>
+#include <BB/calc.h>
 #include <BB/vtk.h>
 #include <BBFE/std/shapefunc.h>
 #include <BBFE/std/surface.h>
