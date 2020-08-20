@@ -53,6 +53,11 @@ void BBFE_fluid_set_basis(
 		int           local_num_nodes,
 		int           num_integ_points_each_axis);
 
+void BBFE_fluid_renew_velocity(
+		double**  v,
+		double*   ans_vec,
+		const int total_num_nodes);
+
 void BBFE_fluid_finalize(
 		BBFE_DATA*   fe,
 		BBFE_BASIS*  basis,

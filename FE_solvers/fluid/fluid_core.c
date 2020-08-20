@@ -107,6 +107,19 @@ void BBFE_fluid_set_basis(
 }
 
 
+void BBFE_fluid_renew_velocity(
+		double**  v,
+		double*   ans_vec,
+		const int total_num_nodes)
+{
+	for(int i=0; i<total_num_nodes; i++) {
+		for(int d=0; d<3; d++) {
+			v[i][d] = ans_vec[ 3*i + d ];
+		}
+	}
+}
+
+
 void BBFE_fluid_finalize(
 		BBFE_DATA*   fe,
 		BBFE_BASIS*  basis,

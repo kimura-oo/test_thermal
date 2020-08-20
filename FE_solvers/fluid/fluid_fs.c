@@ -8,11 +8,11 @@ const double  DVAL_MAT_EPSILON  = 1.0e-8;
 const char*    ID_MAT_MAX_ITER  = "#mat_max_iter";
 const int    DVAL_MAT_MAX_ITER  = 10000;
 const char*              ID_DT  = "#time_spacing";
-const double           DVAL_DT  = 0.02;
+const double           DVAL_DT  = 0.01;
 const char*     ID_FINISH_TIME  = "#finish_time";
-const double  DVAL_FINISH_TIME  = 4.0;
+const double  DVAL_FINISH_TIME  = 10.0;
 const char* ID_OUTPUT_INTERVAL  = "#output_interval";
-const int DVAL_OUTPUT_INTERVAL  = 2;
+const int DVAL_OUTPUT_INTERVAL  = 4;
 
 
 const double DELTA    = 1.0E-06;
@@ -25,7 +25,7 @@ static const char* INPUT_FILENAME_D_BC_P  = "D_bc.dat";
 static const char* OUTPUT_FILENAME_VTK    = "result_%06d.vtk";
 
 
-double RE = 1000.0;
+double RE = 10000.0;
 
 typedef struct
 {
@@ -634,22 +634,11 @@ int main(
 		BBFE_sys_monowrap_copy_mat(&(sys.mono_ppe0) , &(sys.mono_ppe));
 		BBFE_sys_monowrap_copy_mat(&(sys.mono_corr0), &(sys.mono_corr));
 	
-		set_element_mat_ppe(
-			&(sys.mono_ppe),
-			&(sys.fe),
-			&(sys.basis),
-			&(sys.vals));
-	set_element_mat_corr(
-			&(sys.mono_corr),
-			&(sys.fe),
-			&(sys.basis),
-			&(sys.vals));
-
-
 		monolis_clear(&(sys.mono_pred));
 		monolis_clear_rhs(&(sys.mono_ppe));
 		monolis_clear_rhs(&(sys.mono_corr));
 
+		printf("%s --- prediction step ---\n", CODENAME);
 		set_element_mat_pred(
 				&(sys.mono_pred),
 				&(sys.fe),
@@ -660,21 +649,20 @@ int main(
 				&(sys.fe),
 				&(sys.basis),
 				&(sys.vals));
-		
 		BBFE_sys_monowrap_solve(
 				&(sys.mono_pred),
 				sys.mono_pred.mat.X,
 				monolis_iter_BiCGSTAB,
-				monolis_prec_DIAG,
+				monolis_prec_SOR,
 				sys.vals.mat_max_iter,
 				sys.vals.mat_epsilon);
 
-		for(int i=0; i<(sys.fe.total_num_nodes); i++) {
-			sys.vals.v[i][0] = sys.mono_pred.mat.X[3*i+0];
-			sys.vals.v[i][1] = sys.mono_pred.mat.X[3*i+1];
-			sys.vals.v[i][2] = sys.mono_pred.mat.X[3*i+2];
-		}
+		BBFE_fluid_renew_velocity(
+				sys.vals.v, 
+				sys.mono_pred.mat.X,
+				sys.fe.total_num_nodes);
 
+		printf("%s --- pressure Poisson eq. ---\n", CODENAME);
 		set_element_vec_ppe(
 				&(sys.mono_ppe),
 				&(sys.fe),
@@ -690,10 +678,11 @@ int main(
 				&(sys.mono_ppe),
 				sys.vals.p,
 				monolis_iter_CG,
-				monolis_prec_DIAG,
+				monolis_prec_SOR,
 				sys.vals.mat_max_iter,
 				sys.vals.mat_epsilon);
 
+		printf("%s --- Correction step ---\n", CODENAME);
 		set_element_vec_corr(
 				&(sys.mono_corr),
 				&(sys.fe),
@@ -703,15 +692,14 @@ int main(
 				&(sys.mono_corr),
 				sys.mono_corr.mat.X,
 				monolis_iter_CG,
-				monolis_prec_DIAG,
+				monolis_prec_SOR,
 				sys.vals.mat_max_iter,
 				sys.vals.mat_epsilon);
 
-		for(int i=0; i<(sys.fe.total_num_nodes); i++) {
-			sys.vals.v[i][0] = sys.mono_corr.mat.X[3*i+0];
-			sys.vals.v[i][1] = sys.mono_corr.mat.X[3*i+1];
-			sys.vals.v[i][2] = sys.mono_corr.mat.X[3*i+2];
-		}
+		BBFE_fluid_renew_velocity(
+				sys.vals.v, 
+				sys.mono_corr.mat.X,
+				sys.fe.total_num_nodes);
 
 		/**********************************************/
 
