@@ -19,6 +19,8 @@ void read_fe_data(
 		BBFE_DATA*  fe,
 		const char* directory)
 {
+	BB_calc_void();
+
 	BBFE_sys_read_node(
 			fe,
 			FILENAME_NODE,

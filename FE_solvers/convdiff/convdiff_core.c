@@ -29,6 +29,8 @@ void BBFE_convdiff_pre(
 		int           num_integ_points_each_axis,
 		bool          manufactured_solution)
 {
+	BB_calc_void();
+
 	int n_axis = num_integ_points_each_axis;
 
 	BBFE_sys_read_node(

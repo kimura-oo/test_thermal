@@ -26,6 +26,8 @@ void BBFE_fluid_pre(
 		const char*   directory,
 		int           num_integ_points_each_axis)
 {
+	BB_calc_void();
+
 	int n_axis = num_integ_points_each_axis;
 
 	BBFE_sys_read_node(
