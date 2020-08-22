@@ -7,8 +7,8 @@ LIBS = -L/usr/local/lib -lm
 TARGET1 = meshgen_tet
 OBJS1 = meshgen_tet.o
 
-TARGET1 = meshgen_hex
-OBJS1 = meshgen_hex.o
+TARGET2 = meshgen_hex
+OBJS2 = meshgen_hex.o
 
 .SUFFIXES: .c .cpp .o
 
@@ -20,7 +20,7 @@ $(TARGET2): $(OBJS2)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 clean:
-		-rm -f $(OBJS1)
+		-rm -f $(OBJS1) $(OBJS2)
 
 .cpp.o:
 	$(CC) $(CFLAGS) -o $@ -c $^ 
