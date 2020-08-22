@@ -219,11 +219,12 @@ void read_calc_conditions(
 
 		num = BB_std_read_file_get_val_int_p(
 				&(vals->mat_max_iter), filename, ID_MAT_MAX_ITER, BUFFER_SIZE, CODENAME);
+		
+		fclose(fp);
 	}
 	
 	print_all_values(vals);
 	
-	fclose(fp);
 	
 	printf("\n");
 }

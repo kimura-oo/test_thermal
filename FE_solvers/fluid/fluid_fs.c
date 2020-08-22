@@ -8,11 +8,11 @@ const double  DVAL_MAT_EPSILON  = 1.0e-8;
 const char*    ID_MAT_MAX_ITER  = "#mat_max_iter";
 const int    DVAL_MAT_MAX_ITER  = 10000;
 const char*              ID_DT  = "#time_spacing";
-const double           DVAL_DT  = 0.01;
+const double           DVAL_DT  = 0.005;
 const char*     ID_FINISH_TIME  = "#finish_time";
 const double  DVAL_FINISH_TIME  = 10.0;
 const char* ID_OUTPUT_INTERVAL  = "#output_interval";
-const int DVAL_OUTPUT_INTERVAL  = 4;
+const int DVAL_OUTPUT_INTERVAL  = 8;
 
 
 const double DELTA    = 1.0E-06;
@@ -141,11 +141,12 @@ void read_calc_conditions(
 				&(vals->finish_time), filename, ID_FINISH_TIME, BUFFER_SIZE, CODENAME);
 		num = BB_std_read_file_get_val_int_p(
 				&(vals->output_interval), filename, ID_OUTPUT_INTERVAL, BUFFER_SIZE, CODENAME);
+		
+		fclose(fp);
 	}
 
 	print_all_values(vals);
 
-	fclose(fp);
 
 	printf("\n");
 }
