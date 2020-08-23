@@ -30,3 +30,11 @@ make
 cp cmd2cond ../../bin
 cd ../../
 
+cd util/mesh
+make clean
+make
+cp mesh_remove ../../bin
+cp mesh_extract ../../bin
+cp mesh_surf_remove ../../bin
+cp mesh_surf_extract ../../bin
+cd ../../
