@@ -23,7 +23,7 @@ void cmd_args_reader(
 		int       argc,
 		char*     argv[])
 {
-	if(argc < 2) {
+	if(argc < 1) {
 		printf("%s Please specify parameters.\n", CODENAME);
 		printf("%s Format: \n", VOIDNAME);
 		printf("%s     ./surf_nbc_eq [block size]\n\n", VOIDNAME);
@@ -33,9 +33,6 @@ void cmd_args_reader(
 
 		exit(0);
 	}
-
-	sets->block_size = atoi(argv[1]);
-	printf("%s Block size: %d\n", CODENAME, sets->block_size);
 
 	int num = BB_std_read_args_return_char_num(
 			argc, argv, OPTION_DIRECTORY);

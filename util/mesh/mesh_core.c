@@ -444,6 +444,8 @@ void write_vtk_shape(
 		const char* directory,
 		const int   cell_type)
 {
+	BB_vtk_void();
+
 	FILE* fp;
 	
 	fp = BBFE_sys_write_fopen(fp, filename, directory);

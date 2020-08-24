@@ -14,6 +14,11 @@ static int BUFFER_SIZE = 10000;
 
 typedef struct {
 	const char* directory;
+
+	const char* infile_node;
+	const char* infile_elem;
+	const char* outfile_bc;
+
 	int         block_size;
 
 } SETTINGS;

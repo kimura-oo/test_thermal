@@ -1,6 +1,10 @@
 
 #include <stdio.h>
 
+
+void BB_vtk_void(){}
+
+
 void BB_vtk_write_header(
 		FILE* fp)
 {

@@ -25,6 +25,9 @@
 #define TYPE_VTK_QUADRATIC_HEXAHEDRON 25
 
 
+
+void BB_vtk_void();
+
 void BB_vtk_write_header(
 		FILE* fp);
 
