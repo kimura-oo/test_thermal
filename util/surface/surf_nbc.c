@@ -19,45 +19,8 @@
 
 #include "surf_core.h"
 
-static const char* CODENAME            = "surf_nbc_eq >";
-static const char* VOIDNAME            = "             ";
-
-static const char* OPTION_DIRECTORY    = "-o";
-static const char* DEFAULT_DIRECTORY   = ".";
-
-void cmd_args_reader(
-		SETTINGS* sets,
-		int       argc,
-		char*     argv[])
-{
-	if(argc < 2) {
-		printf("%s Please specify parameters.\n", CODENAME);
-		printf("%s Format: \n", VOIDNAME);
-		printf("%s     ./surf_nbc_eq [block size]\n\n", VOIDNAME);
-		printf("%s Options: \n", VOIDNAME);
-		printf("%s     %s [input & output directory]\n", VOIDNAME, OPTION_DIRECTORY);
-		printf("\n");
-
-		exit(0);
-	}
-
-	sets->block_size = atoi(argv[1]);
-	printf("%s Block size: %d\n", CODENAME, sets->block_size);
-
-	int num = BB_std_read_args_return_char_num(
-			argc, argv, OPTION_DIRECTORY);
-	if(num == -1) {
-		printf("%s Input & output directory is not specified.\n", CODENAME);
-		sets->directory = DEFAULT_DIRECTORY;
-		printf("%s Input & output directory: %s (default)\n", CODENAME, sets->directory);
-	}
-	else {
-		sets->directory = argv[num+1];
-		printf("%s Input & output directory: %s\n", CODENAME, sets->directory);
-	}
-
-	printf("\n");
-}
+static const char* CODENAME            = "surf_nbc >";
+static const char* VOIDNAME            = "          ";
 
 
 void set_basis(
@@ -276,15 +239,15 @@ int main(
 	BBFE_DATA  surf;
 	SETTINGS   sets;
 
-	cmd_args_reader(&sets, argc, argv);
+	cmd_args_reader_bc(&sets, argc, argv, CODENAME, VOIDNAME);
 
 	BBFE_sys_read_node(
 			&surf,
-			FILENAME_NODE,
+			sets.infile_node,
 			sets.directory);
 	BBFE_sys_read_elem(
 			&surf,
-			FILENAME_SURF,
+			sets.infile_elem,
 			sets.directory,
 			1);
 

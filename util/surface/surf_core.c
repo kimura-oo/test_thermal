@@ -15,19 +15,111 @@
 #include "surf_core.h"
 
 
+void cmd_args_reader_bc(
+		SETTINGS* set,
+		int       argc,
+		char*     argv[],
+		const char* codename,
+		const char* voidname)
+{
+	if(argc < 2) {
+		printf("%s Please specify parameters.\n", codename);
+		printf("%s Format: \n", voidname);
+		printf("%s     %s [block size: n] [bc value 1] [bc value 2] ... [bc value n]\n\n", voidname, argv[0]);
+		printf("%s Options: \n", voidname);
+		printf("%s     %s [input & output directory]\n", voidname, OPTION_DIRECTORY);
+		printf("%s     %s [input filename (nodes)]\n",   voidname, OPTION_INFILE_NODE);
+		printf("%s     %s [input filename (surface elements)]\n", voidname, OPTION_INFILE_SURF);
+		printf("%s     %s [output filename for Dirichlet B.C.]\n", voidname, OPTION_OUTFILE);
+		printf("\n");
+
+		exit(0);
+	}
+
+	set->block_size = atoi(argv[1]);
+	printf("%s Block size: %d\n", codename, set->block_size);
+
+	if(argc < 2 + set->block_size) {
+		printf("%s Please specify parameters.\n", codename);
+		printf("%s Format: \n", voidname);
+		printf("%s     %s [block size: n] [bc value 1] [bc value 2] ... [bc value n]\n\n", voidname, argv[0]);
+
+		exit(0);
+	}
+
+	set->bc_value = BB_std_calloc_1d_double(set->bc_value, set->block_size);
+	printf("%s B.C. values: ", codename);
+	for(int i=0; i<(set->block_size); i++) {
+		set->bc_value[i] = atof( argv[i+2] );
+		printf("%e, ", set->bc_value[i]);
+	}
+	printf("\n");
+
+
+	int num; 
+	num = BB_std_read_args_return_char_num(
+			argc, argv, OPTION_DIRECTORY);
+	if(num == -1) {
+		set->directory = DEF_DIRECTORY;
+		printf("%s Input & output directory: %s (default)\n", codename, set->directory);
+	}
+	else {
+		set->directory = argv[num+1];
+		printf("%s Input & output directory: %s\n", codename, set->directory);
+	}
+
+	num = BB_std_read_args_return_char_num(
+			argc, argv, OPTION_INFILE_NODE);
+	if(num == -1) {
+		set->infile_node = FILENAME_NODE;
+		printf("%s Input filename (nodes): %s (default)\n", codename, set->infile_node);
+	}
+	else {
+		set->infile_node = argv[num+1];
+		printf("%s Input filename (nodes): %s\n", codename, set->infile_node);
+	}
+
+	num = BB_std_read_args_return_char_num(
+			argc, argv, OPTION_INFILE_SURF);
+	if(num == -1) {
+		set->infile_elem = FILENAME_SURF;
+		printf("%s Input filename (surface elements): %s (default)\n", codename, set->infile_elem);
+	}
+	else {
+		set->infile_elem = argv[num+1];
+		printf("%s Input filename (surface elements): %s\n", codename, set->infile_elem);
+	}
+
+	num = BB_std_read_args_return_char_num(
+			argc, argv, OPTION_OUTFILE);
+	if(num == -1) {
+		set->outfile_bc = FILENAME_D_BC;
+		printf("%s Output filename for Dirichlet B.C.: %s (default)\n", codename, set->outfile_bc);
+	}
+	else {
+		set->outfile_bc = argv[num+1];
+		printf("%s Output filename for Dirichlet B.C.: %s\n", codename, set->outfile_bc);
+	}
+
+	printf("\n");
+}
+
+
 void read_fe_data(
 		BBFE_DATA*  fe,
-		const char* directory)
+		const char* directory,
+		const char* infile_node,
+		const char* infile_elem)
 {
 	BB_calc_void();
 
 	BBFE_sys_read_node(
 			fe,
-			FILENAME_NODE,
+			infile_node,
 			directory);
 	BBFE_sys_read_elem(
 			fe,
-			FILENAME_ELEM,
+			infile_elem,
 			directory,
 			1);
 }
@@ -198,6 +290,55 @@ void write_surface_vtk(
 	}
 
 	BB_vtk_write_cell_types(fp, surf->num_bc_surfs, cell_type);
+
+	fclose(fp);
+}
+
+
+int get_bc_node_list(
+		bool* node_has_bc,
+		BBFE_DATA* fe)
+{
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		node_has_bc[i] = false;
+	}
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		for(int i=0; i<(fe->local_num_nodes); i++) {
+			node_has_bc[ fe->conn[e][i] ] = true;
+		}
+	}
+
+	int count = 0;
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		if( node_has_bc[i] ){ count++; }
+	}
+
+	return count;
+}
+
+
+int write_bc_file_const(
+		BBFE_DATA*  fe,
+		bool*       node_has_bc,
+		int         num_bc_nodes,
+		int         block_size,
+		double*     val,
+		const char* filename,
+		const char* directory)
+{
+	FILE* fp;
+	fp = BBFE_sys_write_fopen(fp, filename, directory);
+
+	fprintf(fp, "%d %d\n", num_bc_nodes, block_size);
+
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		if(node_has_bc[i]) {
+			for(int b=0; b<block_size; b++) {
+				fprintf(fp, "%d %d %.15e\n", i, b, val[b]);
+			}
+		}
+	}
 
 	fclose(fp);
 }
