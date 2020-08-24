@@ -20,12 +20,12 @@ const int BUFFER_SIZE = 10000;
 
 static const char* INPUT_FILENAME_COND    = "cond.dat";
 static const char* INPUT_FILENAME_D_BC_V  = "D_bc_v.dat";
-static const char* INPUT_FILENAME_D_BC_P  = "D_bc.dat";
+static const char* INPUT_FILENAME_D_BC_P  = "D_bc_p.dat";
 
 static const char* OUTPUT_FILENAME_VTK    = "result_%06d.vtk";
 
 
-double RE = 10000.0;
+double RE = 200.0;
 
 typedef struct
 {
@@ -582,6 +582,13 @@ int main(
 			sys.fe.total_num_nodes,
 			1);
 
+	BBFE_sys_read_Dirichlet_bc(
+			&(sys.bc_v),
+			INPUT_FILENAME_D_BC_V,
+			sys.cond.directory,
+			sys.fe.total_num_nodes,
+			3);
+
 	memory_allocation_nodal_values(
 			&(sys.vals),
 			sys.fe.total_num_nodes);
@@ -597,18 +604,8 @@ int main(
 
 
 	for(int i=0; i<(sys.fe.total_num_nodes); i++) {
-		double x[3];
-		x[0] = sys.fe.x[i][0];
-		x[1] = sys.fe.x[i][1];
-		x[2] = sys.fe.x[i][2];
-		if(
-				4.0 < x[0] && x[0] < 6.0 &&
-				2.0 < x[1] && x[1] < 4.0 &&
-				4.0 < x[2] && x[2] < 6.0 
-		  ) {
-			sys.vals.v[i][0] = 0.0;
-			sys.vals.v[i][1] = 2.0;
-			sys.vals.v[i][2] = 0.0;
+		if( sys.fe.x[i][1] < 0.01 ) {
+			sys.bc_v.imposed_D_val[3*i+1] = 1.0;
 		}
 	}
 
@@ -650,6 +647,12 @@ int main(
 				&(sys.fe),
 				&(sys.basis),
 				&(sys.vals));
+		BBFE_sys_monowrap_set_Dirichlet_bc(
+				&(sys.mono_pred),
+				sys.fe.total_num_nodes,
+				3,
+				&(sys.bc_v),
+				sys.mono_pred.mat.B);
 		BBFE_sys_monowrap_solve(
 				&(sys.mono_pred),
 				sys.mono_pred.mat.X,
@@ -672,7 +675,7 @@ int main(
 		BBFE_sys_monowrap_set_Dirichlet_bc(
 				&(sys.mono_ppe),
 				sys.fe.total_num_nodes,
-				BLOCK_SIZE,
+				1,
 				&(sys.bc_p),
 				sys.mono_ppe.mat.B);
 		BBFE_sys_monowrap_solve(
@@ -689,6 +692,12 @@ int main(
 				&(sys.fe),
 				&(sys.basis),
 				&(sys.vals));
+		BBFE_sys_monowrap_set_Dirichlet_bc(
+				&(sys.mono_corr),
+				sys.fe.total_num_nodes,
+				3,
+				&(sys.bc_v),
+				sys.mono_corr.mat.B);
 		BBFE_sys_monowrap_solve(
 				&(sys.mono_corr),
 				sys.mono_corr.mat.X,

@@ -21,6 +21,7 @@ make clean
 make
 cp surf_dbc_all ../../bin
 cp surf_nbc ../../bin
+cp surf_dbc ../../bin
 cp surf_conn ../../bin
 cd ../../
 

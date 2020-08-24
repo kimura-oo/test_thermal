@@ -28,7 +28,6 @@
 #include <string.h>
 #include <stdarg.h>
 
-static const int BLOCK_SIZE                   = 1;
 static const char* CODENAME                   = "fluid >";
 
 static const char* INPUT_FILENAME_NODE        = "node.dat";

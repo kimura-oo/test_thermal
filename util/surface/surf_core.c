@@ -330,7 +330,9 @@ int write_bc_file_const(
 	FILE* fp;
 	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
-	fprintf(fp, "%d %d\n", num_bc_nodes, block_size);
+	int num_bcs = num_bc_nodes * block_size;
+
+	fprintf(fp, "%d %d\n", num_bcs, block_size);
 
 	for(int i=0; i<(fe->total_num_nodes); i++) {
 		if(node_has_bc[i]) {
