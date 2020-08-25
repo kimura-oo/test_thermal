@@ -6,7 +6,7 @@
 
 const char* CODENAME           = "cmd2cond >";
 const char* VOIDNAME           = "          ";
-const char* FILENAME           = "cond.txt";
+const char* FILENAME           = "cond.dat";
 const char* OPTION_OUTPUT_DIR  = "-d";
 const char* DEFAULT_OUTPUT_DIR = ".";
 const char* OPTION_ADD_MODE    = "--add";
@@ -111,7 +111,7 @@ int main(
 
 			int val[val_num];
 			for(int i=0; i<val_num; i++) {
-				val[i] = atoi( argv[num+2+i] );
+				val[i] = atoi( argv[num+3+i] );
 				printf("%s %d: %d\n", CODENAME, i+1, val[i]);				
 			}
 
@@ -129,7 +129,7 @@ int main(
 
 			double val[val_num];
 			for(int i=0; i<val_num; i++) {
-				val[i] = atof( argv[num+2+i] );
+				val[i] = atof( argv[num+3+i] );
 				printf("%s %d: %.15e\n", CODENAME, i+1, val[i]);				
 			}
 

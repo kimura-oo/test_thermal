@@ -4,18 +4,20 @@
 const char* ID_NUM_IP_EACH_AXIS = "#num_ip_each_axis";
 const int DVAL_NUM_IP_EACH_AXIS = 2;
 const char*     ID_MAT_EPSILON  = "#mat_epsilon";
-const double  DVAL_MAT_EPSILON  = 1.0e-6;
+const double  DVAL_MAT_EPSILON  = 1.0e-8;
 const char*    ID_MAT_MAX_ITER  = "#mat_max_iter";
 const int    DVAL_MAT_MAX_ITER  = 10000;
 const char*              ID_DT  = "#time_spacing";
-const double           DVAL_DT  = 0.0025;
+const double           DVAL_DT  = 0.01;
 const char*     ID_FINISH_TIME  = "#finish_time";
-const double  DVAL_FINISH_TIME  = 50.0;
+const double  DVAL_FINISH_TIME  = 1.0;
 const char* ID_OUTPUT_INTERVAL  = "#output_interval";
-const int DVAL_OUTPUT_INTERVAL  = 40;
+const int DVAL_OUTPUT_INTERVAL  = 1;
+const char*         ID_DENSITY  = "#density";
+const int         DVAL_DENSITY  = 1000.0;
+const char*       ID_VISCOSITY  = "#viscosity";
+const int       DVAL_VISCOSITY  = 1.0;
 
-
-const double DELTA    = 1.0E-06;
 const int BUFFER_SIZE = 10000;
 
 static const char* INPUT_FILENAME_COND    = "cond.dat";
@@ -24,8 +26,6 @@ static const char* INPUT_FILENAME_D_BC_P  = "D_bc_p.dat";
 
 static const char* OUTPUT_FILENAME_VTK    = "result_%06d.vtk";
 
-
-double RE = 300.0;
 
 typedef struct
 {
@@ -36,6 +36,9 @@ typedef struct
 	double dt;
 	double finish_time;
 	int    output_interval;
+
+	double density;
+	double viscosity;
 
 	double** v;
 	double*  p;
@@ -89,6 +92,9 @@ void assign_default_values(
 	vals->dt               = DVAL_DT;
 	vals->finish_time      = DVAL_FINISH_TIME;
 	vals->output_interval  = DVAL_OUTPUT_INTERVAL;
+
+	vals->density          = DVAL_DENSITY;
+	vals->viscosity        = DVAL_VISCOSITY;
 }
 
 
@@ -105,6 +111,8 @@ void print_all_values(
 	printf("%s %s: %e\n", CODENAME, ID_FINISH_TIME,      vals->finish_time);
 	printf("%s %s: %d\n", CODENAME, ID_OUTPUT_INTERVAL,  vals->output_interval);
 
+	printf("%s %s: %e\n", CODENAME, ID_DENSITY,          vals->density);
+	printf("%s %s: %e\n", CODENAME, ID_VISCOSITY,        vals->viscosity);
 	printf("%s -------------------------------------------\n\n", CODENAME);
 }
 
@@ -141,6 +149,12 @@ void read_calc_conditions(
 				&(vals->finish_time), filename, ID_FINISH_TIME, BUFFER_SIZE, CODENAME);
 		num = BB_std_read_file_get_val_int_p(
 				&(vals->output_interval), filename, ID_OUTPUT_INTERVAL, BUFFER_SIZE, CODENAME);
+
+		num = BB_std_read_file_get_val_double_p(
+				&(vals->density), filename, ID_DENSITY, BUFFER_SIZE, CODENAME);
+		num = BB_std_read_file_get_val_double_p(
+				&(vals->viscosity), filename, ID_VISCOSITY, BUFFER_SIZE, CODENAME);
+
 		
 		fclose(fp);
 	}
@@ -236,7 +250,7 @@ void set_element_mat_pred(
 					val_ip[p] = 0.0;
 	
 					double tau = BBFE_elemmat_convdiff_stab_coef_ns(
-							1.0/RE, v_ip[p], 1.0, h_e, vals->dt);
+							vals->viscosity/vals->density, v_ip[p], 1.0, h_e, vals->dt);
 
 					val_ip[p] += basis->N[p][i] * basis->N[p][j];
 					val_ip[p] += tau * BB_calc_vec3d_dot(v_ip[p], fe->geo[e][p].grad_N[i]) * basis->N[p][j];
@@ -311,7 +325,7 @@ void set_element_vec_pred(
 					val_ip[p] = 0.0;	
 					
 					double tau = BBFE_elemmat_convdiff_stab_coef_ns(
-							1.0/RE, v_ip[p], 1.0, h_e, vals->dt);
+							vals->viscosity/vals->density, v_ip[p], 1.0, h_e, vals->dt);
 
 					val_ip[p] += - basis->N[p][i]*(
 							v_ip[p][0] * grad_v_ip[p][d][0] + 
@@ -319,7 +333,7 @@ void set_element_vec_pred(
 							v_ip[p][2] * grad_v_ip[p][d][2] 
 							);
 					
-					val_ip[p] += -1.0/RE*(
+					val_ip[p] += -vals->viscosity/vals->density*(
 							fe->geo[e][p].grad_N[i][0] * grad_v_ip[p][d][0] +
 							fe->geo[e][p].grad_N[i][1] * grad_v_ip[p][d][1] +
 							fe->geo[e][p].grad_N[i][2] * grad_v_ip[p][d][2]
@@ -438,7 +452,7 @@ void set_element_vec_corr(
 				for(int p=0; p<np; p++) {
 					val_ip[p] = 0.0;
 
-					val_ip[p] += - basis->N[p][i]*grad_p_ip[p][d];
+					val_ip[p] += -1.0/vals->density * basis->N[p][i]*grad_p_ip[p][d];
 
 					val_ip[p] *= vals->dt;
 
@@ -538,7 +552,7 @@ void set_element_vec_ppe(
 			for(int p=0; p<np; p++) {
 				val_ip[p] = 0.0;
 
-				val_ip[p] += 1.0/(vals->dt) * div_v_ip[p] * basis->N[p][i];
+				val_ip[p] += vals->density/(vals->dt) * div_v_ip[p] * basis->N[p][i];
 			}
 
 			double integ_val = BBFE_std_integ_calc(
@@ -729,5 +743,7 @@ int main(
 	printf("** Total time: %f\n", t2 - t1);
 
 	printf("\n");
+
+	return 0;
 
 }
