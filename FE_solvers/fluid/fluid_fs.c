@@ -4,15 +4,15 @@
 const char* ID_NUM_IP_EACH_AXIS = "#num_ip_each_axis";
 const int DVAL_NUM_IP_EACH_AXIS = 2;
 const char*     ID_MAT_EPSILON  = "#mat_epsilon";
-const double  DVAL_MAT_EPSILON  = 1.0e-8;
+const double  DVAL_MAT_EPSILON  = 1.0e-6;
 const char*    ID_MAT_MAX_ITER  = "#mat_max_iter";
 const int    DVAL_MAT_MAX_ITER  = 10000;
 const char*              ID_DT  = "#time_spacing";
-const double           DVAL_DT  = 0.005;
+const double           DVAL_DT  = 0.0025;
 const char*     ID_FINISH_TIME  = "#finish_time";
-const double  DVAL_FINISH_TIME  = 10.0;
+const double  DVAL_FINISH_TIME  = 50.0;
 const char* ID_OUTPUT_INTERVAL  = "#output_interval";
-const int DVAL_OUTPUT_INTERVAL  = 8;
+const int DVAL_OUTPUT_INTERVAL  = 40;
 
 
 const double DELTA    = 1.0E-06;
@@ -25,7 +25,7 @@ static const char* INPUT_FILENAME_D_BC_P  = "D_bc_p.dat";
 static const char* OUTPUT_FILENAME_VTK    = "result_%06d.vtk";
 
 
-double RE = 200.0;
+double RE = 300.0;
 
 typedef struct
 {
@@ -605,7 +605,7 @@ int main(
 
 	for(int i=0; i<(sys.fe.total_num_nodes); i++) {
 		if( sys.fe.x[i][1] < 0.01 ) {
-			sys.bc_v.imposed_D_val[3*i+1] = 1.0;
+			sys.bc_v.imposed_D_val[3*i+1] = 0.5;
 		}
 	}
 

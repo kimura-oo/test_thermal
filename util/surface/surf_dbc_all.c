@@ -105,34 +105,6 @@ void cmd_args_reader(
 }
 
 
-
-void write_Dirichlet_bc_data(
-		BBFE_DATA*  fe,
-		SURFACE*    surf,
-		const int   block_size,
-		const char* directory,
-		const char* filename)
-{
-	FILE* fp;
-	fp = BBFE_sys_write_fopen(fp, filename, directory);
-
-	printf("\n%s Writing Dirichlet B.C. data\n", CODENAME);
-	printf("%s     Num. B.C. nodes: %d\n", CODENAME, surf->num_bc_nodes);
-	printf("%s     Block size     : %d\n", CODENAME, block_size);
-
-	fprintf(fp, "%d %d\n", block_size*(surf->num_bc_nodes), block_size);
-	for(int i=0; i<(fe->total_num_nodes); i++) {
-		if( surf->node_is_on_surface[i] ) {
-			for(int b=0; b<block_size; b++) {
-				fprintf(fp, "%d %d %e\n", i, b, 0.0);
-			}
-		}
-	}
-
-	fclose(fp);
-}
-
-
 int main(
 		int   argc,
 		char* argv[])
@@ -153,7 +125,8 @@ int main(
 
 	// function for higher order elements should be implemented!!!
 	
-	write_Dirichlet_bc_data(&fe, &surf, sets.block_size, sets.directory, sets.outfile_bc);
+	write_bc_file_const(&fe, surf.node_is_on_surface, 
+			surf.num_bc_nodes, sets.block_size, sets.bc_value, sets.outfile_bc, sets.directory);
 
 	printf("\n");
 

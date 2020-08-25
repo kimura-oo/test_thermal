@@ -8,7 +8,7 @@ static const int BUFFER_SIZE = 10000;
 static const char* CODENAME     = "vtk2dat >";
 static const char* ID_NODE      = "POINTS";
 static const char* ID_ELEM      = "CELLS";
-static const char* OP_DIRECTORY = "-o";
+static const char* OP_DIRECTORY = "-d";
 static const char* DEFAULT_DIR  = ".";
 
 static const int L_NUM_NODES = 8;
@@ -26,7 +26,7 @@ int main(
 	if( argc < 2 ) {
 		printf("%s ERROR: Input file should be specified.\n", CODENAME);
 		printf("%s Format:  ./vtk2dat [input filename]\n", CODENAME);
-		printf("%s Options: -o [output directory] (default: .)\n\n", CODENAME);
+		printf("%s Options: -d [output directory] (default: .)\n\n", CODENAME);
 		
 		exit(EXIT_FAILURE);
 	}

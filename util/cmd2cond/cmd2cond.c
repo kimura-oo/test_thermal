@@ -7,7 +7,7 @@
 const char* CODENAME           = "cmd2cond >";
 const char* VOIDNAME           = "          ";
 const char* FILENAME           = "cond.txt";
-const char* OPTION_OUTPUT_DIR  = "-o";
+const char* OPTION_OUTPUT_DIR  = "-d";
 const char* DEFAULT_OUTPUT_DIR = ".";
 const char* OPTION_ADD_MODE    = "--add";
 

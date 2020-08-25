@@ -167,13 +167,13 @@ const char* arg_manager(
 		printf("%s Format: \n", VOIDNAME);
 		printf("%s ./meshgen_tet [1: num. elements (x)] [2: num. elements (y)] [3: num. elements (z)] [4: total length (x)] [5: total length (y)] [6: total length (z)] \n\n", VOIDNAME);
 		printf("%s Options: \n", VOIDNAME);
-		printf("%s -o [output directory] (Default: ./) \n\n", VOIDNAME);
+		printf("%s -d [output directory] (Default: ./) \n\n", VOIDNAME);
 
 		exit(0);
 	}
 
 	const char* dir_name;
-	dir_name = read_args_return_next_arg(argc, argv, "-o");
+	dir_name = read_args_return_next_arg(argc, argv, "-d");
 	if(dir_name == NULL) {
 		return "./";
 	}
