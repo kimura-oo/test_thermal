@@ -23,6 +23,7 @@ cp surf_dbc_all ../../bin
 cp surf_nbc ../../bin
 cp surf_dbc ../../bin
 cp surf_conn ../../bin
+cp surf_bc_merge ../../bin
 cd ../../
 
 cd util/cmd2cond

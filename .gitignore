@@ -24,7 +24,7 @@
 !monolis_update.sh
 !monolis_install.sh
 !util_install.sh
-!docs/verifications/pics/*.pdf
+!docs/*/pics/*.pdf
 
 lib/
 include/
