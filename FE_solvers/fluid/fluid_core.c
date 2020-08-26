@@ -124,14 +124,11 @@ void BBFE_fluid_renew_velocity(
 
 void BBFE_fluid_finalize(
 		BBFE_DATA*   fe,
-		BBFE_BASIS*  basis,
-		BBFE_BC*     bc)
+		BBFE_BASIS*  basis)
 {
 	BBFE_sys_memory_free_integ(basis, 3);
 	BBFE_sys_memory_free_shapefunc(basis);
 
 	BBFE_sys_memory_free_node(fe, 3);
 	BBFE_sys_memory_free_elem(fe, basis->num_integ_points, 3);
-	
-	BBFE_sys_memory_free_Dirichlet_bc(bc, fe->total_num_nodes, BLOCK_SIZE);
 }

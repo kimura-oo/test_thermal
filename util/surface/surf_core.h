@@ -98,7 +98,7 @@ int get_bc_node_list(
 		bool* node_has_bc,
 		BBFE_DATA* fe);
 
-int write_bc_file_const(
+void write_bc_file_const(
 		BBFE_DATA*  fe,
 		bool*       node_has_bc,
 		int         num_bc_nodes,

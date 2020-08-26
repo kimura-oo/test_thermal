@@ -4,7 +4,7 @@
 
 #include <math.h>
 
-const double ZERO_CRITERION  = 1.0e-8;
+const double ZERO_CRITERION  = 1.0e-10;
 
 
 double BBFE_elemmat_convdiff_mat_conv(

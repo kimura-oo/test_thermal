@@ -19,9 +19,7 @@
 
 #include "BBFE/elemmat/set.h"
 #include "BBFE/elemmat/equivval.h"
-#include "BBFE/elemmat/convdiff.h"
-
-#include "BBFE/manusol/manusol.h"
+#include "BBFE/elemmat/fluid.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -59,5 +57,4 @@ void BBFE_fluid_renew_velocity(
 
 void BBFE_fluid_finalize(
 		BBFE_DATA*   fe,
-		BBFE_BASIS*  basis,
-		BBFE_BC*     bc);
+		BBFE_BASIS*  basis);

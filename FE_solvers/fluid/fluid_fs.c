@@ -155,7 +155,7 @@ void read_calc_conditions(
 		num = BB_std_read_file_get_val_double_p(
 				&(vals->viscosity), filename, ID_VISCOSITY, BUFFER_SIZE, CODENAME);
 
-		
+
 		fclose(fp);
 	}
 
@@ -204,11 +204,7 @@ void output_files(
 	snprintf(fname_vtk, BUFFER_SIZE, OUTPUT_FILENAME_VTK, file_num);
 
 	output_result_file_vtk(
-			&(sys->fe),
-			&(sys->vals),
-			fname_vtk,
-			sys->cond.directory,
-			t);
+			&(sys->fe), &(sys->vals), fname_vtk, sys->cond.directory, t);
 }
 
 
@@ -224,7 +220,7 @@ void set_element_mat_pred(
 	double* val_ip;  double* Jacobian_ip;
 	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
 	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
-	
+
 	double** local_v;
 	local_v = BB_std_calloc_2d_double(local_v, nl, 3);
 
@@ -236,7 +232,7 @@ void set_element_mat_pred(
 
 		double vol = BBFE_std_integ_calc_volume(np, basis->integ_weight, Jacobian_ip);
 		double h_e = cbrt(vol);
-		
+
 		BBFE_elemmat_set_local_array_vector(local_v, fe, vals->v, e, 3);
 
 		for(int p=0; p<np; p++) {
@@ -248,33 +244,30 @@ void set_element_mat_pred(
 
 				for(int p=0; p<np; p++) {
 					val_ip[p] = 0.0;
-	
-					double tau = BBFE_elemmat_convdiff_stab_coef_ns(
-							vals->viscosity/vals->density, v_ip[p], 1.0, h_e, vals->dt);
 
-					val_ip[p] += basis->N[p][i] * basis->N[p][j];
-					val_ip[p] += tau * BB_calc_vec3d_dot(v_ip[p], fe->geo[e][p].grad_N[i]) * basis->N[p][j];
+					double tau = BBFE_elemmat_fluid_supg_coef(
+							vals->density, vals->viscosity, v_ip[p], h_e, vals->dt);
+
+					val_ip[p] = BBFE_elemmat_fluid_fs_mat_pred_expl(
+							basis->N[p][i], basis->N[p][j], fe->geo[e][p].grad_N[i], v_ip[p], tau);
 				}
 
 				double integ_val = BBFE_std_integ_calc(
 						np, val_ip, basis->integ_weight, Jacobian_ip);
 
 				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 0, 0);
+						monolis, integ_val, fe->conn[e][i], fe->conn[e][j], 0, 0);
 				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 1, 1);
+						monolis, integ_val, fe->conn[e][i], fe->conn[e][j], 1, 1);
 				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 2, 2);
+						monolis, integ_val, fe->conn[e][i], fe->conn[e][j], 2, 2);
 			}
 		}
 	}
 
 	BB_std_free_1d_double(val_ip,      np);
 	BB_std_free_1d_double(Jacobian_ip, np);
-	
+
 	BB_std_free_2d_double(local_v, nl, 3);
 
 	BB_std_free_2d_double(v_ip, np, 3);
@@ -290,9 +283,9 @@ void set_element_vec_pred(
 	int nl = fe->local_num_nodes;
 	int np = basis->num_integ_points;
 
-	double* val_ip;
-	double* Jacobian_ip;
-	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
+	double** val_ip;
+	double*  Jacobian_ip;
+	val_ip      = BB_std_calloc_2d_double(val_ip, 3, np);
 	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
 
 	double** local_v;
@@ -319,97 +312,37 @@ void set_element_vec_pred(
 		}
 
 		for(int i=0; i<nl; i++) {
+			double integ_val[3];
+	
+			for(int p=0; p<np; p++) {
+				double tau = BBFE_elemmat_fluid_supg_coef(
+						vals->density, vals->viscosity, v_ip[p], h_e, vals->dt);
+
+				double vec[3];
+				BBFE_elemmat_fluid_fs_vec_pred_expl(
+						vec, basis->N[p][i], fe->geo[e][p].grad_N[i],
+						v_ip[p], grad_v_ip[p],
+						vals->density, vals->viscosity, tau, vals->dt);
+
+				for(int d=0; d<3; d++) {
+					val_ip[d][p] = vec[d];
+				}
+			}
 
 			for(int d=0; d<3; d++) {
-				for(int p=0; p<np; p++) {
-					val_ip[p] = 0.0;	
-					
-					double tau = BBFE_elemmat_convdiff_stab_coef_ns(
-							vals->viscosity/vals->density, v_ip[p], 1.0, h_e, vals->dt);
+				integ_val[d] = BBFE_std_integ_calc(
+						np, val_ip[d], basis->integ_weight, Jacobian_ip);
 
-					val_ip[p] += - basis->N[p][i]*(
-							v_ip[p][0] * grad_v_ip[p][d][0] + 
-							v_ip[p][1] * grad_v_ip[p][d][1] + 
-							v_ip[p][2] * grad_v_ip[p][d][2] 
-							);
-					
-					val_ip[p] += -vals->viscosity/vals->density*(
-							fe->geo[e][p].grad_N[i][0] * grad_v_ip[p][d][0] +
-							fe->geo[e][p].grad_N[i][1] * grad_v_ip[p][d][1] +
-							fe->geo[e][p].grad_N[i][2] * grad_v_ip[p][d][2]
-							);
-
-					val_ip[p] += -tau * BB_calc_vec3d_dot(v_ip[p], fe->geo[e][p].grad_N[i]) * 
-						BB_calc_vec3d_dot(v_ip[p], grad_v_ip[p][d]);
-					
-					val_ip[p] *= vals->dt;
-
-					val_ip[p] += basis->N[p][i] * v_ip[p][d];
-					val_ip[p] += tau * BB_calc_vec3d_dot(v_ip[p], fe->geo[e][p].grad_N[i]) * v_ip[p][d];
-				}
-
-				double integ_val = BBFE_std_integ_calc(
-						np, val_ip, basis->integ_weight, Jacobian_ip);
-
-				monolis->mat.B[ 3*(fe->conn[e][i]) + d ] += integ_val;
+				monolis->mat.B[ 3*fe->conn[e][i] + d ] += integ_val[d];
 			}
 		}
 	}
-
-	BB_std_free_1d_double(val_ip,      np);
+	
+	BB_std_free_2d_double(val_ip, 3, np);
 	BB_std_free_1d_double(Jacobian_ip, np);
-
 	BB_std_free_2d_double(local_v, nl, 3);
-
 	BB_std_free_2d_double(v_ip, np, 3);
-
 	BB_std_free_3d_double(grad_v_ip, np, 3, 3);
-}
-
-
-void set_element_mat_corr(
-		MONOLIS*     monolis,
-		BBFE_DATA*   fe,
-		BBFE_BASIS*  basis,
-		VALUES*      vals)
-{
-	int nl = fe->local_num_nodes;
-	int np = basis->num_integ_points;
-
-	double* val_ip;  double* Jacobian_ip;
-	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
-	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
-
-	for(int e=0; e<(fe->total_num_elems); e++) {
-		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
-
-		for(int i=0; i<nl; i++) {
-			for(int j=0; j<nl; j++) {
-
-				for(int p=0; p<np; p++) {
-					val_ip[p] = 0.0;
-
-					val_ip[p] += basis->N[p][i] * basis->N[p][j];
-				}
-
-				double integ_val = BBFE_std_integ_calc(
-						np, val_ip, basis->integ_weight, Jacobian_ip);
-
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 0, 0);
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 1, 1);
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 2, 2);
-			}
-		}
-	}
-
-	BB_std_free_1d_double(val_ip,      basis->num_integ_points);
-	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 }
 
 
@@ -422,9 +355,9 @@ void set_element_vec_corr(
 	int nl = fe->local_num_nodes;
 	int np = basis->num_integ_points;
 
-	double* val_ip;
-	double* Jacobian_ip;
-	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
+	double** val_ip;
+	double*  Jacobian_ip;
+	val_ip      = BB_std_calloc_2d_double(val_ip, 3, np);
 	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
 
 	double** local_v;  double* local_p;
@@ -447,77 +380,35 @@ void set_element_vec_corr(
 		}
 
 		for(int i=0; i<nl; i++) {
+			for(int p=0; p<np; p++) {
+				double vec[3];
+				
+				BBFE_elemmat_fluid_fs_vec_corr(
+						vec, basis->N[p][i], grad_p_ip[p],
+						v_ip[p], vals->density, vals->dt);
 
-			for(int d=0; d<3; d++) {
-				for(int p=0; p<np; p++) {
-					val_ip[p] = 0.0;
-
-					val_ip[p] += -1.0/vals->density * basis->N[p][i]*grad_p_ip[p][d];
-
-					val_ip[p] *= vals->dt;
-
-					val_ip[p] += basis->N[p][i] * v_ip[p][d];
+				for(int d=0; d<3; d++) {
+					val_ip[d][p] = vec[d];
 				}
+			}
 
-				double integ_val = BBFE_std_integ_calc(
-						np, val_ip, basis->integ_weight, Jacobian_ip);
+			double integ_val[3];
+			
+			for(int d=0; d<3; d++) {
+				integ_val[d] = BBFE_std_integ_calc(
+						np, val_ip[d], basis->integ_weight, Jacobian_ip);
 
-				monolis->mat.B[ 3*(fe->conn[e][i]) + d ] += integ_val;
+				monolis->mat.B[ 3*(fe->conn[e][i]) + d ] += integ_val[d];
 			}
 		}
 	}
 
-	BB_std_free_1d_double(val_ip,      basis->num_integ_points);
-	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
-
-	BB_std_free_2d_double(local_v, fe->local_num_nodes, 3);
-	BB_std_free_1d_double(local_p, fe->local_num_nodes);
-	
+	BB_std_free_2d_double(val_ip, 3, np);
+	BB_std_free_1d_double(Jacobian_ip, np);
+	BB_std_free_2d_double(local_v, nl, 3);
+	BB_std_free_1d_double(local_p, nl);
 	BB_std_free_2d_double(v_ip     , np, 3);
 	BB_std_free_2d_double(grad_p_ip, np, 3);
-}
-
-
-void set_element_mat_ppe(
-		MONOLIS*     monolis,
-		BBFE_DATA*   fe,
-		BBFE_BASIS*  basis,
-		VALUES*      vals)
-{
-	int nl = fe->local_num_nodes;
-	int np = basis->num_integ_points;
-
-	double* val_ip;  double* Jacobian_ip;
-	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
-	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
-
-	for(int e=0; e<(fe->total_num_elems); e++) {
-		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
-
-		for(int i=0; i<nl; i++) {
-			for(int j=0; j<nl; j++) {
-
-				for(int p=0; p<np; p++) {
-					val_ip[p] = 0.0;
-
-					val_ip[p] += 
-						-( fe->geo[e][p].grad_N[i][0] * fe->geo[e][p].grad_N[j][0] + 
-								fe->geo[e][p].grad_N[i][1] * fe->geo[e][p].grad_N[j][1] + 
-								fe->geo[e][p].grad_N[i][2] * fe->geo[e][p].grad_N[j][2] );
-				}
-
-				double integ_val = BBFE_std_integ_calc(
-						np, val_ip, basis->integ_weight, Jacobian_ip);
-
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 0, 0);
-			}
-		}
-	}
-
-	BB_std_free_1d_double(val_ip,      basis->num_integ_points);
-	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 }
 
 
@@ -550,9 +441,8 @@ void set_element_vec_ppe(
 
 		for(int i=0; i<nl; i++) {
 			for(int p=0; p<np; p++) {
-				val_ip[p] = 0.0;
-
-				val_ip[p] += vals->density/(vals->dt) * div_v_ip[p] * basis->N[p][i];
+				val_ip[p] = BBFE_elemmat_fluid_fs_vec_ppe(
+						basis->N[p][i], div_v_ip[p], vals->density, vals->dt);
 			}
 
 			double integ_val = BBFE_std_integ_calc(
@@ -616,23 +506,11 @@ int main(
 	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr) , &(sys.fe), 3);
 	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr0), &(sys.fe), 3);
 
+	BBFE_elemmat_set_global_mat_Laplacian_const(
+			&(sys.mono_ppe0),  &(sys.fe), &(sys.basis), 1.0);
+	BBFE_elemmat_set_global_mat_cmass_const(
+			&(sys.mono_corr0), &(sys.fe), &(sys.basis), 1.0, 3);
 
-	for(int i=0; i<(sys.fe.total_num_nodes); i++) {
-		if( sys.fe.x[i][1] < 0.01 ) {
-			sys.bc_v.imposed_D_val[3*i+1] = 0.5;
-		}
-	}
-
-	set_element_mat_ppe(
-			&(sys.mono_ppe0),
-			&(sys.fe),
-			&(sys.basis),
-			&(sys.vals));
-	set_element_mat_corr(
-			&(sys.mono_corr0),
-			&(sys.fe),
-			&(sys.basis),
-			&(sys.vals));
 	/****************** solver ********************/
 	double t = 0.0;
 	int step = 0;
@@ -642,10 +520,10 @@ int main(
 		step += 1;
 
 		printf("\n%s ----------------- step %d ----------------\n", CODENAME, step);
-		
+
 		BBFE_sys_monowrap_copy_mat(&(sys.mono_ppe0) , &(sys.mono_ppe));
 		BBFE_sys_monowrap_copy_mat(&(sys.mono_corr0), &(sys.mono_corr));
-	
+
 		monolis_clear(&(sys.mono_pred));
 		monolis_clear_rhs(&(sys.mono_ppe));
 		monolis_clear_rhs(&(sys.mono_corr));
@@ -734,9 +612,14 @@ int main(
 
 	}
 
-	BBFE_fluid_finalize(&(sys.fe), &(sys.basis), &(sys.bc_p));
-
+	BBFE_fluid_finalize(&(sys.fe), &(sys.basis));
+	BBFE_sys_memory_free_Dirichlet_bc(&(sys.bc_v), sys.fe.total_num_nodes, 3);
+	BBFE_sys_memory_free_Dirichlet_bc(&(sys.bc_p), sys.fe.total_num_nodes, 1);
+	monolis_finalize(&(sys.mono_pred));
 	monolis_finalize(&(sys.mono_ppe));
+	monolis_finalize(&(sys.mono_ppe0));
+	monolis_finalize(&(sys.mono_corr));
+	monolis_finalize(&(sys.mono_corr0));
 	monolis_global_finalize();
 
 	double t2 = monolis_get_time();

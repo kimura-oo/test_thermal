@@ -5,6 +5,9 @@
 #include "BBFE/std/integ.h"
 #include "BBFE/std/mapping.h"
 
+/**********************************************************
+ * basic utils
+ **********************************************************/
 void BBFE_elemmat_set_Jacobian_array(
 		double*    Jacobian_ip,
 		const int  num_integ_points,
@@ -98,4 +101,92 @@ void BBFE_elemmat_set_shapefunc_derivative(
 			}
 		}
 	}
+}
+
+/**********************************************************
+ * setter of simple global matrix
+ **********************************************************/
+void BBFE_elemmat_set_global_mat_cmass_const(
+		MONOLIS*    monolis,
+		BBFE_DATA*  fe,
+		BBFE_BASIS* basis,
+		double      coef,
+		int         block_size)
+{
+	int nl = fe->local_num_nodes;
+	int np = basis->num_integ_points;
+
+	double* val_ip;  double* Jacobian_ip;
+	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
+	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
+
+		for(int i=0; i<nl; i++) {
+			for(int j=0; j<nl; j++) {
+
+				for(int p=0; p<np; p++) {
+					val_ip[p] = 0.0;
+
+					val_ip[p] += coef * basis->N[p][i] * basis->N[p][j];
+				}
+
+				double integ_val = BBFE_std_integ_calc(
+						np, val_ip, basis->integ_weight, Jacobian_ip);
+
+				for(int b=0; b<block_size; b++) {
+					monolis_add_scalar_to_sparse_matrix(
+							monolis, integ_val,
+							fe->conn[e][i], fe->conn[e][j], b, b);
+				}
+			}
+		}
+	}
+
+	BB_std_free_1d_double(val_ip,      basis->num_integ_points);
+	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
+}
+
+
+void BBFE_elemmat_set_global_mat_Laplacian_const(
+		MONOLIS*    monolis,
+		BBFE_DATA*  fe,
+		BBFE_BASIS* basis,
+		double      coef)
+{
+	int nl = fe->local_num_nodes;
+	int np = basis->num_integ_points;
+
+	double* val_ip;  double* Jacobian_ip;
+	val_ip      = BB_std_calloc_1d_double(val_ip     , np);
+	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
+
+	for(int e=0; e<(fe->total_num_elems); e++) {
+		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
+
+		for(int i=0; i<nl; i++) {
+			for(int j=0; j<nl; j++) {
+
+				for(int p=0; p<np; p++) {
+					val_ip[p] = 0.0;
+
+					val_ip[p] += 
+						- coef * ( fe->geo[e][p].grad_N[i][0] * fe->geo[e][p].grad_N[j][0] + 
+								fe->geo[e][p].grad_N[i][1] * fe->geo[e][p].grad_N[j][1] + 
+								fe->geo[e][p].grad_N[i][2] * fe->geo[e][p].grad_N[j][2] );
+				}
+
+				double integ_val = BBFE_std_integ_calc(
+						np, val_ip, basis->integ_weight, Jacobian_ip);
+
+				monolis_add_scalar_to_sparse_matrix(
+						monolis, integ_val,
+						fe->conn[e][i], fe->conn[e][j], 0, 0);
+			}
+		}
+	}
+
+	BB_std_free_1d_double(val_ip,      basis->num_integ_points);
+	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 }

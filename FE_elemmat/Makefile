@@ -7,7 +7,7 @@ LIBS = -L/usr/local/lib -lm -L../lib/BB -lBB -lBBFE_std
 
 TARGET_LIB = libBBFE_elemmat.a
 #OBJS = debug_main.o
-OBJS = set.o equivval.o convdiff.o
+OBJS = set.o equivval.o convdiff.o fluid.o
 
 $(TARGET_LIB): $(OBJS)
 		ar rcs $@ $?

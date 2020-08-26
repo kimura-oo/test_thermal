@@ -1,7 +1,11 @@
 #pragma once
 
 #include "BBFE/sys/FE_dataset.h"
+#include "monolis.h"
 
+/**********************************************************
+ * basic utils
+ **********************************************************/
 void BBFE_elemmat_set_Jacobian_array(
 		double*    Jacobian_ip,
 		const int  num_integ_points,
@@ -28,3 +32,19 @@ void BBFE_elemmat_set_Jacobi_mat(
 void BBFE_elemmat_set_shapefunc_derivative(
 		BBFE_DATA*   fe,
 		BBFE_BASIS*  basis);
+
+/**********************************************************
+ * setter of simple global matrix
+ **********************************************************/
+void BBFE_elemmat_set_global_mat_cmass_const(
+		MONOLIS*    monolis,
+		BBFE_DATA*  fe,
+		BBFE_BASIS* basis,
+		double      coef,
+		int         block_size);
+
+void BBFE_elemmat_set_global_mat_Laplacian_const(
+		MONOLIS*    monolis,
+		BBFE_DATA*  fe,
+		BBFE_BASIS* basis,
+		double      coef);
