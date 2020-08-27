@@ -31,3 +31,10 @@ void BBFE_sys_read_Dirichlet_bc(
 		const char*  directory,
 		const int    total_num_nodes,
 		const int    block_size);
+
+void BBFE_sys_read_Neumann_bc(
+		BBFE_BC*     bc,
+		const char*  filename,
+		const char*  directory,
+		const int    total_num_nodes,
+		const int    block_size);

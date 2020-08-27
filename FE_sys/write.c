@@ -81,6 +81,22 @@ void BBFE_sys_write_vtk_shape(
 }
 
 
+void BBFE_sys_write_vtk_shape_with_disp(
+		FILE*       fp,
+		BBFE_DATA*  fe,
+		const int cell_type,
+		double**    u,  // displacement
+		double      scale)
+{
+	BB_vtk_write_header(fp);
+	fprintf(fp, "DATASET UNSTRUCTURED_GRID\n");
+	BB_vtk_write_points_3d_with_disp(fp, fe->total_num_nodes, fe->x, u, scale);
+	BB_vtk_write_cells(fp, fe->total_num_elems, fe->local_num_nodes, fe->conn);
+	BB_vtk_write_cell_types(fp, fe->total_num_elems, cell_type);
+
+}
+
+
 void BBFE_write_ascii_nodal_vals_scalar(
 		BBFE_DATA*   fe,
 		double*      vals,

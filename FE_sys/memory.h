@@ -48,3 +48,13 @@ void BBFE_sys_memory_free_Dirichlet_bc(
 		BBFE_BC*   bc,
 		const int  total_num_nodes,
 		const int  block_size);
+
+void BBFE_sys_memory_allocation_Neumann_bc(
+		BBFE_BC*   bc,
+		const int  total_num_nodes,
+		const int  block_size);
+
+void BBFE_sys_memory_free_Neumann_bc(
+		BBFE_BC*   bc,
+		const int  total_num_nodes,
+		const int  block_size);

@@ -36,6 +36,13 @@ void BB_vtk_write_points_3d(
 		int      num_points,
 		double** x); //[num_points][3]
 
+void BB_vtk_write_points_3d_with_disp(
+		FILE*    fp,
+		int      num_points,
+		double** x,
+		double** u,     //[num_points][3] displacement
+		double   scale);
+
 void BB_vtk_write_cells(
 		FILE* fp,
 		int   num_cells,

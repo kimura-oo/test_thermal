@@ -136,5 +136,51 @@ void BBFE_sys_read_Dirichlet_bc(
 		bc->D_bc_exists[ index ]   = true;
 		bc->imposed_D_val[ index ] = val;
 	}
+	
+	fclose(fp);
+}
+
+
+void BBFE_sys_read_Neumann_bc(
+		BBFE_BC*     bc,
+		const char*  filename,
+		const char*  directory,
+		const int    total_num_nodes,
+		const int    block_size)
+{
+
+	bc->total_num_nodes = total_num_nodes;
+	bc->block_size      = block_size;
+
+	BBFE_sys_memory_allocation_Neumann_bc(bc, total_num_nodes, bc->block_size);
+	int n = total_num_nodes * bc->block_size;
+
+	for(int i=0; i<n; i++) {
+		bc->N_bc_exists[i]   = false;
+		bc->imposed_N_val[i] = 0.0;
+	}
+
+	FILE* fp;
+	fp = BBFE_sys_read_fopen_without_error(fp, filename, directory);
+	if( fp == NULL ) {
+		return;
+	}
+
+
+	BB_std_scan_line(&fp, BUFFER_SIZE,
+			"%d %d", &(bc->num_N_bcs), &(bc->block_size));
+	printf("%s Num. Neumann B.C.: %d\n", CODENAME, bc->num_N_bcs);
+
+	for(int i=0; i<(bc->num_N_bcs); i++) {
+		int node_id;  int block_id;  double val;
+		BB_std_scan_line(&fp, BUFFER_SIZE,
+				"%d %d %lf", &node_id, &block_id, &val);
+
+		int index = (bc->block_size)*node_id + block_id;
+		bc->N_bc_exists[ index ]    = true;
+		bc->imposed_N_val[ index ] += val;
+	}
+
+	fclose(fp);
 }
 

@@ -136,3 +136,27 @@ void BBFE_sys_memory_free_Dirichlet_bc(
 	BB_std_free_1d_bool(  bc->D_bc_exists  , n);
 	BB_std_free_1d_double(bc->imposed_D_val, n);
 }
+
+
+void BBFE_sys_memory_allocation_Neumann_bc(
+		BBFE_BC*   bc,
+		const int  total_num_nodes,
+		const int  block_size)
+{
+	int n = total_num_nodes * block_size;
+
+	bc->N_bc_exists   = BB_std_calloc_1d_bool(  bc->N_bc_exists  , n);
+	bc->imposed_N_val = BB_std_calloc_1d_double(bc->imposed_N_val, n);
+}
+
+
+void BBFE_sys_memory_free_Neumann_bc(
+		BBFE_BC*   bc,
+		const int  total_num_nodes,
+		const int  block_size)
+{
+	int n = total_num_nodes * block_size;
+
+	BB_std_free_1d_bool(  bc->N_bc_exists  , n);
+	BB_std_free_1d_double(bc->imposed_N_val, n);
+}

@@ -71,3 +71,20 @@ void BBFE_sys_monowrap_set_Dirichlet_bc(
 		}
 	}
 }
+
+
+void BBFE_sys_monowrap_set_Neumann_bc(
+		int           num_nodes,
+		int           num_dofs_on_node,
+		BBFE_BC*      bc,
+		double*       g_rhs)
+	{
+	for(int i=0; i<num_nodes; i++) {
+		for(int k=0; k<num_dofs_on_node; k++) {
+			if( bc->N_bc_exists[ num_dofs_on_node*i+k ] ) {
+				g_rhs[ num_dofs_on_node*i+k ] += 
+					bc->imposed_N_val[ num_dofs_on_node*i+k ];
+			}
+		}
+	}
+}

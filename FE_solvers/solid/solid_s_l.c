@@ -17,10 +17,11 @@ const char*          ID_GRAVITY  = "#gravity";
 const double       DVAL_GRAVITY  = -9.81;
 
 const int BUFFER_SIZE = 10000;
+const double DISPLACEMENT_SCALE = 1.0;
 
 static const char* INPUT_FILENAME_COND    = "cond.dat";
 static const char* INPUT_FILENAME_D_BC    = "D_bc.dat";
-static const char* INPUT_FILENAME_N_BC    = "D_bc.dat";
+static const char* INPUT_FILENAME_N_BC    = "N_bc.dat";
 
 static const char* OUTPUT_FILENAME_VTK    = "result.vtk";
 
@@ -157,18 +158,19 @@ void output_result_file_vtk(
 		VALUES*        vals,
 		const char*    filename,
 		const char*    directory,
-		double         t)
+		double         t,
+		double         scale)
 {
 	FILE* fp;
 	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
 	switch( fe->local_num_nodes ) {
 		case 4:
-			BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_TETRA);
+			BBFE_sys_write_vtk_shape_with_disp(fp, fe, TYPE_VTK_TETRA, vals->u, scale);
 			break;
 
 		case 8:
-			BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_HEXAHEDRON);
+			BBFE_sys_write_vtk_shape_with_disp(fp, fe, TYPE_VTK_HEXAHEDRON, vals->u, scale);
 			break;
 	}
 
@@ -182,13 +184,14 @@ void output_result_file_vtk(
 void output_files(
 		FE_SYSTEM* sys,
 		int file_num,
-		double t)
+		double t,
+		double scale)
 {
 	char fname_vtk[BUFFER_SIZE];
 	snprintf(fname_vtk, BUFFER_SIZE, OUTPUT_FILENAME_VTK, file_num);
 
 	output_result_file_vtk(
-			&(sys->fe), &(sys->vals), fname_vtk, sys->cond.directory, t);
+			&(sys->fe), &(sys->vals), fname_vtk, sys->cond.directory, t, scale);
 }
 
 
@@ -310,6 +313,12 @@ int main(
 			sys.cond.directory,
 			sys.fe.total_num_nodes,
 			3);
+	BBFE_sys_read_Neumann_bc(
+			&(sys.bc),
+			INPUT_FILENAME_N_BC,
+			sys.cond.directory,
+			sys.fe.total_num_nodes,
+			3);
 
 	memory_allocation_nodal_values(
 			&(sys.vals),
@@ -339,6 +348,11 @@ int main(
 			3,
 			&(sys.bc),
 			sys.mono.mat.B);
+	BBFE_sys_monowrap_set_Neumann_bc(
+			sys.fe.total_num_nodes,
+			3,
+			&(sys.bc),
+			sys.mono.mat.B);
 	BBFE_sys_monowrap_solve(
 			&(sys.mono),
 			sys.mono.mat.X,
@@ -353,7 +367,7 @@ int main(
 			sys.fe.total_num_nodes);
 	/**********************************************/
 	
-	output_files(&sys, 0, 0);
+	output_files(&sys, 0, 0, DISPLACEMENT_SCALE);
 
 	BBFE_solid_finalize(&(sys.fe), &(sys.basis), &(sys.bc));
 	monolis_finalize(&(sys.mono));
