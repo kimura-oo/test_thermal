@@ -14,9 +14,9 @@ const double  DVAL_FINISH_TIME  = 1.0;
 const char* ID_OUTPUT_INTERVAL  = "#output_interval";
 const int DVAL_OUTPUT_INTERVAL  = 1;
 const char*         ID_DENSITY  = "#density";
-const int         DVAL_DENSITY  = 1000.0;
+const double      DVAL_DENSITY  = 1000.0;
 const char*       ID_VISCOSITY  = "#viscosity";
-const int       DVAL_VISCOSITY  = 1.0;
+const double    DVAL_VISCOSITY  = 1.0;
 
 const int BUFFER_SIZE = 10000;
 
