@@ -20,7 +20,6 @@ const int BUFFER_SIZE = 10000;
 
 static const char* INPUT_FILENAME_COND    = "cond.dat";
 static const char* INPUT_FILENAME_D_BC    = "D_bc.dat";
-static const char* INPUT_FILENAME_N_BC    = "D_bc.dat";
 
 static const char* OUTPUT_FILENAME_VTK    = "result.vtk";
 
@@ -205,11 +204,24 @@ void set_element_mat(
 	val_ip      = BB_std_calloc_3d_double(val_ip, 3, 3, np);
 	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
 
+	double** local_u;
+	local_u = BB_std_calloc_2d_double(local_u, nl, 3);
+
+	double** u_ip; 
+	u_ip = BB_std_calloc_2d_double(u_ip, np, 3);
+
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
 
+		BBFE_elemmat_set_local_array_vector(local_u, fe, vals->u, e, 3);
+
+		for(int p=0; p<np; p++) {
+			BBFE_std_mapping_vector3d(u_ip[p], nl, local_u, basis->N[p]);
+		}
+
 		for(int i=0; i<nl; i++) {
 			for(int j=0; j<nl; j++) {
+
 				for(int p=0; p<np; p++) {
 					double mat[3][3];
 					BBFE_elemmat_solid_mat_linear(
@@ -239,6 +251,8 @@ void set_element_mat(
 
 	BB_std_free_3d_double(val_ip, 3, 3, np);
 	BB_std_free_1d_double(Jacobian_ip, np);
+	BB_std_free_2d_double(local_u, nl, 3);
+	BB_std_free_2d_double(u_ip, np, 3);
 }
 
 
@@ -256,15 +270,30 @@ void set_element_vec(
 	val_ip      = BB_std_calloc_2d_double(val_ip, 3, np);
 	Jacobian_ip = BB_std_calloc_1d_double(Jacobian_ip, np);
 
+	double** local_u;
+	local_u = BB_std_calloc_2d_double(local_u, nl, 3);
+
+	double** u_ip; 
+	u_ip = BB_std_calloc_2d_double(u_ip, np, 3);
+
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
+
+		BBFE_elemmat_set_local_array_vector(local_u, fe, vals->u, e, 3);
+
+		for(int p=0; p<np; p++) {
+			BBFE_std_mapping_vector3d(u_ip[p], nl, local_u, basis->N[p]);
+		}
 
 		for(int i=0; i<nl; i++) {
 			double integ_val[3];
 
 			for(int p=0; p<np; p++) {
 				double vec[3];
-				vec[0] = vals->g[0];  vec[1] = vals->g[1];  vec[2] = vals->g[2];
+
+				vec[0] = vals->g[0];
+				vec[1] = vals->g[1];
+				vec[2] = vals->g[2];
 
 				for(int d=0; d<3; d++) {
 					val_ip[d][p] = vec[d];
@@ -282,6 +311,8 @@ void set_element_vec(
 
 	BB_std_free_2d_double(val_ip, 3, np);
 	BB_std_free_1d_double(Jacobian_ip, np);
+	BB_std_free_2d_double(local_u, nl, 3);
+	BB_std_free_2d_double(u_ip, np, 3);
 }
 
 

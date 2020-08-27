@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-static const char* CODENAME                   = "fluid >";
+static const char* CODENAME                   = "solid >";
 
 static const char* INPUT_FILENAME_NODE        = "node.dat";
 static const char* INPUT_FILENAME_ELEM        = "elem.dat";
