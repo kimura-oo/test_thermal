@@ -20,7 +20,8 @@ void cmd_args_reader_bc(
 		int       argc,
 		char*     argv[],
 		const char* codename,
-		const char* voidname)
+		const char* voidname,
+		const char* def_filename_bc)
 {
 	if(argc < 2) {
 		printf("%s Please specify parameters.\n", codename);
@@ -30,7 +31,7 @@ void cmd_args_reader_bc(
 		printf("%s     %s [input & output directory]\n", voidname, OPTION_DIRECTORY);
 		printf("%s     %s [input filename (nodes)]\n",   voidname, OPTION_INFILE_NODE);
 		printf("%s     %s [input filename (surface elements)]\n", voidname, OPTION_INFILE_SURF);
-		printf("%s     %s [output filename for Dirichlet B.C.]\n", voidname, OPTION_OUTFILE);
+		printf("%s     %s [output filename for B.C.]\n", voidname, OPTION_OUTFILE);
 		printf("\n");
 
 		exit(0);
@@ -93,12 +94,12 @@ void cmd_args_reader_bc(
 	num = BB_std_read_args_return_char_num(
 			argc, argv, OPTION_OUTFILE);
 	if(num == -1) {
-		set->outfile_bc = FILENAME_D_BC;
-		printf("%s Output filename for Dirichlet B.C.: %s (default)\n", codename, set->outfile_bc);
+		set->outfile_bc = def_filename_bc;
+		printf("%s Output filename for B.C.: %s (default)\n", codename, set->outfile_bc);
 	}
 	else {
 		set->outfile_bc = argv[num+1];
-		printf("%s Output filename for Dirichlet B.C.: %s\n", codename, set->outfile_bc);
+		printf("%s Output filename for B.C.: %s\n", codename, set->outfile_bc);
 	}
 
 	printf("\n");
@@ -338,6 +339,34 @@ void write_bc_file_const(
 		if(node_has_bc[i]) {
 			for(int b=0; b<block_size; b++) {
 				fprintf(fp, "%d %d %.15e\n", i, b, val[b]);
+			}
+		}
+	}
+
+	fclose(fp);
+}
+
+
+void write_bc_file_nonconst(
+		BBFE_DATA*  fe,
+		bool*       node_has_bc,
+		int         num_bc_nodes,
+		int         block_size,
+		double**    val,
+		const char* filename,
+		const char* directory)
+{
+	FILE* fp;
+	fp = BBFE_sys_write_fopen(fp, filename, directory);
+
+	int num_bcs = num_bc_nodes * block_size;
+
+	fprintf(fp, "%d %d\n", num_bcs, block_size);
+
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		if(node_has_bc[i]) {
+			for(int b=0; b<block_size; b++) {
+				fprintf(fp, "%d %d %.15e\n", i, b, val[b][i]);
 			}
 		}
 	}

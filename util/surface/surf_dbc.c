@@ -17,6 +17,8 @@
 static const char* CODENAME            = "surf_dbc >";
 static const char* VOIDNAME            = "          ";
 
+static const char* FILENAME_D_BC = "D_bc.dat";
+
 
 int main(
 		int   argc,
@@ -25,7 +27,7 @@ int main(
 	SETTINGS set;
 	BBFE_DATA fe;
 	
-	cmd_args_reader_bc(&set, argc, argv, CODENAME, VOIDNAME);
+	cmd_args_reader_bc(&set, argc, argv, CODENAME, VOIDNAME, FILENAME_D_BC);
 
 	BBFE_sys_read_node(&fe, set.infile_node, set.directory);
 	BBFE_sys_read_elem(&fe, set.infile_elem, set.directory, 1);

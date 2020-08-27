@@ -14,6 +14,7 @@
 static const char* CODENAME            = "surf_dbc_all >";
 static const char* VOIDNAME            = "              ";
 
+static const char* FILENAME_D_BC = "D_bc.dat";
 
 void cmd_args_reader(
 		SETTINGS* set,

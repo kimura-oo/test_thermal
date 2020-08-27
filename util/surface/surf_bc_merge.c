@@ -17,6 +17,9 @@
 static const char* CODENAME            = "surf_bc_merge >";
 static const char* VOIDNAME            = "               ";
 
+static const char* FILENAME_D_BC = "D_bc.dat";
+
+
 void cmd_args_reader(
 		SETTINGS* set,
 		int       argc,

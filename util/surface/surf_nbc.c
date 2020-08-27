@@ -15,13 +15,12 @@
 #include <BBFE/sys/write.h>
 #include <BBFE/sys/memory.h>
 
-#include <BBFE/elemmat/set.h>
-
 #include "surf_core.h"
 
 static const char* CODENAME            = "surf_nbc >";
 static const char* VOIDNAME            = "          ";
 
+static const char* FILENAME_N_BC = "N_bc.dat";
 
 void set_basis(
 		BBFE_BASIS*   basis,
@@ -78,7 +77,22 @@ void set_basis(
 }
 
 
-void equivval_surface(
+void set_local_array_vector(
+		double**       local_val,
+		BBFE_DATA*     fe,
+		double**       val,
+		const int      elem_num,
+		const int      dimension)
+{
+	for(int i=0; i<(fe->local_num_nodes); i++) {
+		for(int d=0; d<dimension; d++) {
+			local_val[i][d] = val[ fe->conn[elem_num][i] ][d];
+		}
+	}
+}
+
+
+void equivval_surface_ss(
 		double*     equiv_val,
 		BBFE_DATA*  surf,
 		BBFE_BASIS* basis,
@@ -93,7 +107,7 @@ void equivval_surface(
 	local_x = BB_std_calloc_2d_double(local_x, surf->local_num_nodes, 3);
 
 	for(int e=0; e<(surf->total_num_elems); e++) {
-		BBFE_elemmat_set_local_array_vector(local_x, surf, surf->x, e, 3);
+		set_local_array_vector(local_x, surf, surf->x, e, 3);
 
 		for(int p=0; p<(basis->num_integ_points); p++) {
 			double dx_dxi[3];  double dx_det[3];
@@ -128,7 +142,7 @@ void equivval_surface(
 }
 
 
-void equivval_surface_vector(
+void equivval_surface_sv(
 		double**    equiv_val,
 		BBFE_DATA*  surf,
 		BBFE_BASIS* basis,
@@ -143,7 +157,7 @@ void equivval_surface_vector(
 	local_x = BB_std_calloc_2d_double(local_x, surf->local_num_nodes, 3);
 
 	for(int e=0; e<(surf->total_num_elems); e++) {
-		BBFE_elemmat_set_local_array_vector(local_x, surf, surf->x, e, 3);
+		set_local_array_vector(local_x, surf, surf->x, e, 3);
 
 		for(int p=0; p<(basis->num_integ_points); p++) {
 			double dx_dxi[3];  double dx_det[3];
@@ -192,10 +206,11 @@ void write_surface_data_vtk(
 		BBFE_DATA*  surf,
 		double*     equiv_val,
 		double**    norm_vec,
+		const char* filename,
 		const char* directory)
 {
 	FILE* fp;
-	fp = BBFE_sys_write_fopen(fp, "surf_N_bc.vtk", directory);
+	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
 	BB_vtk_write_header(fp);
 	fprintf(fp, "DATASET UNSTRUCTURED_GRID\n");
@@ -226,20 +241,31 @@ void write_surface_data_vtk(
 }
 
 
+void write_dbc_data(
+		double**    equivval,
+		const char* filename,
+		const char* directory)
+{
+	FILE* fp;
+
+	fp = BBFE_sys_write_fopen(fp, filename, directory);
+
+}
+
+
 int main(
 		int   argc,
 		char* argv[])
 {
 	printf("\n");
 
-	double n_val = 1.0;
 	int n_axis   = 2;
 
 	BBFE_BASIS basis;
 	BBFE_DATA  surf;
 	SETTINGS   sets;
 
-	cmd_args_reader_bc(&sets, argc, argv, CODENAME, VOIDNAME);
+	cmd_args_reader_bc(&sets, argc, argv, CODENAME, VOIDNAME, FILENAME_N_BC);
 
 	BBFE_sys_read_node(
 			&surf,
@@ -263,26 +289,29 @@ int main(
 
 	set_basis(&basis, surf.local_num_nodes, n_axis);
 
-	double* equiv_val;
-	equiv_val = BB_std_calloc_1d_double(equiv_val, surf.total_num_nodes);
+	double** equiv_val;
+	equiv_val = BB_std_calloc_2d_double(equiv_val, sets.block_size, surf.total_num_nodes);
 	double** norm_vec;
 	norm_vec = BB_std_calloc_2d_double(norm_vec, surf.total_num_nodes, 3);
 	
-	equivval_surface(equiv_val, &surf, &basis, n_val);
-	equivval_surface_vector(norm_vec, &surf, &basis, n_val);
-
-	for(int i=0; i<surf.total_num_nodes; i++) {
-		printf("%d: %e %e %e\n", i, 
-				norm_vec[i][0],
-				norm_vec[i][1],
-				norm_vec[i][2]);
+	//equivval_surface_sv(norm_vec, &surf, &basis, 1.0);
+	
+	for(int b=0; b<sets.block_size; b++) {
+		equivval_surface_ss(equiv_val[b], &surf, &basis, sets.bc_value[b]);
 	}
 	
-	write_surface_data_vtk(&surf, equiv_val, norm_vec, sets.directory);
+	bool* node_has_bc;
+	node_has_bc = BB_std_calloc_1d_bool(node_has_bc, surf.total_num_nodes);
+	
+	int num_bc_nodes;
+	num_bc_nodes = get_bc_node_list(node_has_bc, &surf);
 
-	BB_std_free_1d_double(equiv_val, surf.total_num_nodes);
+	write_bc_file_nonconst(&surf, node_has_bc, num_bc_nodes, sets.block_size,
+			equiv_val, sets.outfile_bc, sets.directory);
+
+	BB_std_free_2d_double(equiv_val, sets.block_size, surf.total_num_nodes);
 	BB_std_free_2d_double(norm_vec,  surf.total_num_nodes, 3);
-
+	BB_std_free_1d_bool(node_has_bc, surf.total_num_nodes);
 
 	printf("\n");
 

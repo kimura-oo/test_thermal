@@ -2,7 +2,7 @@
 CC = g++
 CFLAGS = -Wall -Wextra -pedantic -O3
 LDFLAGS =
-INCLUDES = -I/usr/local/include -I../../include
+INCLUDES = -I/usr/local/include -I../../include 
 LIBS = -L/usr/local/lib -lm -L../../lib -lBB -lBBFE_std -lBBFE_sys -lBBFE_elemmat
 
 TARGET1 = surf_dbc_all

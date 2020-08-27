@@ -3,8 +3,6 @@
 
 static const char* FILENAME_NODE = "node.dat";
 static const char* FILENAME_ELEM = "elem.dat";
-static const char* FILENAME_D_BC = "D_bc.dat";
-static const char* FILENAME_N_BC = "N_bc.dat";
 static const char* FILENAME_SURF = "surf.dat";
 
 static const char* OPTION_DIRECTORY    = "-d";
@@ -50,13 +48,13 @@ typedef struct {
 
 } SURFACE;
 
-
 void cmd_args_reader_bc(
 		SETTINGS* set,
 		int       argc,
 		char*     argv[],
 		const char* codename,
-		const char* voidname);
+		const char* voidname,
+		const char* def_filename_bc);
 
 void read_fe_data(
 		BBFE_DATA*  fe,
@@ -104,5 +102,14 @@ void write_bc_file_const(
 		int         num_bc_nodes,
 		int         block_size,
 		double*     val,
+		const char* filename,
+		const char* directory);
+
+void write_bc_file_nonconst(
+		BBFE_DATA*  fe,
+		bool*       node_has_bc,
+		int         num_bc_nodes,
+		int         block_size,
+		double**    val,
 		const char* filename,
 		const char* directory);
