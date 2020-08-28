@@ -17,9 +17,11 @@ const char*          ID_GRAVITY  = "#gravity";
 const double       DVAL_GRAVITY  = -9.81;
 
 const int BUFFER_SIZE = 10000;
+const double DISPLACEMENT_SCALE = 1.0;
 
 static const char* INPUT_FILENAME_COND    = "cond.dat";
 static const char* INPUT_FILENAME_D_BC    = "D_bc.dat";
+static const char* INPUT_FILENAME_N_BC    = "N_bc.dat";
 
 static const char* OUTPUT_FILENAME_VTK    = "result.vtk";
 
@@ -341,6 +343,12 @@ int main(
 			sys.cond.directory,
 			sys.fe.total_num_nodes,
 			3);
+	BBFE_sys_read_Neumann_bc(
+			&(sys.bc),
+			INPUT_FILENAME_N_BC,
+			sys.cond.directory,
+			sys.fe.total_num_nodes,
+			3);
 
 	memory_allocation_nodal_values(
 			&(sys.vals),
@@ -366,6 +374,11 @@ int main(
 
 	BBFE_sys_monowrap_set_Dirichlet_bc(
 			&(sys.mono),
+			sys.fe.total_num_nodes,
+			3,
+			&(sys.bc),
+			sys.mono.mat.B);
+	BBFE_sys_monowrap_set_Neumann_bc(
 			sys.fe.total_num_nodes,
 			3,
 			&(sys.bc),

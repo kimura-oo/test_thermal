@@ -1,6 +1,9 @@
 #pragma once
 
 // rule: BBFE_std_mapping_
+
+void BBFE_std_mapping_void();
+
 void BBFE_std_mapping_calc_Jacobi_mat_3d(
 		double     J[3][3],
 		const int  local_num_nodes,

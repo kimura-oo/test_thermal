@@ -8,6 +8,7 @@
 /**********************************************************
  * basic utils
  **********************************************************/
+
 void BBFE_elemmat_set_Jacobian_array(
 		double*    Jacobian_ip,
 		const int  num_integ_points,
