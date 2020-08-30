@@ -53,12 +53,9 @@ typedef struct
 {
 	BBFE_BASIS   basis;
 	BBFE_DATA    fe;
-
 	CONDITIONS   cond;
 	VALUES       vals;
-
 	BBFE_BC      bc;
-
 	MONOLIS      mono;
 
 } FE_SYSTEM;
@@ -311,18 +308,15 @@ int main(
 			&(sys.bc),
 			INPUT_FILENAME_D_BC,
 			sys.cond.directory,
-			sys.fe.total_num_nodes,
-			3);
+			sys.fe.total_num_nodes, 3);
 	BBFE_sys_read_Neumann_bc(
 			&(sys.bc),
 			INPUT_FILENAME_N_BC,
 			sys.cond.directory,
-			sys.fe.total_num_nodes,
-			3);
+			sys.fe.total_num_nodes, 3);
 
 	memory_allocation_nodal_values(
-			&(sys.vals),
-			sys.fe.total_num_nodes);
+			&(sys.vals), sys.fe.total_num_nodes);
 
 	BBFE_elemmat_set_Jacobi_mat(&(sys.fe), &(sys.basis));
 	BBFE_elemmat_set_shapefunc_derivative(&(sys.fe), &(sys.basis));
@@ -331,28 +325,17 @@ int main(
 
 	/****************** solver ********************/
 	set_element_mat(
-			&(sys.mono),
-			&(sys.fe),
-			&(sys.basis),
-			&(sys.vals));
+			&(sys.mono), &(sys.fe), &(sys.basis), &(sys.vals));
 
 	set_element_vec(
-			&(sys.mono),
-			&(sys.fe),
-			&(sys.basis),
-			&(sys.vals));
+			&(sys.mono), &(sys.fe), &(sys.basis), &(sys.vals));
 
 	BBFE_sys_monowrap_set_Dirichlet_bc(
-			&(sys.mono),
-			sys.fe.total_num_nodes,
-			3,
-			&(sys.bc),
-			sys.mono.mat.B);
+			&(sys.mono), sys.fe.total_num_nodes, 3,
+			&(sys.bc), sys.mono.mat.B);
 	BBFE_sys_monowrap_set_Neumann_bc(
-			sys.fe.total_num_nodes,
-			3,
-			&(sys.bc),
-			sys.mono.mat.B);
+			sys.fe.total_num_nodes, 3,
+			&(sys.bc), sys.mono.mat.B);
 	BBFE_sys_monowrap_solve(
 			&(sys.mono),
 			sys.mono.mat.X,
