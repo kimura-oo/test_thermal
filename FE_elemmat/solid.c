@@ -131,7 +131,7 @@ void BBFE_elemmat_solid_tensor_Green_Lagrange_mat_notation(
 		for(int j=0; j<3; j++) {
 			a[i][j] = 0.0;
 			for(int k=0; k<3; k++) {
-				a[i][j] += F[k][i]*F[j][j];
+				a[i][j] += F[k][i]*F[k][j];
 			}
 		}
 	}
@@ -195,5 +195,28 @@ void BBFE_elemmat_solid_mat_tl(
 
 	for(int i=0; i<3; i++) {
 		mat[i][i] += val;
+	}
+}
+
+
+void BBFE_elemmat_solid_vec_inner_force_tl(
+		double       vec[3], 
+		double       D[6][6],
+		const double grad_N_i[3],
+		double**     grad_u)
+{
+	double B_i[6][3];
+	BBFE_elemmat_solid_mat_dispstr_tl(B_i, grad_u, grad_N_i);
+	
+	double F[3][3];  double E[6];  double S[6];
+	BBFE_elemmat_solid_tensor_defgrad(F, grad_u);
+	BBFE_elemmat_solid_tensor_Green_Lagrange_mat_notation(E, F);
+	BBFE_elemmat_solid_tensor_second_Piora_Kirchhoff_mat_notation(S, D, E);
+
+	for(int i=0; i<3; i++) {
+		vec[i] = 0.0;
+		for(int j=0; j<6; j++) {
+			vec[i] += B_i[j][i]*S[j];
+		}
 	}
 }

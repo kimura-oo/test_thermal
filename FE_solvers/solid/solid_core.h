@@ -55,6 +55,11 @@ void BBFE_solid_renew_vector(
 		double*   ans_vec,
 		const int total_num_nodes);
 
+void BBFE_solid_add_vector(
+		double**  vec,
+		double*   ans_vec,
+		const int total_num_nodes);
+
 void BBFE_solid_finalize(
 		BBFE_DATA*   fe,
 		BBFE_BASIS*  basis,

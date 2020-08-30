@@ -123,6 +123,19 @@ void BBFE_solid_renew_vector(
 }
 
 
+void BBFE_solid_add_vector(
+		double**  vec,
+		double*   ans_vec,
+		const int total_num_nodes)
+{
+	for(int i=0; i<total_num_nodes; i++) {
+		for(int d=0; d<3; d++) {
+			vec[i][d] += ans_vec[ 3*i + d ];
+		}
+	}
+}
+
+
 void BBFE_solid_finalize(
 		BBFE_DATA*   fe,
 		BBFE_BASIS*  basis,

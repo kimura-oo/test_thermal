@@ -7,6 +7,7 @@ const char*      ID_MAT_EPSILON  = "#mat_epsilon";
 const double   DVAL_MAT_EPSILON  = 1.0e-8;
 const char*     ID_MAT_MAX_ITER  = "#mat_max_iter";
 const int     DVAL_MAT_MAX_ITER  = 10000;
+
 const char*          ID_DENSITY  = "#density";
 const double       DVAL_DENSITY  = 1000.0;
 const char*    ID_YOUNG_MODULUS  = "#young_modulus";
@@ -15,6 +16,11 @@ const char*    ID_POISSON_RATIO  = "#poisson_ratio";
 const double DVAL_POISSON_RATIO  = 0.3;
 const char*          ID_GRAVITY  = "#gravity";
 const double       DVAL_GRAVITY  = -9.81;
+
+const char*       ID_NL_EPSILON  = "#nl_epsilon";
+const double    DVAL_NL_EPSILON  = 1.0e-8;
+const char*      ID_NL_MAX_ITER  = "#nl_max_iter";
+const int      DVAL_NL_MAX_ITER  = 1000;
 
 const int BUFFER_SIZE = 10000;
 const double DISPLACEMENT_SCALE = 1.0;
@@ -31,6 +37,8 @@ typedef struct
 	int    num_ip_each_axis;
 	double mat_epsilon;
 	int    mat_max_iter;
+	double nl_epsilon;
+	int    nl_max_iter;
 
 	double density;
 	double young;
@@ -78,6 +86,8 @@ void assign_default_values(
 	vals->num_ip_each_axis = DVAL_NUM_IP_EACH_AXIS;
 	vals->mat_epsilon      = DVAL_MAT_EPSILON;
 	vals->mat_max_iter     = DVAL_MAT_MAX_ITER;
+	vals->nl_epsilon       = DVAL_NL_EPSILON;
+	vals->nl_max_iter      = DVAL_NL_MAX_ITER;
 
 	vals->density          = DVAL_DENSITY;
 	vals->young            = DVAL_YOUNG_MODULUS;
@@ -97,6 +107,8 @@ void print_all_values(
 	printf("%s %s: %d\n", CODENAME, ID_NUM_IP_EACH_AXIS, vals->num_ip_each_axis);
 	printf("%s %s: %e\n", CODENAME, ID_MAT_EPSILON,      vals->mat_epsilon);
 	printf("%s %s: %d\n", CODENAME, ID_MAT_MAX_ITER,     vals->mat_max_iter);
+	printf("%s %s: %e\n", CODENAME, ID_NL_EPSILON,      vals->nl_epsilon);
+	printf("%s %s: %d\n", CODENAME, ID_NL_MAX_ITER,     vals->nl_max_iter);
 
 	printf("%s %s: %e\n", CODENAME, ID_DENSITY,          vals->density);
 	printf("%s %s: %e\n", CODENAME, ID_YOUNG_MODULUS,    vals->young);
@@ -133,6 +145,10 @@ void read_calc_conditions(
 				&(vals->mat_epsilon), filename, ID_MAT_EPSILON, BUFFER_SIZE, CODENAME);
 		num = BB_std_read_file_get_val_int_p(
 				&(vals->mat_max_iter), filename, ID_MAT_MAX_ITER, BUFFER_SIZE, CODENAME);
+		num = BB_std_read_file_get_val_double_p(
+				&(vals->nl_epsilon), filename, ID_NL_EPSILON, BUFFER_SIZE, CODENAME);
+		num = BB_std_read_file_get_val_int_p(
+				&(vals->nl_max_iter), filename, ID_NL_MAX_ITER, BUFFER_SIZE, CODENAME);
 
 		num = BB_std_read_file_get_val_double_p(
 				&(vals->density), filename, ID_DENSITY, BUFFER_SIZE, CODENAME);
@@ -140,7 +156,7 @@ void read_calc_conditions(
 				&(vals->young), filename, ID_YOUNG_MODULUS, BUFFER_SIZE, CODENAME);
 		num = BB_std_read_file_get_val_double_p(
 				&(vals->poisson), filename, ID_POISSON_RATIO, BUFFER_SIZE, CODENAME);		
-		
+
 		num = BB_std_read_file_get_val_double_p(
 				vals->g, filename, ID_GRAVITY, BUFFER_SIZE, CODENAME);
 
@@ -158,18 +174,19 @@ void output_result_file_vtk(
 		VALUES*        vals,
 		const char*    filename,
 		const char*    directory,
-		double         t)
+		double         t,
+		double         scale)
 {
 	FILE* fp;
 	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
 	switch( fe->local_num_nodes ) {
 		case 4:
-			BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_TETRA);
+			BBFE_sys_write_vtk_shape_with_disp(fp, fe, TYPE_VTK_TETRA, vals->u, scale);
 			break;
 
 		case 8:
-			BBFE_sys_write_vtk_shape(fp, fe, TYPE_VTK_HEXAHEDRON);
+			BBFE_sys_write_vtk_shape_with_disp(fp, fe, TYPE_VTK_HEXAHEDRON, vals->u, scale);
 			break;
 	}
 
@@ -183,13 +200,14 @@ void output_result_file_vtk(
 void output_files(
 		FE_SYSTEM* sys,
 		int file_num,
-		double t)
+		double t,
+		double scale)
 {
 	char fname_vtk[BUFFER_SIZE];
 	snprintf(fname_vtk, BUFFER_SIZE, OUTPUT_FILENAME_VTK, file_num);
 
 	output_result_file_vtk(
-			&(sys->fe), &(sys->vals), fname_vtk, sys->cond.directory, t);
+			&(sys->fe), &(sys->vals), fname_vtk, sys->cond.directory, t, scale);
 }
 
 
@@ -209,28 +227,32 @@ void set_element_mat(
 	double** local_u;
 	local_u = BB_std_calloc_2d_double(local_u, nl, 3);
 
-	double** u_ip; 
-	u_ip = BB_std_calloc_2d_double(u_ip, np, 3);
+	double*** grad_u_ip; 
+	grad_u_ip = BB_std_calloc_3d_double(grad_u_ip, np, 3, 3);
+
+	double D[6][6];
+	BBFE_elemmat_solid_mat_Hooke(
+			D, vals->young, vals->poisson);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
-
 		BBFE_elemmat_set_local_array_vector(local_u, fe, vals->u, e, 3);
 
 		for(int p=0; p<np; p++) {
-			BBFE_std_mapping_vector3d(u_ip[p], nl, local_u, basis->N[p]);
+			BBFE_std_mapping_vector3d_grad(grad_u_ip[p], nl, local_u, fe->geo[e][p].grad_N);
 		}
 
 		for(int i=0; i<nl; i++) {
 			for(int j=0; j<nl; j++) {
 
 				for(int p=0; p<np; p++) {
+
 					double mat[3][3];
-					BBFE_elemmat_solid_mat_linear(
-							mat, 
+					BBFE_elemmat_solid_mat_tl(
+							mat, D, 
 							fe->geo[e][p].grad_N[i], 
-							fe->geo[e][p].grad_N[j], 
-							vals->young, vals->poisson);
+							fe->geo[e][p].grad_N[j],
+							grad_u_ip[p]);
 
 					for(int k=0; k<3; k++) { 
 						for(int l=0; l<3; l++) {
@@ -254,7 +276,7 @@ void set_element_mat(
 	BB_std_free_3d_double(val_ip, 3, 3, np);
 	BB_std_free_1d_double(Jacobian_ip, np);
 	BB_std_free_2d_double(local_u, nl, 3);
-	BB_std_free_2d_double(u_ip, np, 3);
+	BB_std_free_3d_double(grad_u_ip, np, 3, 3);
 }
 
 
@@ -275,8 +297,12 @@ void set_element_vec(
 	double** local_u;
 	local_u = BB_std_calloc_2d_double(local_u, nl, 3);
 
-	double** u_ip; 
-	u_ip = BB_std_calloc_2d_double(u_ip, np, 3);
+	double*** grad_u_ip; 
+	grad_u_ip = BB_std_calloc_3d_double(grad_u_ip, np, 3, 3);
+
+	double D[6][6];
+	BBFE_elemmat_solid_mat_Hooke(
+			D, vals->young, vals->poisson);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		BBFE_elemmat_set_Jacobian_array(Jacobian_ip, np, e, fe);
@@ -284,7 +310,7 @@ void set_element_vec(
 		BBFE_elemmat_set_local_array_vector(local_u, fe, vals->u, e, 3);
 
 		for(int p=0; p<np; p++) {
-			BBFE_std_mapping_vector3d(u_ip[p], nl, local_u, basis->N[p]);
+			BBFE_std_mapping_vector3d_grad(grad_u_ip[p], nl, local_u, fe->geo[e][p].grad_N);
 		}
 
 		for(int i=0; i<nl; i++) {
@@ -293,12 +319,15 @@ void set_element_vec(
 			for(int p=0; p<np; p++) {
 				double vec[3];
 
-				vec[0] = vals->g[0];
-				vec[1] = vals->g[1];
-				vec[2] = vals->g[2];
+				BBFE_elemmat_solid_vec_inner_force_tl(
+						vec, D, fe->geo[e][p].grad_N[i], grad_u_ip[p]);
+
+				vec[0] -= vals->density * vals->g[0];
+				vec[1] -= vals->density * vals->g[1];
+				vec[2] -= vals->density * vals->g[2];
 
 				for(int d=0; d<3; d++) {
-					val_ip[d][p] = vec[d];
+					val_ip[d][p] = -vec[d];
 				}
 			}
 
@@ -314,7 +343,7 @@ void set_element_vec(
 	BB_std_free_2d_double(val_ip, 3, np);
 	BB_std_free_1d_double(Jacobian_ip, np);
 	BB_std_free_2d_double(local_u, nl, 3);
-	BB_std_free_2d_double(u_ip, np, 3);
+	BB_std_free_3d_double(grad_u_ip, np, 3, 3);
 }
 
 
@@ -360,44 +389,66 @@ int main(
 	BBFE_sys_monowrap_init_monomat(&(sys.mono) , &(sys.fe), 3);
 
 	/****************** solver ********************/
-	set_element_mat(
-			&(sys.mono),
-			&(sys.fe),
-			&(sys.basis),
-			&(sys.vals));
+	int num_iter_nl = 0;
+	double error0, error;
+	while(1) {
+		printf("%d --- Nonlinaer iteration: %d ---\n", CODENAME, num_iter_nl);
+		monolis_clear(&(sys.mono));
 
-	set_element_vec(
-			&(sys.mono),
-			&(sys.fe),
-			&(sys.basis),
-			&(sys.vals));
+		set_element_mat(
+				&(sys.mono),
+				&(sys.fe),
+				&(sys.basis),
+				&(sys.vals));
 
-	BBFE_sys_monowrap_set_Dirichlet_bc(
-			&(sys.mono),
-			sys.fe.total_num_nodes,
-			3,
-			&(sys.bc),
-			sys.mono.mat.B);
-	BBFE_sys_monowrap_set_Neumann_bc(
-			sys.fe.total_num_nodes,
-			3,
-			&(sys.bc),
-			sys.mono.mat.B);
-	BBFE_sys_monowrap_solve(
-			&(sys.mono),
-			sys.mono.mat.X,
-			monolis_iter_BiCGSTAB,
-			monolis_prec_SOR,
-			sys.vals.mat_max_iter,
-			sys.vals.mat_epsilon);
+		set_element_vec(
+				&(sys.mono),
+				&(sys.fe),
+				&(sys.basis),
+				&(sys.vals));
 
-	BBFE_solid_renew_vector(
-			sys.vals.u, 
-			sys.mono.mat.X,
-			sys.fe.total_num_nodes);
+		BBFE_sys_monowrap_set_Dirichlet_bc(
+				&(sys.mono),
+				sys.fe.total_num_nodes,
+				3,
+				&(sys.bc),
+				sys.mono.mat.B);
+		BBFE_sys_monowrap_set_Neumann_bc(
+				sys.fe.total_num_nodes,
+				3,
+				&(sys.bc),
+				sys.mono.mat.B);
+		BBFE_sys_monowrap_solve(
+				&(sys.mono),
+				sys.mono.mat.X,
+				monolis_iter_CG,
+				monolis_prec_SOR,
+				sys.vals.mat_max_iter,
+				sys.vals.mat_epsilon);
+
+		BBFE_solid_add_vector(
+				sys.vals.u, 
+				sys.mono.mat.X,
+				sys.fe.total_num_nodes);
+
+
+		error = 
+			BBFE_sys_monowrap_calc_error_norm(
+					sys.fe.total_num_nodes, 3, 
+					sys.mono.mat.B);
+		if( num_iter_nl == 0 ){ error0 = error; }
+		printf("%s Error norm: %e\n", CODENAME, error/error0);
+		if( error/error0 < 1.0e-08 ) { break; }
+		
+		num_iter_nl++;
+
+		printf("%s ----------------------\n", CODENAME);
+
+	}
+
 	/**********************************************/
-	
-	output_files(&sys, 0, 0);
+
+	output_files(&sys, 0, 0, DISPLACEMENT_SCALE);
 
 	BBFE_solid_finalize(&(sys.fe), &(sys.basis), &(sys.bc));
 	monolis_finalize(&(sys.mono));
