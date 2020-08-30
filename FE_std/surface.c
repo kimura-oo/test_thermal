@@ -15,8 +15,8 @@ int BBFE_std_surface_get_num_surfs_in_elem(
 			num_surfs_in_elem = 4;
 			break;
 
-		case 8 : // tet 1st
-		case 27: // tet 2nd
+		case 8 : // hex 1st
+		case 27: // hex 2nd
 			num_surfs_in_elem = 6;
 			break;
 	}
@@ -37,10 +37,10 @@ int BBFE_std_surface_get_num_nodes_on_surf(
 			num_nodes_in_surf = 6;
 			break;
 
-		case 8 : // tet 1st
+		case 8 : // hex 1st
 			num_nodes_in_surf = 4;
 			break;
-		case 27: // tet 2nd
+		case 27: // hex 2nd
 			num_nodes_in_surf = 9;
 			break;
 	}
@@ -73,8 +73,8 @@ int BBFE_std_surface_get_surface_node_3d(
 						conn);
 			break;
 
-		case 8 : // tet 1st
-		case 27: // tet 2nd
+		case 8 : // hex 1st
+		case 27: // hex 2nd
 			num_nodes_on_surf = 4;
 			num_surface_nodes = 
 				BBFE_std_surface_hex1st_get_surface_node(
