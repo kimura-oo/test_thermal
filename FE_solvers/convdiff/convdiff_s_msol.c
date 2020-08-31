@@ -44,7 +44,7 @@ typedef struct
 	BBFE_DATA    fe;
 	BBFE_BC      bc;
 	MONOLIS      monolis;
-	
+
 	CONDITIONS   cond;
 	VALUES       vals;
 
@@ -58,7 +58,7 @@ double manusol_get_sol(
 		double t)
 {
 	double val = sin( 0.25*x ) * sin( 0.5*y ) * sin( 1.0*z );
-	
+
 	return val;
 }
 
@@ -67,7 +67,7 @@ double manusol_get_mass_coef(
 		double x[3])
 {
 	double val = 1.0;
-	
+
 	return val;
 }
 
@@ -107,38 +107,38 @@ double manusol_get_source(
 	dk_dx[0] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) ) * (invD/2.0);
 	x_p[0] = x[0];  x_p[1] = x[1]+DELTA;  x_p[2] = x[2];
 	x_m[0] = x[0];  x_m[1] = x[1]-DELTA;  x_m[2] = x[2];
-	dk_dx[1] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) ) * (invD/2.0);	
+	dk_dx[1] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) ) * (invD/2.0);
 	x_p[0] = x[0];  x_p[1] = x[1];  x_p[2] = x[2]+DELTA;
 	x_m[0] = x[0];  x_m[1] = x[1];  x_m[2] = x[2]-DELTA;
 	dk_dx[2] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) )* (invD/2.0);
 
 	double dT_dx[3];
-	dT_dx[0] =  ( manusol_get_sol(x[0]+DELTA, x[1], x[2], 0.0) -  
+	dT_dx[0] =  ( manusol_get_sol(x[0]+DELTA, x[1], x[2], 0.0) -
 		manusol_get_sol(x[0]-DELTA, x[1], x[2], 0.0) ) * (invD/2.0);
-	dT_dx[1] =  ( manusol_get_sol(x[0], x[1]+DELTA, x[2], 0.0) -  
+	dT_dx[1] =  ( manusol_get_sol(x[0], x[1]+DELTA, x[2], 0.0) -
 		manusol_get_sol(x[0], x[1]-DELTA, x[2], 0.0) ) * (invD/2.0);
-	dT_dx[2] =  ( manusol_get_sol(x[0], x[1], x[2]+DELTA, 0.0) -  
+	dT_dx[2] =  ( manusol_get_sol(x[0], x[1], x[2]+DELTA, 0.0) -
 		manusol_get_sol(x[0], x[1], x[2]-DELTA, 0.0) ) * (invD/2.0);
 
 	double d2T_dx2[3];
-	d2T_dx2[0] = ( 
-			    manusol_get_sol(x[0]+DELTA, x[1], x[2], 0.0) + 
+	d2T_dx2[0] = (
+			    manusol_get_sol(x[0]+DELTA, x[1], x[2], 0.0) +
 			    manusol_get_sol(x[0]-DELTA, x[1], x[2], 0.0) -
 			2.0*manusol_get_sol(x[0]      , x[1], x[2], 0.0) ) * invD2;
-	d2T_dx2[1] = ( 
-			    manusol_get_sol(x[0], x[1]+DELTA, x[2], 0.0) + 
+	d2T_dx2[1] = (
+			    manusol_get_sol(x[0], x[1]+DELTA, x[2], 0.0) +
 			    manusol_get_sol(x[0], x[1]-DELTA, x[2], 0.0) -
 			2.0*manusol_get_sol(x[0], x[1]      , x[2], 0.0) ) * invD2;
-	d2T_dx2[2] = ( 
-			    manusol_get_sol(x[0], x[1], x[2]+DELTA, 0.0) + 
+	d2T_dx2[2] = (
+			    manusol_get_sol(x[0], x[1], x[2]+DELTA, 0.0) +
 			    manusol_get_sol(x[0], x[1], x[2]-DELTA, 0.0) -
 			2.0*manusol_get_sol(x[0], x[1], x[2]      , 0.0) ) * invD2;
 
-	double val = 
-		a * (v[0]*dT_dx[0] + v[1]*dT_dx[1] + v[2]*dT_dx[2]) - 
-		(dk_dx[0]*dT_dx[0] + dk_dx[1]*dT_dx[1] + dk_dx[2]*dT_dx[2]) - 
+	double val =
+		a * (v[0]*dT_dx[0] + v[1]*dT_dx[1] + v[2]*dT_dx[2]) -
+		(dk_dx[0]*dT_dx[0] + dk_dx[1]*dT_dx[1] + dk_dx[2]*dT_dx[2]) -
 		k * (d2T_dx2[0] + d2T_dx2[1] + d2T_dx2[2]);
-	
+
 	return val;
 }
 
@@ -219,13 +219,13 @@ void read_calc_conditions(
 
 		num = BB_std_read_file_get_val_int_p(
 				&(vals->mat_max_iter), filename, ID_MAT_MAX_ITER, BUFFER_SIZE, CODENAME);
-		
+
 		fclose(fp);
 	}
-	
+
 	print_all_values(vals);
-	
-	
+
+
 	printf("\n");
 }
 
@@ -267,7 +267,7 @@ void output_result_file_vtk(
 			fe, vals->error, vals->theo_sol, vals->T);
 	BB_vtk_write_point_vals_scalar(fp, vals->error   , fe->total_num_nodes, "abs_error");
 	BB_vtk_write_point_vals_scalar(fp, vals->theo_sol, fe->total_num_nodes, "theoretical");
-	
+
 	double* source;
 	source = BB_std_calloc_1d_double(source, fe->total_num_nodes);
 	manusol_set_source(fe, source);
@@ -336,7 +336,7 @@ void set_element_mat_vec(
 
 	double** local_x;
 	local_x   = BB_std_calloc_2d_double(local_x, nl, 3);
-	
+
 	double** x_ip;  double* a_ip;  double** v_ip;  double* k_ip;  double* f_ip;
 	x_ip = BB_std_calloc_2d_double(x_ip, np, 3);
 	v_ip = BB_std_calloc_2d_double(v_ip, np, 3);
@@ -349,7 +349,7 @@ void set_element_mat_vec(
 
 		double vol = BBFE_std_integ_calc_volume(np, basis->integ_weight, Jacobian_ip);
 		double h_e = cbrt(vol);
-		
+
 		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x, e, 3);
 
 		for(int p=0; p<np; p++) {
@@ -391,10 +391,10 @@ void set_element_mat_vec(
 		for(int i=0; i<(fe->local_num_nodes); i++) {
 			for(int p=0; p<(basis->num_integ_points); p++) {
 				val_ip[p] = 0.0;
-		
+
 				double tau = BBFE_elemmat_convdiff_stab_coef(
 						k_ip[p], a_ip[p], v_ip[p], h_e);
-				
+
 				val_ip[p] += BBFE_elemmat_convdiff_vec_source(
 						basis->N[p][i], f_ip[p]);
 
@@ -432,16 +432,16 @@ int main (
 
 	monolis_global_initialize();
 	double t1 = monolis_get_time();
-	
+
 	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);
 	read_calc_conditions(&(sys.vals), sys.cond.directory);
 
 	BBFE_convdiff_pre(
 			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
 			argc, argv, sys.cond.directory,
-			sys.vals.num_ip_each_axis, 
+			sys.vals.num_ip_each_axis,
 			true);
-	
+
 	memory_allocation_nodal_values(
 			&(sys.vals),
 			sys.fe.total_num_nodes);
