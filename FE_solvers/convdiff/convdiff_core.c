@@ -32,14 +32,18 @@ void BBFE_convdiff_pre(
 	BB_calc_void();
 
 	int n_axis = num_integ_points_each_axis;
+	const char* filename;
 
+	filename = monolis_get_input_filename(INPUT_FILENAME_NODE);
 	BBFE_sys_read_node(
 			fe,
-			INPUT_FILENAME_NODE,
+			filename,
 			directory);
+
+	filename = monolis_get_input_filename(INPUT_FILENAME_ELEM);
 	BBFE_sys_read_elem(
 			fe,
-			INPUT_FILENAME_ELEM,
+			filename,
 			directory,
 			n_axis*n_axis*n_axis);
 
@@ -83,7 +87,7 @@ void BBFE_convdiff_set_basis(
 {
 	switch( local_num_nodes ) {
 		case 4:
-			basis->num_integ_points = 
+			basis->num_integ_points =
 				BBFE_std_integ_tet_set_arbitrary_points(
 						num_integ_points_each_axis,
 						basis->integ_point,
@@ -104,7 +108,7 @@ void BBFE_convdiff_set_basis(
 			break;
 
 		case 8:
-			basis->num_integ_points = 
+			basis->num_integ_points =
 				BBFE_std_integ_hex_set_arbitrary_points(
 						num_integ_points_each_axis,
 						basis->integ_point,
@@ -138,6 +142,6 @@ void BBFE_convdiff_finalize(
 
 	BBFE_sys_memory_free_node(fe, 3);
 	BBFE_sys_memory_free_elem(fe, basis->num_integ_points, 3);
-	
+
 	BBFE_sys_memory_free_Dirichlet_bc(bc, fe->total_num_nodes, BLOCK_SIZE);
 }
