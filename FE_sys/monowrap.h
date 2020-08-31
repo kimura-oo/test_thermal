@@ -32,3 +32,8 @@ void BBFE_sys_monowrap_set_Neumann_bc(
 		int           num_dofs_on_node,
 		BBFE_BC*      bc,
 		double*       g_rhs);
+
+double BBFE_sys_monowrap_calc_error_norm(
+		int        num_nodes,
+		int        num_dofs_on_node,
+		double*    vec);

@@ -46,3 +46,10 @@ void BBFE_elemmat_solid_mat_tl(
 		const double grad_N_i[3],
 		const double grad_N_j[3],
 		double**     grad_u );
+
+void BBFE_elemmat_solid_vec_inner_force_tl(
+		double       vec[3], 
+		double       D[6][6],
+		const double grad_N_i[3],
+		double**     grad_u);
+

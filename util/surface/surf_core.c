@@ -173,8 +173,10 @@ void get_surface_nodes(
 
 	switch(fe->local_num_nodes) {
 		case 4:
+			printf("%s Element type: 1st-order tetrahedron\n", codename);
+			break;
 		case 10:
-			printf("%s Element type: tetrahedron\n", codename);
+			printf("%s Element type: 2nd-order tetrahedron\n", codename);
 			break;
 
 		case 8:
@@ -241,8 +243,7 @@ void set_surface_conn(
 						BBFE_std_shapefunc_tet1st_get_surface(loc_conn, s);
 						break;
 					case 10:
-						// not implemented...
-						//BBFE_std_shapefunc_tet2nd_get_surface(loc_conn, s);
+						BBFE_std_shapefunc_tet2nd_get_surface(loc_conn, s);
 						break;
 					case 8:
 						BBFE_std_shapefunc_hex1st_get_surface(loc_conn, s);

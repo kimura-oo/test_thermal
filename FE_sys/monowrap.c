@@ -1,5 +1,6 @@
 
 #include "monowrap.h"
+#include <math.h>
 
 
 void BBFE_sys_monowrap_init_monomat(
@@ -87,4 +88,23 @@ void BBFE_sys_monowrap_set_Neumann_bc(
 			}
 		}
 	}
+}
+
+
+double BBFE_sys_monowrap_calc_error_norm(
+		int        num_nodes,
+		int        num_dofs_on_node,
+		double*    vec)
+{
+	double norm = 0.0;
+	
+	for(int i=0; i<num_nodes; i++) {
+		for(int k=0; k<num_dofs_on_node; k++) {
+			norm += vec[ num_dofs_on_node*i+k ]*vec[ num_dofs_on_node*i+k ];
+		}
+	}
+
+	norm = sqrt(norm);
+
+	return norm;
 }

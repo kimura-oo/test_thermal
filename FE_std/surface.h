@@ -35,6 +35,13 @@ int BBFE_std_surface_tet1st_get_surface_node(
 		int      total_num_elems,
 		int**    conn);
 
+int BBFE_std_surface_tet2nd_get_surface_node(
+		bool*    node_is_on_surface,
+		int      total_num_nodes,
+		double** x,
+		int      total_num_elems,
+		int**    conn);
+
 int BBFE_std_surface_tet1st_get_surface(
 		bool**   surf_is_on_surface, //[total_num_elems][num_surfs]
 		bool*    node_is_on_surface,

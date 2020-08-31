@@ -409,9 +409,11 @@ int get_cell_type_vtk_3d(
 
 	switch(num_points_in_cell) {
 		case 4: 
+		case 10: 
 			cell_type = TYPE_VTK_TETRA;      
 			break;
-		case 8: 
+		case 8:
+		case 27:
 			cell_type = TYPE_VTK_HEXAHEDRON; 
 			break;
 	}
@@ -427,9 +429,11 @@ int get_cell_type_vtk_2d(
 
 	switch(num_points_in_cell) {
 		case 3: 
+		case 10: 
 			cell_type = TYPE_VTK_TRIANGLE;      
 			break;
 		case 4: 
+		case 27:
 			cell_type = TYPE_VTK_QUAD; 
 			break;
 	}
