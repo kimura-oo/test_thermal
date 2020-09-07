@@ -57,9 +57,10 @@ void BBFE_convdiff_pre(
 			1,
 			n_axis*n_axis*n_axis);
 
+	filename = monolis_get_input_filename(INPUT_FILENAME_D_BC);
 	BBFE_sys_read_Dirichlet_bc(
 			bc,
-			INPUT_FILENAME_D_BC,
+			filename,
 			directory,
 			fe->total_num_nodes,
 			BLOCK_SIZE);
