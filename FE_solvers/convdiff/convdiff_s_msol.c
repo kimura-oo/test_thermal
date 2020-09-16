@@ -282,10 +282,13 @@ void output_result_file_vtk(
 void output_files(
 		FE_SYSTEM* sys)
 {
+	const char* filename;
+
+	filename = monolis_get_output_filename(OUTPUT_FILENAME_VTK);
 	output_result_file_vtk(
 			&(sys->fe),
 			&(sys->vals),
-			OUTPUT_FILENAME_VTK,
+			filename,
 			sys->cond.directory);
 
 	BBFE_write_ascii_nodal_vals_scalar(
