@@ -291,10 +291,11 @@ void output_files(
 			filename,
 			sys->cond.directory);
 
+	filename = monolis_get_output_filename(OUTPUT_FILENAME_ASCII_TEMP);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			sys->vals.T,
-			OUTPUT_FILENAME_ASCII_TEMP,
+			filename,
 			sys->cond.directory);
 
 	/**** for manufactured solution ****/
@@ -302,10 +303,11 @@ void output_files(
 	source = BB_std_calloc_1d_double(source, sys->fe.total_num_nodes);
 	manusol_set_source(&(sys->fe), source);
 
+	filename = monolis_get_output_filename(OUTPUT_FILENAME_ASCII_SOURCE);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			source,
-			OUTPUT_FILENAME_ASCII_SOURCE,
+			filename,
 			sys->cond.directory);
 
 	double L2_error = BBFE_elemmat_equivval_relative_L2_error_scalar(
@@ -314,6 +316,7 @@ void output_files(
 			0.0,
 			sys->vals.T,
 			manusol_get_sol);
+
 	printf("%s L2 error: %e\n", CODENAME, L2_error);
 	FILE* fp;
 	fp = BBFE_sys_write_fopen(fp, "l2_error.txt", sys->cond.directory);
