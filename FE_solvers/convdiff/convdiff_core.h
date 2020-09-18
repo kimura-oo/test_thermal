@@ -57,6 +57,14 @@ void BBFE_convdiff_set_basis(
 		int           local_num_nodes,
 		int           num_integ_points_each_axis);
 
+double BBFE_convdiff_equivval_relative_L2_error_scalar(
+		BBFE_DATA*    fe,
+		BBFE_BASIS*   basis,
+		MONOLIS*      monolis,
+		double        t,
+		const double* comp_vec, // [total_num_nodes]
+		double        (*func)(double, double, double, double)); // scalar function(x, y, z, t)
+
 void BBFE_convdiff_finalize(
 		BBFE_DATA*   fe,
 		BBFE_BASIS*  basis,

@@ -310,9 +310,10 @@ void output_files(
 			filename,
 			sys->cond.directory);
 
-	double L2_error = BBFE_elemmat_equivval_relative_L2_error_scalar(
+	double L2_error = BBFE_convdiff_equivval_relative_L2_error_scalar(
 			&(sys->fe),
 			&(sys->basis),
+			&(sys->monolis),
 			0.0,
 			sys->vals.T,
 			manusol_get_sol);
@@ -331,7 +332,7 @@ void output_files(
 void set_element_mat_vec(
 		MONOLIS*     monolis,
 		BBFE_DATA*     fe,
-		BBFE_BASIS* basis)
+		BBFE_BASIS*  basis)
 {
 	int nl = fe->local_num_nodes;
 	int np = basis->num_integ_points;
