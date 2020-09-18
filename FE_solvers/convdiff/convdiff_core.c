@@ -159,8 +159,6 @@ double BBFE_convdiff_equivval_relative_L2_error_scalar(
 	double* local_val;
 	local_val = BB_std_calloc_1d_double(local_val, fe->local_num_nodes);
 
-printf("%d %d \n", monolis->com.internal_nelem, fe->total_num_elems);
-
 	monolis_get_internal_elem_1d_bool(monolis, fe->total_num_elems, is_internal_elem);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
@@ -222,8 +220,6 @@ printf("%d %d \n", monolis->com.internal_nelem, fe->total_num_elems);
 
 	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
 	BB_std_free_1d_double(local_val, fe->local_num_nodes);
-
-printf("%e %e \n", L2_abs_error, L2_abs_theo);
 
 	L2_abs_error = monolis_allreduce_double_scalar(
 			monolis,
