@@ -6,7 +6,7 @@ const int DVAL_NUM_IP_EACH_AXIS = 3;
 const char*     ID_MAT_EPSILON   = "#mat_epsilon";
 const double  DVAL_MAT_EPSILON   = 1.0e-8;
 const char*    ID_MAT_MAX_ITER  = "#mat_max_iter";
-const int    DVAL_MAT_MAX_ITER  = 10000;
+const int    DVAL_MAT_MAX_ITER  = 100;
 
 
 static const double DELTA    = 1.0E-06;
@@ -462,6 +462,7 @@ int main (
 	BBFE_elemmat_set_shapefunc_derivative(
 			&(sys.fe),
 			&(sys.basis));
+
 	set_element_mat_vec(
 			&(sys.monolis),
 			&(sys.fe),
@@ -474,12 +475,16 @@ int main (
 			sys.vals.theo_sol,
 			0.0);
 
+	monolis_show_timelog (&(sys.monolis), true);
 	BBFE_sys_monowrap_set_Dirichlet_bc(
 			&(sys.monolis),
 			sys.fe.total_num_nodes,
 			BLOCK_SIZE,
 			&(sys.bc),
 			sys.monolis.mat.B);
+
+	double t2 = monolis_get_time();
+	printf("** Pre  time: %f\n", t2 - t1);
 
 	BBFE_sys_monowrap_solve(
 			&(sys.monolis),
@@ -490,17 +495,18 @@ int main (
 			sys.vals.mat_epsilon);
 	/**********************************************/
 
+	double t3 = monolis_get_time();
 	output_files(&sys);
 
 	BBFE_convdiff_finalize(&(sys.fe), &(sys.basis), &(sys.bc));
 
+	double t4 = monolis_get_time();
+	printf("** Post  time: %f\n", t4 - t3);
+	printf("** Total time: %f\n", t4 - t1);
+	printf("\n");
+
 	monolis_finalize(&(sys.monolis));
 	monolis_global_finalize();
-
-	double t2 = monolis_get_time();
-	printf("** Total time: %f\n", t2 - t1);
-
-	printf("\n");
 
 	return 0;
 }
