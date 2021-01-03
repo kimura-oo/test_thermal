@@ -4,12 +4,12 @@
 const char* ID_NUM_IP_EACH_AXIS = "#num_ip_each_axis";
 const int DVAL_NUM_IP_EACH_AXIS = 3;
 const char*     ID_MAT_EPSILON   = "#mat_epsilon";
-const double  DVAL_MAT_EPSILON   = 1.0e-8;
+const double  DVAL_MAT_EPSILON   = 1.0e-10;
 const char*    ID_MAT_MAX_ITER  = "#mat_max_iter";
-const int    DVAL_MAT_MAX_ITER  = 100;
+const int    DVAL_MAT_MAX_ITER  = 10000;
 
 
-static const double DELTA    = 1.0E-06;
+static const double DELTA    = 1.0E-05;
 static const int BUFFER_SIZE = 10000;
 
 static const char* INPUT_FILENAME_COND          = "cond.dat";
@@ -76,16 +76,20 @@ void manusol_get_conv_vel(
 		double v[3],
 		double x[3])
 {
-	v[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
-	v[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
-	v[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
+	v[0] = 1.0 / sqrt(3.0);
+	v[1] = 1.0 / sqrt(3.0);
+	v[2] = 1.0 / sqrt(3.0);
+	//v[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
+	//v[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
+	//v[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
 }
 
 
 double manusol_get_diff_coef(
 		double x[3])
 {
-	double val = (2.0 + sin(1.0*x[0]) * sin(0.5*x[1]) * sin(0.25*x[2]));
+	double val = 1.0;
+	//double val = (2.0 + sin(1.0*x[0]) * sin(0.5*x[1]) * sin(0.25*x[2]));
 
 	return val;
 }
@@ -476,6 +480,7 @@ int main (
 			0.0);
 
 	monolis_show_timelog (&(sys.monolis), true);
+	monolis_show_iterlog (&(sys.monolis), true);
 	BBFE_sys_monowrap_set_Dirichlet_bc(
 			&(sys.monolis),
 			sys.fe.total_num_nodes,

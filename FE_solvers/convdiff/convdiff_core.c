@@ -70,7 +70,8 @@ void BBFE_convdiff_pre(
 			fe->local_num_nodes,
 			n_axis);
 
-	monolis_initialize(monolis);
+	monolis_initialize(monolis,
+			directory);
 	monolis_get_nonzero_pattern(
 			monolis,
 			fe->total_num_nodes,

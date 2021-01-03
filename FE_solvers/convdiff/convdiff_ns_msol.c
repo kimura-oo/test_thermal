@@ -54,7 +54,7 @@ typedef struct
 	BBFE_DATA    fe;
 	BBFE_BC      bc;
 	MONOLIS      monolis;
-	
+
 	CONDITIONS   cond;
 	VALUES       vals;
 
@@ -89,7 +89,7 @@ double manusol_get_mass_coef(
 		double x[3])
 {
 	double val = 1.0;
-	
+
 	return val;
 }
 
@@ -113,7 +113,7 @@ double manusol_get_source(
 	double invD  = 1.0/DELTA;
 	double invD2 = invD*invD;
 
-	double dT_dt = ( manusol_get_sol(x[0], x[1], x[2], t+DELTA) -  
+	double dT_dt = ( manusol_get_sol(x[0], x[1], x[2], t+DELTA) -
 		manusol_get_sol(x[0], x[1], x[2], t-DELTA) ) * (invD/2.0);
 
 	double dk_dx[3];
@@ -123,36 +123,36 @@ double manusol_get_source(
 	dk_dx[0] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) ) * (invD/2.0);
 	x_p[0] = x[0];  x_p[1] = x[1]+DELTA;  x_p[2] = x[2];
 	x_m[0] = x[0];  x_m[1] = x[1]-DELTA;  x_m[2] = x[2];
-	dk_dx[1] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) ) * (invD/2.0);	
+	dk_dx[1] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) ) * (invD/2.0);
 	x_p[0] = x[0];  x_p[1] = x[1];  x_p[2] = x[2]+DELTA;
 	x_m[0] = x[0];  x_m[1] = x[1];  x_m[2] = x[2]-DELTA;
 	dk_dx[2] = ( manusol_get_diff_coef(x_p) - manusol_get_diff_coef(x_m) )* (invD/2.0);
 
 	double dT_dx[3];
-	dT_dx[0] =  ( manusol_get_sol(x[0]+DELTA, x[1], x[2], t) -  
+	dT_dx[0] =  ( manusol_get_sol(x[0]+DELTA, x[1], x[2], t) -
 		manusol_get_sol(x[0]-DELTA, x[1], x[2], t) ) * (invD/2.0);
-	dT_dx[1] =  ( manusol_get_sol(x[0], x[1]+DELTA, x[2], t) -  
+	dT_dx[1] =  ( manusol_get_sol(x[0], x[1]+DELTA, x[2], t) -
 		manusol_get_sol(x[0], x[1]-DELTA, x[2], t) ) * (invD/2.0);
-	dT_dx[2] =  ( manusol_get_sol(x[0], x[1], x[2]+DELTA, t) -  
+	dT_dx[2] =  ( manusol_get_sol(x[0], x[1], x[2]+DELTA, t) -
 		manusol_get_sol(x[0], x[1], x[2]-DELTA, t) ) * (invD/2.0);
 
 	double d2T_dx2[3];
-	d2T_dx2[0] = ( 
-			    manusol_get_sol(x[0]+DELTA, x[1], x[2], t) + 
+	d2T_dx2[0] = (
+			    manusol_get_sol(x[0]+DELTA, x[1], x[2], t) +
 			    manusol_get_sol(x[0]-DELTA, x[1], x[2], t) -
 			2.0*manusol_get_sol(x[0]      , x[1], x[2], t) ) * invD2;
-	d2T_dx2[1] = ( 
-			    manusol_get_sol(x[0], x[1]+DELTA, x[2], t) + 
+	d2T_dx2[1] = (
+			    manusol_get_sol(x[0], x[1]+DELTA, x[2], t) +
 			    manusol_get_sol(x[0], x[1]-DELTA, x[2], t) -
 			2.0*manusol_get_sol(x[0], x[1]      , x[2], t) ) * invD2;
-	d2T_dx2[2] = ( 
-			    manusol_get_sol(x[0], x[1], x[2]+DELTA, t) + 
+	d2T_dx2[2] = (
+			    manusol_get_sol(x[0], x[1], x[2]+DELTA, t) +
 			    manusol_get_sol(x[0], x[1], x[2]-DELTA, t) -
 			2.0*manusol_get_sol(x[0], x[1], x[2]      , t) ) * invD2;
 
-	double val = 
-		a * (dT_dt + v[0]*dT_dx[0] + v[1]*dT_dx[1] + v[2]*dT_dx[2]) - 
-		(dk_dx[0]*dT_dx[0] + dk_dx[1]*dT_dx[1] + dk_dx[2]*dT_dx[2]) - 
+	double val =
+		a * (dT_dt + v[0]*dT_dx[0] + v[1]*dT_dx[1] + v[2]*dT_dx[2]) -
+		(dk_dx[0]*dT_dx[0] + dk_dx[1]*dT_dx[1] + dk_dx[2]*dT_dx[2]) -
 		k * (d2T_dx2[0] + d2T_dx2[1] + d2T_dx2[2]);
 
 	return val;
@@ -211,7 +211,7 @@ void assign_default_values(
 	vals->num_ip_each_axis = DVAL_NUM_IP_EACH_AXIS;
 	vals->mat_epsilon      = DVAL_MAT_EPSILON;
 	vals->mat_max_iter     = DVAL_MAT_MAX_ITER;
-	
+
 	vals->dt               = DVAL_DT;
 	vals->finish_time      = DVAL_FINISH_TIME;
 	vals->output_interval  = DVAL_OUTPUT_INTERVAL;
@@ -222,15 +222,15 @@ void print_all_values(
 		VALUES*  vals)
 {
 	printf("\n%s ---------- Calculation condition ----------\n", CODENAME);
-	
+
 	printf("%s %s: %d\n", CODENAME, ID_NUM_IP_EACH_AXIS, vals->num_ip_each_axis);
 	printf("%s %s: %e\n", CODENAME, ID_MAT_EPSILON,      vals->mat_epsilon);
 	printf("%s %s: %d\n", CODENAME, ID_MAT_MAX_ITER,     vals->mat_max_iter);
-	
+
 	printf("%s %s: %e\n", CODENAME, ID_DT,               vals->dt);
 	printf("%s %s: %e\n", CODENAME, ID_FINISH_TIME,      vals->finish_time);
 	printf("%s %s: %d\n", CODENAME, ID_OUTPUT_INTERVAL,  vals->output_interval);
-	
+
 	printf("%s -------------------------------------------\n\n", CODENAME);
 }
 
@@ -272,13 +272,13 @@ void read_calc_conditions(
 
 		num = BB_std_read_file_get_val_int_p(
 				&(vals->output_interval), filename, ID_OUTPUT_INTERVAL, BUFFER_SIZE, CODENAME);
-		
+
 		fclose(fp);
 	}
-	
+
 	print_all_values(vals);
-	
-	
+
+
 	printf("\n");
 }
 
@@ -405,7 +405,7 @@ void set_element_mat(
 		double h_e = cbrt(vol);
 
 		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x, e, 3);
-		
+
 		for(int p=0; p<np; p++) {
 			BBFE_std_mapping_vector3d(x_ip[p], nl, local_x, basis->N[p]);
 			a_ip[p] = manusol_get_mass_coef(x_ip[p]);
@@ -454,7 +454,7 @@ void set_element_mat(
 	BB_std_free_1d_double(Jacobian_ip, basis->num_integ_points);
 
 	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
-	
+
 	BB_std_free_2d_double(x_ip, np, 3);
 	BB_std_free_2d_double(v_ip, np, 3);
 	BB_std_free_1d_double(k_ip, np);
@@ -505,7 +505,7 @@ void set_element_vec(
 
 		BBFE_elemmat_set_local_array_vector(local_x, fe, fe->x,   e, 3);
 		BBFE_elemmat_set_local_array_scalar(local_T, fe, vals->T, e);
-		
+
 		for(int p=0; p<np; p++) {
 			BBFE_std_mapping_vector3d(x_ip[p], nl, local_x, basis->N[p]);
 			manusol_get_conv_vel(v_ip[p], x_ip[p]);
@@ -527,7 +527,7 @@ void set_element_vec(
 
 				val_ip[p] += BBFE_elemmat_convdiff_vec_stab_source(
 						fe->geo[e][p].grad_N[i], a_ip[p], v_ip[p], tau, f_ip[p]);
-			
+
 				val_ip[p] += 1.0/(vals->dt) * BBFE_elemmat_convdiff_vec_mass(
 						basis->N[p][i], T_ip[p], a_ip[p]);
 
@@ -547,7 +547,7 @@ void set_element_vec(
 
 	BB_std_free_2d_double(local_x, fe->local_num_nodes, 3);
 	BB_std_free_1d_double(local_T, fe->local_num_nodes);
-	
+
 	BB_std_free_2d_double(x_ip, np, 3);
 	BB_std_free_2d_double(v_ip, np, 3);
 	BB_std_free_1d_double(k_ip, np);
@@ -568,16 +568,16 @@ int main (
 
 	monolis_global_initialize();
 	double t1 = monolis_get_time();
-	
-	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);	
+
+	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);
 	read_calc_conditions(&(sys.vals), sys.cond.directory);
 
 	BBFE_convdiff_pre(
 			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
 			argc, argv, sys.cond.directory,
-			sys.vals.num_ip_each_axis, 
+			sys.vals.num_ip_each_axis,
 			true);
-	
+
 	memory_allocation_nodal_values(
 			&(sys.vals),
 			sys.fe.total_num_nodes);
@@ -594,7 +594,8 @@ int main (
 			&(sys.fe),
 			&(sys.basis));
 
-	monolis_initialize(&(sys.monolis0));
+	monolis_initialize(&(sys.monolis0),
+			sys.cond.directory);
 	monolis_get_nonzero_pattern(
 			&(sys.monolis0),
 			sys.fe.total_num_nodes,
@@ -602,7 +603,7 @@ int main (
 			1,
 			sys.fe.total_num_elems,
 			sys.fe.conn);
-	
+
 	set_element_mat(
 			&(sys.monolis0),
 			&(sys.fe),
@@ -658,10 +659,10 @@ int main (
 	}
 
 	BBFE_convdiff_finalize(&(sys.fe), &(sys.basis), &(sys.bc));
-	
+
 	monolis_finalize(&(sys.monolis));
 	monolis_finalize(&(sys.monolis0));
-	
+
 	monolis_global_finalize();
 
 	double t2 = monolis_get_time();
