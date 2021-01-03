@@ -4,11 +4,12 @@
 
 
 void BBFE_sys_monowrap_init_monomat(
-		MONOLIS*   monolis,
-		BBFE_DATA* fe,
-		const int  block_size)
+		MONOLIS*    monolis,
+		BBFE_DATA*  fe,
+		const int   block_size,
+		const char* dirname)
 {
-	monolis_initialize(monolis);
+	monolis_initialize(monolis, dirname);
 	
 	monolis_get_nonzero_pattern(
 			monolis,
