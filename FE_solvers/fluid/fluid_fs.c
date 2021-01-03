@@ -24,7 +24,7 @@ static const char* INPUT_FILENAME_COND    = "cond.dat";
 static const char* INPUT_FILENAME_D_BC_V  = "D_bc_v.dat";
 static const char* INPUT_FILENAME_D_BC_P  = "D_bc_p.dat";
 
-static const char* OUTPUT_FILENAME_VTK    = "result_%06d.vtk";
+static const char* OUTPUT_FILENAME_VTK    = "result_%d_%06d.vtk";
 
 
 typedef struct
@@ -200,8 +200,9 @@ void output_files(
 		int file_num,
 		double t)
 {
+	int myrank = monolis_get_global_myrank();
 	char fname_vtk[BUFFER_SIZE];
-	snprintf(fname_vtk, BUFFER_SIZE, OUTPUT_FILENAME_VTK, file_num);
+	snprintf(fname_vtk, BUFFER_SIZE, OUTPUT_FILENAME_VTK, myrank, file_num);
 
 	output_result_file_vtk(
 			&(sys->fe), &(sys->vals), fname_vtk, sys->cond.directory, t);
@@ -479,16 +480,19 @@ int main(
 			argc, argv, sys.cond.directory,
 			sys.vals.num_ip_each_axis);
 
+	const char* filename;
+	filename = monolis_get_input_filename(INPUT_FILENAME_D_BC_P);
 	BBFE_sys_read_Dirichlet_bc(
 			&(sys.bc_p),
-			INPUT_FILENAME_D_BC_P,
+			filename,
 			sys.cond.directory,
 			sys.fe.total_num_nodes,
 			1);
 
+	filename = monolis_get_input_filename(INPUT_FILENAME_D_BC_V);
 	BBFE_sys_read_Dirichlet_bc(
 			&(sys.bc_v),
-			INPUT_FILENAME_D_BC_V,
+			filename,
 			sys.cond.directory,
 			sys.fe.total_num_nodes,
 			3);

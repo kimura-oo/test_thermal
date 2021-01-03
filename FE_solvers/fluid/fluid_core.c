@@ -29,14 +29,18 @@ void BBFE_fluid_pre(
 	BB_calc_void();
 
 	int n_axis = num_integ_points_each_axis;
+	const char* filename;
 
+	filename = monolis_get_input_filename(INPUT_FILENAME_NODE);
 	BBFE_sys_read_node(
 			fe,
-			INPUT_FILENAME_NODE,
+			filename,
 			directory);
+
+	filename = monolis_get_input_filename(INPUT_FILENAME_ELEM);
 	BBFE_sys_read_elem(
 			fe,
-			INPUT_FILENAME_ELEM,
+			filename,
 			directory,
 			n_axis*n_axis*n_axis);
 
