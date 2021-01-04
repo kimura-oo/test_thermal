@@ -624,10 +624,15 @@ int main(
 	monolis_finalize(&(sys.mono_ppe0));
 	monolis_finalize(&(sys.mono_corr));
 	monolis_finalize(&(sys.mono_corr0));
-	monolis_global_finalize();
 
 	double t2 = monolis_get_time();
-	printf("** Total time: %f\n", t2 - t1);
+	int myrank = monolis_get_global_myrank();
+
+	if(myrank == 0) {
+		printf("** Total time: %f\n", t2 - t1);
+	}
+
+	monolis_global_finalize();
 
 	printf("\n");
 
