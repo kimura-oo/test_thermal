@@ -321,7 +321,7 @@ int main(
 	BBFE_elemmat_set_Jacobi_mat(&(sys.fe), &(sys.basis));
 	BBFE_elemmat_set_shapefunc_derivative(&(sys.fe), &(sys.basis));
 
-	BBFE_sys_monowrap_init_monomat(&(sys.mono) , &(sys.fe), 3);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono) , &(sys.fe), 3, sys.cond.directory);
 
 	/****************** solver ********************/
 	set_element_mat(

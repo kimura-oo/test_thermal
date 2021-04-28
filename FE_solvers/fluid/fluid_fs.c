@@ -504,11 +504,11 @@ int main(
 	BBFE_elemmat_set_Jacobi_mat(&(sys.fe), &(sys.basis));
 	BBFE_elemmat_set_shapefunc_derivative(&(sys.fe), &(sys.basis));
 
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_pred) , &(sys.fe), 3);
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe)  , &(sys.fe), 1);
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe0) , &(sys.fe), 1);
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr) , &(sys.fe), 3);
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr0), &(sys.fe), 3);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_pred) , &(sys.fe), 3, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe)  , &(sys.fe), 1, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe0) , &(sys.fe), 1, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr) , &(sys.fe), 3, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr0), &(sys.fe), 3, sys.cond.directory);
 
 	BBFE_elemmat_set_global_mat_Laplacian_const(
 			&(sys.mono_ppe0),  &(sys.fe), &(sys.basis), 1.0);
@@ -624,10 +624,15 @@ int main(
 	monolis_finalize(&(sys.mono_ppe0));
 	monolis_finalize(&(sys.mono_corr));
 	monolis_finalize(&(sys.mono_corr0));
-	monolis_global_finalize();
 
 	double t2 = monolis_get_time();
-	printf("** Total time: %f\n", t2 - t1);
+	int myrank = monolis_get_global_myrank();
+
+	if(myrank == 0) {
+		printf("** Total time: %f\n", t2 - t1);
+	}
+
+	monolis_global_finalize();
 
 	printf("\n");
 

@@ -4,9 +4,10 @@
 #include "monolis.h"
 
 void BBFE_sys_monowrap_init_monomat(
-		MONOLIS*   monolis,
-		BBFE_DATA* fe,
-		const int  block_size);
+		MONOLIS*    monolis,
+		BBFE_DATA*  fe,
+		const int   block_size,
+		const char* dirname);
 
 void BBFE_sys_monowrap_copy_mat(
 		MONOLIS* in,
