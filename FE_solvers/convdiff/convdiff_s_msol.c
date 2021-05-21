@@ -442,7 +442,7 @@ int main (
 	FE_SYSTEM sys;
 
 	monolis_global_initialize();
-	double t1 = monolis_get_time();
+	double t1 = monolis_get_time_sync();
 
 	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);
 	read_calc_conditions(&(sys.vals), sys.cond.directory);
@@ -488,7 +488,7 @@ int main (
 			&(sys.bc),
 			sys.monolis.mat.B);
 
-	double t2 = monolis_get_time();
+	double t2 = monolis_get_time_sync();
 	printf("** Pre  time: %f\n", t2 - t1);
 
 	BBFE_sys_monowrap_solve(
@@ -500,12 +500,12 @@ int main (
 			sys.vals.mat_epsilon);
 	/**********************************************/
 
-	double t3 = monolis_get_time();
+	double t3 = monolis_get_time_sync();
 	output_files(&sys);
 
 	BBFE_convdiff_finalize(&(sys.fe), &(sys.basis), &(sys.bc));
 
-	double t4 = monolis_get_time();
+	double t4 = monolis_get_time_sync();
 	printf("** Post  time: %f\n", t4 - t3);
 	printf("** Total time: %f\n", t4 - t1);
 	printf("\n");
