@@ -322,9 +322,9 @@ void set_element_vec(
 				BBFE_elemmat_solid_vec_inner_force_tl(
 						vec, D, fe->geo[e][p].grad_N[i], grad_u_ip[p]);
 
-				vec[0] -= vals->density * vals->g[0];
-				vec[1] -= vals->density * vals->g[1];
-				vec[2] -= vals->density * vals->g[2];
+				vec[0] -= vals->density * vals->g[0] * basis->N[p][i];
+				vec[1] -= vals->density * vals->g[1] * basis->N[p][i];
+				vec[2] -= vals->density * vals->g[2] * basis->N[p][i];
 
 				for(int d=0; d<3; d++) {
 					val_ip[d][p] = -vec[d];

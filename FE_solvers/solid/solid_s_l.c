@@ -267,7 +267,7 @@ void set_element_vec(
 				vec[0] = vals->g[0];  vec[1] = vals->g[1];  vec[2] = vals->g[2];
 
 				for(int d=0; d<3; d++) {
-					val_ip[d][p] = vec[d];
+					val_ip[d][p] = vec[d] * vals->density * basis->N[p][i];
 				}
 			}
 
@@ -339,7 +339,7 @@ int main(
 	BBFE_sys_monowrap_solve(
 			&(sys.mono),
 			sys.mono.mat.X,
-			monolis_iter_BiCGSTAB,
+			monolis_iter_CG,
 			monolis_prec_SOR,
 			sys.vals.mat_max_iter,
 			sys.vals.mat_epsilon);
