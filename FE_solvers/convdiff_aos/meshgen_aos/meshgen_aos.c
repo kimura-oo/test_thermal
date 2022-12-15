@@ -169,6 +169,207 @@ void init_fe_data(
 }
 
 
+static int set_index_elem(
+		CONDITION* cond,
+		const int ex,
+		const int ey,
+		const int ez)
+{
+	int num_elems_x = cond->div_x;
+	int num_elems_y = cond->div_y;
+	int num_elems_z = cond->div_z;
+
+	int index = 
+		num_elems_x*num_elems_y*ez + 
+		num_elems_x*            ey + 
+		                        ex;
+	
+	return index;
+}
+
+
+static int set_index_global_node(
+		CONDITION* cond,
+		const int ix,
+		const int iy,
+		const int iz,
+		const int order)
+{
+	int num_nodes_x = order*cond->div_x + 1;
+	int num_nodes_y = order*cond->div_y + 1;
+	int num_nodes_z = order*cond->div_z + 1;
+	
+	int index = 
+		num_nodes_x*num_nodes_y*iz + 
+		num_nodes_x            *iy + 
+		                        ix;
+
+	return index;
+}
+
+
+static int set_index_local_node(
+		const int ix,
+		const int iy,
+		const int iz,
+		const int order)
+{
+	int n = order+1;
+	int index = n*n*iz + n*iy + ix;
+
+	return index;
+}
+
+
+static int set_index_start_node_num_in_elem(
+		CONDITION* cond,
+		const int ex,
+		const int ey,
+		const int ez,
+		const int order)
+{
+	int n = order+1;
+	
+	int num_nodes_x = order*cond->div_x + 1;
+	int num_nodes_y = order*cond->div_y + 1;
+	int num_nodes_z = order*cond->div_z + 1;
+
+	int index = 
+		num_nodes_x*num_nodes_y*order*ez + 
+		num_nodes_x            *order*ey + 
+		                        order*ex;
+
+	return index;
+}
+
+
+static int set_index_global_node_corr_local_index(
+		CONDITION* cond,
+		const int ix,
+		const int iy,
+		const int iz,
+		const int order,
+		const int start_num)
+{
+	int num_nodes_x = order*cond->div_x + 1;
+	int num_nodes_y = order*cond->div_y + 1;
+	int num_nodes_z = order*cond->div_z + 1;
+
+	int index = start_num + 
+		num_nodes_x*num_nodes_y*iz + 
+		num_nodes_x            *iy + 
+		                        ix;
+
+	return index;
+}
+
+
+void set_nodes(
+		FE_DATA* fe,
+		CONDITION* cond)
+{
+	int order = cond->order;
+	int num_nodes_x = order*cond->div_x + 1;
+	int num_nodes_y = order*cond->div_y + 1;
+	int num_nodes_z = order*cond->div_z + 1;
+
+	double dx = cond->l_x/(order*cond->div_x);
+	double dy = cond->l_y/(order*cond->div_y);
+	double dz = cond->l_z/(order*cond->div_z);
+
+	for(int k=0; k<num_nodes_z; k++) {
+		for(int j=0; j<num_nodes_y; j++) {
+			for(int i=0; i<num_nodes_x; i++) {
+				int n = set_index_global_node(cond, i, j, k, order);
+
+				fe->x[n][0] = cond->x0 + dx*i;
+				fe->x[n][1] = cond->y0 + dy*j;
+				fe->x[n][2] = cond->z0 + dz*k;
+					
+			}
+		}
+	}
+}
+
+
+void set_elems(
+		FE_DATA* fe,
+		CONDITION* cond)
+{
+	int order = cond->order;
+	int num_elems_x = cond->div_x;
+	int num_elems_y = cond->div_y;
+	int num_elems_z = cond->div_z;
+
+	int nl = fe->local_num_nodes;
+
+	for(int ek=0; ek<num_elems_z; ek++) {
+		for(int ej=0; ej<num_elems_y; ej++) {
+			for(int ei=0; ei<num_elems_x; ei++) {
+				int elem_num  = set_index_elem(cond, ei, ej, ek);
+				int start_num = set_index_start_node_num_in_elem(
+						cond, ei, ej, ek, order);
+				
+				for(int k=0; k<nl; k++) {
+					for(int j=0; j<nl; j++) {
+						for(int i=0; i<nl; i++) {
+							int n  = set_index_local_node(i, j, k, order);
+							int gn = set_index_global_node_corr_local_index(
+									cond, i, j, k, order, start_num);
+							
+							fe->conn[elem_num][n] = gn;
+						}
+					}
+				}
+
+			}
+		}
+	}
+}
+
+
+void output_data(
+		FE_DATA* fe,
+		const char* filename_node,
+		const char* filename_elem,
+		const char* directory)
+{
+	char fname_node[BUFFER_SIZE];
+	snprintf(fname_node, BUFFER_SIZE, "%s/%s", directory, filename_node);
+	FILE* fp_node;
+	fp_node = fopen(fname_node, "w");
+	if( fp_node == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, fname_node);
+	}
+
+	fprintf(fp_node, "%d\n", fe->total_num_nodes);
+	for(int i=0; i<fe->total_num_nodes; i++) {
+		fprintf(fp_node, "%e %e %e\n", fe->x[i][0], fe->x[i][1], fe->x[i][2]);
+	}
+
+	char fname_elem[BUFFER_SIZE];
+	snprintf(fname_elem, BUFFER_SIZE, "%s/%s", directory, filename_elem);
+	FILE* fp_elem;
+	fp_elem = fopen(fname_elem, "w");
+	if( fp_elem == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, fname_elem);
+	}
+
+	fprintf(fp_elem, "%d %d\n", fe->total_num_elems, fe->local_num_nodes);
+	for(int i=0; i<fe->total_num_elems; i++) {
+		for(int j=0; j<fe->local_num_nodes; j++) {
+			fprintf(fp_elem, "%d ", fe->conn[i][j]);
+		}
+		fprintf(fp_elem, "\n");
+	}
+
+	fclose(fp_node);
+	fclose(fp_elem);
+}
+
+
 int main(
 		int 	argc,
 		char* 	argv[])
@@ -187,6 +388,13 @@ int main(
 			&fe, cond.div_x, cond.div_y, cond.div_z, cond.order);
 	init_fe_data(&fe);
 
+	set_nodes(&fe, &cond);
+	printf("1\n");
+	set_elems(&fe, &cond);
+	printf("1\n");
+
+	output_data(&fe, "node.dat", "elem.dat", dir_name);
+	printf("1\n");
 
 	if(read_args_find_option(argc, argv, "--dbc")) {
 		printf("%s '--dbc' option is selected.\n", CODENAME);
