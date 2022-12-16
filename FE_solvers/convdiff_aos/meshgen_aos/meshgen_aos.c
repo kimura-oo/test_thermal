@@ -32,7 +32,6 @@ static const char* VOIDNAME = "            >";
 static const int BUFFER_SIZE = 10000;
 
 
-
 static const char* read_args_return_next_arg(
 		int argc,
 		char* argv[],
@@ -370,6 +369,89 @@ void output_data(
 }
 
 
+static bool node_is_inside_plane(
+		const double 	x,
+		const double 	val,
+		const double 	epsilon) 
+{
+	double min_val = val - epsilon;
+	double max_val = val + epsilon;
+
+	if ( min_val < x && x < max_val ) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+
+void detect_and_output_Dirichlet_bc(
+		FE_DATA* fe,
+		CONDITION* cond,
+		const char* filename_dbc,
+		const char* directory)
+{
+	double x_min = cond->x0;
+	double y_min = cond->y0;
+	double z_min = cond->z0;
+	double x_max = cond->x0 + cond->l_x;
+	double y_max = cond->y0 + cond->l_y;
+	double z_max = cond->z0 + cond->l_z;
+
+	double ratio = 100.0;
+	double epsilon_x =  cond->l_x/(ratio*cond->order*cond->div_x);
+	double epsilon_y =  cond->l_y/(ratio*cond->order*cond->div_y);
+	double epsilon_z =  cond->l_z/(ratio*cond->order*cond->div_z);
+	
+	// Count the num. of Dirichlet B.C.
+	int num_dbc = 0;
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		bool dbc_flag = false;
+
+		if( node_is_inside_plane(fe->x[i][0], x_min, epsilon_x) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][0], x_max, epsilon_x) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][1], y_min, epsilon_y) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][1], y_max, epsilon_y) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][2], z_min, epsilon_z) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][2], z_max, epsilon_z) ) { dbc_flag = true; }
+		
+		if( dbc_flag ) { 
+			num_dbc++;
+		}
+	}
+
+	// Outout Dirichlet B.C. file
+	char fname_dbc[BUFFER_SIZE];
+	snprintf(fname_dbc, BUFFER_SIZE, "%s/%s", directory, filename_dbc);
+	FILE* fp_dbc;
+	fp_dbc = fopen(fname_dbc, "w");
+	if( fp_dbc == NULL ) {
+		printf("%s ERROR: File \"%s\" cannot be opened.\n", 
+				CODENAME, fname_dbc);
+	}
+
+	int block_length = 1;
+	fprintf(fp_dbc, "%d %d\n", num_dbc, block_length);
+	for(int i=0; i<(fe->total_num_nodes); i++) {
+		bool dbc_flag = false;
+
+		if( node_is_inside_plane(fe->x[i][0], x_min, epsilon_x) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][0], x_max, epsilon_x) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][1], y_min, epsilon_y) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][1], y_max, epsilon_y) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][2], z_min, epsilon_z) ) { dbc_flag = true; }
+		if( node_is_inside_plane(fe->x[i][2], z_max, epsilon_z) ) { dbc_flag = true; }
+		
+		if( dbc_flag ) { 
+			fprintf(fp_dbc, "%d 0 0.0\n", i);
+		}
+	}
+
+	fclose(fp_dbc);
+}
+
+
 int main(
 		int 	argc,
 		char* 	argv[])
@@ -389,17 +471,13 @@ int main(
 	init_fe_data(&fe);
 
 	set_nodes(&fe, &cond);
-	printf("1\n");
 	set_elems(&fe, &cond);
-	printf("1\n");
 
 	output_data(&fe, "node.dat", "elem.dat", dir_name);
-	printf("1\n");
 
 	if(read_args_find_option(argc, argv, "--dbc")) {
 		printf("%s '--dbc' option is selected.\n", CODENAME);
-		// implement Dirichlet BC routine here
-		
+		detect_and_output_Dirichlet_bc(&fe, &cond, "D_bc.dat", dir_name);
 	}	
 
 	printf("\n");
