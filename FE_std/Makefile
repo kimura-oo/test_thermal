@@ -7,7 +7,7 @@ LIBS = -L/usr/local/lib -lm -L../lib/BB -lBB
 
 TARGET_LIB = libBBFE_std.a
 #OBJS = debug_main.o
-OBJS = integ.o shapefunc.o mapping.o surface.o
+OBJS = integ.o shapefunc.o shapefunc_gen.o mapping.o surface.o
 
 $(TARGET_LIB): $(OBJS)
 		ar rcs $@ $?
