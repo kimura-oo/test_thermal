@@ -21,7 +21,6 @@ static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source.dat";
 typedef struct
 {
 	int    num_ip_each_axis;
-	int    p_order;
 	double mat_epsilon;
 	int    mat_max_iter;
 
@@ -77,12 +76,9 @@ void manusol_get_conv_vel(
 		double v[3],
 		double x[3])
 {
-	v[0] = 1.0 / sqrt(3.0);
-	v[1] = 1.0 / sqrt(3.0);
-	v[2] = 1.0 / sqrt(3.0);
-	//v[0] = 1.0 + x[0]*x[0]*x[0]*x[0];
-	//v[1] = 1.0 + x[1]*x[1]*x[1]*x[1];
-	//v[2] = 1.0 + x[2]*x[2]*x[2]*x[2];
+	v[0] = 0.0; //1.0 / sqrt(3.0);
+	v[1] = 0.0; //1.0 / sqrt(3.0);
+	v[2] = 0.0; //1.0 / sqrt(3.0);
 }
 
 
@@ -380,7 +376,7 @@ void set_element_mat_vec(
 					val_ip[p] = 0.0;
 
 					double tau = BBFE_elemmat_convdiff_stab_coef(
-							k_ip[p], a_ip[p], v_ip[p], h_e);
+					 	k_ip[p], a_ip[p], v_ip[p], h_e);
 
 					val_ip[p] += BBFE_elemmat_convdiff_mat_conv(
 							basis->N[p][i], fe->geo[e][p].grad_N[j], a_ip[p], v_ip[p]);
@@ -449,11 +445,9 @@ int main (
 	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);
 	read_calc_conditions(&(sys.vals), sys.cond.directory);
 
-	sys.vals.p_order = 2;
 	BBFE_convdiff_pre(
 			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
 			argc, argv, sys.cond.directory,
-			sys.vals.p_order,
 			sys.vals.num_ip_each_axis,
 			true);
 

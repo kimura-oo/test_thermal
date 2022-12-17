@@ -49,7 +49,6 @@ void BBFE_convdiff_pre(
 		int           argc,
 		char*         argv[],
 		const char*   directory,
-		int 		  p_order,
 		int           num_integ_points_each_axis,
 		bool          manufactured_solution);
 

@@ -18,6 +18,16 @@ const char* BBFE_convdiff_get_directory_name(
 }
 
 
+static int autocalc_order(
+		int 	local_num_nodes)
+{
+	int order = round( pow(local_num_nodes, 1.0/3.0) - 1.0);
+	printf("%s Polynomial order: %d\n", CODENAME, order);
+
+	return order;
+}
+
+
 void BBFE_convdiff_pre(
 		BBFE_DATA*    fe,
 		BBFE_BASIS*   basis,
@@ -26,7 +36,6 @@ void BBFE_convdiff_pre(
 		int           argc,
 		char*         argv[],
 		const char*   directory,
-		int 		  p_order,
 		int           num_integ_points_each_axis,
 		bool          manufactured_solution)
 {
@@ -65,6 +74,8 @@ void BBFE_convdiff_pre(
 			directory,
 			fe->total_num_nodes,
 			BLOCK_SIZE);
+
+	int p_order = autocalc_order(fe->local_num_nodes);
 
 	BBFE_convdiff_set_basis(
 			basis,
