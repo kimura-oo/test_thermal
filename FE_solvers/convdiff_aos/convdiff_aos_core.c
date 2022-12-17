@@ -26,6 +26,7 @@ void BBFE_convdiff_pre(
 		int           argc,
 		char*         argv[],
 		const char*   directory,
+		int 		  p_order,
 		int           num_integ_points_each_axis,
 		bool          manufactured_solution)
 {
@@ -67,6 +68,7 @@ void BBFE_convdiff_pre(
 
 	BBFE_convdiff_set_basis(
 			basis,
+			p_order,
 			fe->local_num_nodes,
 			n_axis);
 
@@ -84,52 +86,30 @@ void BBFE_convdiff_pre(
 
 void BBFE_convdiff_set_basis(
 		BBFE_BASIS*   basis,
+		int 		  p_order,
 		int           local_num_nodes,
 		int           num_integ_points_each_axis)
 {
-	switch( local_num_nodes ) {
-		case 4:
-			basis->num_integ_points =
-				BBFE_std_integ_tet_set_arbitrary_points(
-						num_integ_points_each_axis,
-						basis->integ_point,
-						basis->integ_weight);
+	basis->num_integ_points =
+		BBFE_std_integ_hex_set_arbitrary_points(
+				num_integ_points_each_axis,
+				basis->integ_point,
+				basis->integ_weight);
 
-			for(int i=0; i<(basis->num_integ_points); i++) {
-				BBFE_std_shapefunc_tet1st_get_val(
-						basis->integ_point[i],
-						basis->N[i]);
+	for(int i=0; i<(basis->num_integ_points); i++) {
+		BBFE_std_shapefunc_gen_3d_get_val(
+				p_order,
+				basis->integ_point[i],
+				basis->N[i]);
 
-				BBFE_std_shapefunc_tet1st_get_derivative(
-						basis->integ_point[i],
-						basis->dN_dxi[i],
-						basis->dN_det[i],
-						basis->dN_dze[i]);
-			}
-			printf("%s Element type: 1st-order tetrahedron.\n", CODENAME);
-			break;
-
-		case 8:
-			basis->num_integ_points =
-				BBFE_std_integ_hex_set_arbitrary_points(
-						num_integ_points_each_axis,
-						basis->integ_point,
-						basis->integ_weight);
-
-			for(int i=0; i<(basis->num_integ_points); i++) {
-				BBFE_std_shapefunc_hex1st_get_val(
-						basis->integ_point[i],
-						basis->N[i]);
-
-				BBFE_std_shapefunc_hex1st_get_derivative(
-						basis->integ_point[i],
-						basis->dN_dxi[i],
-						basis->dN_det[i],
-						basis->dN_dze[i]);
-			}
-			printf("%s Element type: 1st-order hexahedron.\n", CODENAME);
-			break;
+		BBFE_std_shapefunc_gen_3d_get_derivative(
+				p_order,
+				basis->integ_point[i],
+				basis->dN_dxi[i],
+				basis->dN_det[i],
+				basis->dN_dze[i]);
 	}
+	
 	printf("%s The number of integration points: %d\n", CODENAME, basis->num_integ_points);
 }
 

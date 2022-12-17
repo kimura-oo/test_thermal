@@ -7,7 +7,7 @@
 #include "BB/vtk.h"
 
 #include "BBFE/std/integ.h"
-#include "BBFE/std/shapefunc.h"
+#include "BBFE/std/shapefunc_gen.h"
 #include "BBFE/std/mapping.h"
 #include "BBFE/std/surface.h"
 
@@ -29,7 +29,7 @@
 #include <stdarg.h>
 
 static const int BLOCK_SIZE                   = 1;
-static const char* CODENAME                   = "convdiff >";
+static const char* CODENAME                   = "convdiff_aos >";
 
 static const char* INPUT_FILENAME_NODE        = "node.dat";
 static const char* INPUT_FILENAME_ELEM        = "elem.dat";
@@ -49,11 +49,13 @@ void BBFE_convdiff_pre(
 		int           argc,
 		char*         argv[],
 		const char*   directory,
+		int 		  p_order,
 		int           num_integ_points_each_axis,
 		bool          manufactured_solution);
 
 void BBFE_convdiff_set_basis(
 		BBFE_BASIS*   basis,
+		int 		  p_order,
 		int           local_num_nodes,
 		int           num_integ_points_each_axis);
 

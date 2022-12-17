@@ -21,6 +21,7 @@ static const char* OUTPUT_FILENAME_ASCII_SOURCE = "source.dat";
 typedef struct
 {
 	int    num_ip_each_axis;
+	int    p_order;
 	double mat_epsilon;
 	int    mat_max_iter;
 
@@ -250,6 +251,7 @@ void output_result_file_vtk(
 		const char*    filename,
 		const char*    directory)
 {
+	/*
 	FILE* fp;
 	fp = BBFE_sys_write_fopen(fp, filename, directory);
 
@@ -279,7 +281,7 @@ void output_result_file_vtk(
 	BB_std_free_1d_double(source, fe->total_num_nodes);
 
 	fclose(fp);
-
+	*/
 }
 
 
@@ -447,9 +449,11 @@ int main (
 	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);
 	read_calc_conditions(&(sys.vals), sys.cond.directory);
 
+	sys.vals.p_order = 2;
 	BBFE_convdiff_pre(
 			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
 			argc, argv, sys.cond.directory,
+			sys.vals.p_order,
 			sys.vals.num_ip_each_axis,
 			true);
 
