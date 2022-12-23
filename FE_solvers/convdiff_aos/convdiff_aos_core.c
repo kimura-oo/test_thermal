@@ -7,6 +7,8 @@ const char* BBFE_convdiff_get_directory_name(
 		char*       argv[],
 		const char* codename)
 {
+	BB_vtk_void();
+
 	const char* dir_name;
 
 	if(argc < 2) { dir_name = "."; }
