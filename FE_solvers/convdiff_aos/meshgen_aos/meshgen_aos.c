@@ -300,7 +300,7 @@ void set_elems(
 	int num_elems_y = cond->div_y;
 	int num_elems_z = cond->div_z;
 
-	int nl = fe->local_num_nodes;
+	int nl = order+1;
 
 	for(int ek=0; ek<num_elems_z; ek++) {
 		for(int ej=0; ej<num_elems_y; ej++) {
