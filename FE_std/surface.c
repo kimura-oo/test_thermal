@@ -3,6 +3,29 @@
 #include "shapefunc.h"
 #include "BB/std.h"
 #include "BB/calc.h"
+#include "mapping.h"
+
+#include <math.h>
+
+
+void BBFE_set_surface_get_outward_unit_normal_vector(
+		const int local_num_nodes,
+		double**  local_x,
+		double*   dN_dxi,
+		double*   dN_det,
+		double    n_vec[3])
+{
+	// calc tangent vectors on the surface
+	double dx_dxi[3];  double dx_det[3];
+	BBFE_std_mapping_vector3d(
+			dx_dxi, local_num_nodes, local_x, dN_dxi);
+	BBFE_std_mapping_vector3d(
+			dx_det, local_num_nodes, local_x, dN_det);
+
+	// calc normal vector on the surface
+	BB_calc_vec3d_cross(n_vec, dx_dxi, dx_det);
+	BB_calc_vec3d_normal_vec(n_vec);
+}
 
 
 int BBFE_std_surface_get_num_surfs_in_elem(

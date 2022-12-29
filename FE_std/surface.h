@@ -1,5 +1,12 @@
 #pragma once
 
+void BBFE_set_surface_get_outward_unit_normal_vector(
+		const int local_num_nodes,
+		double**  local_x,
+		double*   dN_dxi,
+		double*   dN_det,
+		double    n_vec[3]);
+
 int BBFE_std_surface_get_num_surfs_in_elem(
 		int  local_num_nodes);
 
