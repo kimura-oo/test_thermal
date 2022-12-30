@@ -39,7 +39,7 @@ void BBFE_std_shapefunc_tri1st_get_val(
 		const double    xi[2],
 		double*         N)
 {
-	N[0] = 1.0 - xi[0] - xi[1] - xi[2];
+	N[0] = 1.0 - xi[0] - xi[1];
 	N[1] = xi[0];
 	N[2] = xi[1];
 }

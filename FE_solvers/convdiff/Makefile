@@ -11,7 +11,7 @@ LIBS_BB = -L../../lib -lBB -lBBFE_std -lBBFE_sys -lBBFE_elemmat -lBBFE_manusol
 
 TARGET1 = convdiff_s_msol
 TARGET2 = convdiff_ns_msol
-OBJS1 = convdiff_s_msol.o convdiff_core.o
+OBJS1 = convdiff_s_msol.o convdiff_core.o convdiff_surface.o
 OBJS2 = convdiff_ns_msol.o convdiff_core.o
 
 .SUFFIXES: .c .cpp .o

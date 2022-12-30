@@ -1,6 +1,6 @@
 #pragma once
 
-void BBFE_set_surface_get_outward_unit_normal_vector(
+void BBFE_set_surface_get_outward_normal_vector(
 		const int local_num_nodes,
 		double**  local_x,
 		double*   dN_dxi,

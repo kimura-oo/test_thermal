@@ -8,7 +8,7 @@
 #include <math.h>
 
 
-void BBFE_set_surface_get_outward_unit_normal_vector(
+void BBFE_set_surface_get_outward_normal_vector(
 		const int local_num_nodes,
 		double**  local_x,
 		double*   dN_dxi,
@@ -24,7 +24,6 @@ void BBFE_set_surface_get_outward_unit_normal_vector(
 
 	// calc normal vector on the surface
 	BB_calc_vec3d_cross(n_vec, dx_dxi, dx_det);
-	BB_calc_vec3d_normal_vec(n_vec);
 }
 
 

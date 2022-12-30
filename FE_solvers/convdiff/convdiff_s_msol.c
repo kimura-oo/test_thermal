@@ -1,5 +1,6 @@
 
 #include "convdiff_core.h"
+#include "convdiff_surface.h"
 
 const char* ID_NUM_IP_EACH_AXIS = "#num_ip_each_axis";
 const int DVAL_NUM_IP_EACH_AXIS = 3;
@@ -433,6 +434,36 @@ void set_element_mat_vec(
 }
 
 
+void set_Neumann_bc(
+		FE_SYSTEM* sys,
+		int        argc,
+		char*      argv[])
+{
+	if( BB_std_read_args_return_boolean(argc, argv, "--nbc") ) {
+		printf("%s Neumann B.C. is imposed.\n", CODENAME);
+
+		BBFE_BASIS   basis_surf;
+		BBFE_DATA    surf;
+		BBFE_convdiff_pre_surface(
+				&surf,
+				&basis_surf,
+				sys->cond.directory,
+				sys->vals.num_ip_each_axis);
+	
+		double* equiv_val;
+		equiv_val = BB_std_calloc_1d_double(equiv_val, sys->fe.total_num_nodes);
+	
+		BBFE_convdiff_set_equiv_val_Neumann(
+			equiv_val, &surf, &(sys->fe), &basis_surf,
+			0.0, DELTA, manusol_get_sol);
+
+		for(int i=0; i<(sys->fe.total_num_nodes); i++) {
+			sys->monolis.mat.B[i] += equiv_val[i];
+		}
+	}
+}
+
+
 int main (
 		int argc,
 		char* argv[])
@@ -488,8 +519,13 @@ int main (
 			&(sys.bc),
 			sys.monolis.mat.B);
 
+	set_Neumann_bc(
+			&sys,
+			argc, argv);
+	
 	double t2 = monolis_get_time_sync();
 	printf("** Pre  time: %f\n", t2 - t1);
+
 
 	BBFE_sys_monowrap_solve(
 			&(sys.monolis),
