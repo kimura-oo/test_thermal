@@ -2,7 +2,7 @@
 CC = mpic++
 CFLAGS = -Wall -Wextra -pedantic -O3
 LDFLAGS =
-INCLUDES = -I/usr/local/include -I../submodule/monolis_complex/include -I../include
+INCLUDES = -I/usr/local/include -I../submodule/monolis/include -I../include
 LIBS = -L/usr/local/lib -lm -L../lib/BB -lBB
 
 TARGET_LIB = libBBFE_sys.a

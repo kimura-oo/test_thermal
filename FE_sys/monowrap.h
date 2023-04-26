@@ -5,6 +5,7 @@
 
 void BBFE_sys_monowrap_init_monomat(
 		MONOLIS*    monolis,
+		MONOLIS_COM* monolis_com,
 		BBFE_DATA*  fe,
 		const int   block_size,
 		const char* dirname);
@@ -15,6 +16,7 @@ void BBFE_sys_monowrap_copy_mat(
 
 void BBFE_sys_monowrap_solve(
 		MONOLIS*      monolis,
+		MONOLIS_COM* monolis_com,
 		double _Complex *       ans_vec,
 		const int     solver_type,
 		const int     precond_type,

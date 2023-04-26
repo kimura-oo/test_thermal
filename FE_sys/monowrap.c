@@ -5,13 +5,20 @@
 
 void BBFE_sys_monowrap_init_monomat(
 		MONOLIS*    monolis,
+		MONOLIS_COM* monolis_com,
 		BBFE_DATA*  fe,
 		const int   block_size,
 		const char* dirname)
 {
-	monolis_initialize(monolis, dirname);
+	monolis_initialize(monolis);
+
+	monolis_com_initialize_by_parted_files(monolis_com, 
+                                      monolis_mpi_get_global_comm(),
+                                      MONOLIS_DEFAULT_TOP_DIR,
+                                      MONOLIS_DEFAULT_PART_DIR,
+                                      "node.dat");
 	
-	monolis_get_nonzero_pattern(
+	monolis_get_nonzero_pattern_by_simple_mesh_C(
 			monolis,
 			fe->total_num_nodes,
 			fe->local_num_nodes,
@@ -25,16 +32,13 @@ void BBFE_sys_monowrap_copy_mat(
 		MONOLIS* in,
 		MONOLIS* out)
 {
-	int num_nonzeros = (in->mat.NDOF) * (in->mat.NDOF) * (in->mat.NZ);
-
-	for(int i=0; i<num_nonzeros; i++) {
-		out->mat.A[i] = in->mat.A[i];
-	}
+	monolis_copy_mat_value_C(in, out);
 }
 
 
 void BBFE_sys_monowrap_solve(
 		MONOLIS*      monolis,
+		MONOLIS_COM* monolis_com,
 		double _Complex *       ans_vec,
 		const int     solver_type,
 		const int     precond_type,
@@ -46,9 +50,10 @@ void BBFE_sys_monowrap_solve(
 	monolis_set_maxiter  (monolis, num_max_iters);
 	monolis_set_tolerance(monolis, epsilon);
 
-	monolis_solve(
+	monolis_solve_C(
 			monolis,
-			monolis->mat.B,
+			monolis_com,
+			monolis->mat.C.B,
 			ans_vec);
 }
 
@@ -63,7 +68,7 @@ void BBFE_sys_monowrap_set_Dirichlet_bc(
 	for(int i=0; i<num_nodes; i++) {
 		for(int k=0; k<num_dofs_on_node; k++) {
 			if( bc->D_bc_exists[ num_dofs_on_node*i+k ] ) {
-				monolis_set_Dirichlet_bc(
+				monolis_set_Dirichlet_bc_C(
 						monolis,
 						g_rhs,
 						i,

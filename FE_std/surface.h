@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 void BBFE_set_surface_get_outward_normal_vector(
 		const int local_num_nodes,
 		double**  local_x,

@@ -137,9 +137,10 @@ void BBFE_elemmat_set_global_mat_cmass_const(
 						np, val_ip, basis->integ_weight, Jacobian_ip);
 
 				for(int b=0; b<block_size; b++) {
-					monolis_add_scalar_to_sparse_matrix(
-							monolis, integ_val,
-							fe->conn[e][i], fe->conn[e][j], b, b);
+					monolis_add_scalar_to_sparse_matrix_C(
+							monolis,
+							fe->conn[e][i], fe->conn[e][j], b, b,
+							integ_val);
 				}
 			}
 		}
@@ -181,9 +182,10 @@ void BBFE_elemmat_set_global_mat_Laplacian_const(
 				double integ_val = BBFE_std_integ_calc(
 						np, val_ip, basis->integ_weight, Jacobian_ip);
 
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 0, 0);
+				monolis_add_scalar_to_sparse_matrix_C(
+						monolis,
+						fe->conn[e][i], fe->conn[e][j], 0, 0,
+						integ_val);
 			}
 		}
 	}
