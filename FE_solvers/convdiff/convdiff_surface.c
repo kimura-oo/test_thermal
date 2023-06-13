@@ -14,7 +14,7 @@ void BBFE_convdiff_pre_surface(
 	int n_axis = num_integ_points_each_axis;
 	const char* filename;
 
-	filename = monolis_get_input_filename(INPUT_FILENAME_SURF);
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_SURF);
 	BBFE_sys_read_elem(
 			surf,
 			filename,

@@ -23,6 +23,7 @@ void BBFE_convdiff_pre(
 		BBFE_BASIS*   basis,
 		BBFE_BC*      bc,
 		MONOLIS*      monolis,
+		MONOLIS_COM*  monolis_com,
 		int           argc,
 		char*         argv[],
 		const char*   directory,
@@ -34,13 +35,13 @@ void BBFE_convdiff_pre(
 	int n_axis = num_integ_points_each_axis;
 	const char* filename;
 
-	filename = monolis_get_input_filename(INPUT_FILENAME_NODE);
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_NODE);
 	BBFE_sys_read_node(
 			fe,
 			filename,
 			directory);
 
-	filename = monolis_get_input_filename(INPUT_FILENAME_ELEM);
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_ELEM);
 	BBFE_sys_read_elem(
 			fe,
 			filename,
@@ -57,7 +58,7 @@ void BBFE_convdiff_pre(
 			1,
 			n_axis*n_axis*n_axis);
 
-	filename = monolis_get_input_filename(INPUT_FILENAME_D_BC);
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_D_BC);
 	BBFE_sys_read_Dirichlet_bc(
 			bc,
 			filename,
@@ -70,9 +71,16 @@ void BBFE_convdiff_pre(
 			fe->local_num_nodes,
 			n_axis);
 
-	monolis_initialize(monolis,
-			directory);
-	monolis_get_nonzero_pattern(
+	monolis_initialize(monolis);
+
+	monolis_com_initialize_by_parted_files(
+			monolis_com,
+			monolis_mpi_get_global_comm(),
+			MONOLIS_DEFAULT_TOP_DIR,
+			MONOLIS_DEFAULT_PART_DIR,
+			"node.dat");
+
+	monolis_get_nonzero_pattern_by_simple_mesh_R(
 			monolis,
 			fe->total_num_nodes,
 			fe->local_num_nodes,
@@ -138,6 +146,7 @@ double BBFE_convdiff_equivval_relative_L2_error_scalar(
 		BBFE_DATA*    fe,
 		BBFE_BASIS*   basis,
 		MONOLIS*      monolis,
+		MONOLIS_COM*  monolis_com,
 		double        t,
 		const double* comp_vec, // [total_num_nodes]
 		double        (*func)(double, double, double, double)) // scalar function(x, y, z, t)
@@ -160,7 +169,8 @@ double BBFE_convdiff_equivval_relative_L2_error_scalar(
 	double* local_val;
 	local_val = BB_std_calloc_1d_double(local_val, fe->local_num_nodes);
 
-	monolis_get_internal_elem_1d_bool(monolis, fe->total_num_elems, is_internal_elem);
+	monolis_get_bool_list_of_internal_simple_mesh(monolis_com, fe->total_num_nodes, fe->total_num_elems,
+		fe->local_num_nodes, fe->conn, is_internal_elem);
 
 	for(int e=0; e<(fe->total_num_elems); e++) {
 		if (!is_internal_elem[e]) continue;
@@ -222,15 +232,17 @@ double BBFE_convdiff_equivval_relative_L2_error_scalar(
 	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
 	BB_std_free_1d_double(local_val, fe->local_num_nodes);
 
-	L2_abs_error = monolis_allreduce_double_scalar(
-			monolis,
-			monolis_sum,
-			L2_abs_error);
+	monolis_allreduce_R(
+			1,
+			&L2_abs_error,
+			MONOLIS_MPI_SUM,
+			monolis_com->comm);
 
-	L2_abs_theo = monolis_allreduce_double_scalar(
-			monolis,
-			monolis_sum,
-			L2_abs_theo);
+	monolis_allreduce_R(
+			1,
+			&L2_abs_theo,
+			MONOLIS_MPI_SUM,
+			monolis_com->comm);
 
 	return ( sqrt(L2_abs_error)/sqrt(L2_abs_theo) );
 }
