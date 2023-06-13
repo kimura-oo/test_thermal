@@ -28,7 +28,7 @@ void BBFE_sys_monowrap_copy_mat_C(
 void BBFE_sys_monowrap_solve(
 		MONOLIS*      monolis,
 		MONOLIS_COM* monolis_com,
-		double _Complex *       ans_vec,
+		double*       ans_vec,
 		const int     solver_type,
 		const int     precond_type,
 		const int     num_max_iters,
@@ -48,7 +48,7 @@ void BBFE_sys_monowrap_set_Dirichlet_bc(
 		int           num_nodes,
 		int           num_dofs_on_node,
 		BBFE_BC*      bc,
-		double _Complex *       g_rhs);
+		double*       g_rhs);
 
 void BBFE_sys_monowrap_set_Dirichlet_bc_C(
 		MONOLIS*      monolis,
