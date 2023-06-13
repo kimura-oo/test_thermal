@@ -460,3 +460,53 @@ int BB_std_read_args_search_num(
 
 	return -1;
 }
+
+/**********************************************************
+ complex memory allocation
+ **********************************************************/
+
+double _Complex* BB_std_calloc_1d_double_C(
+	double _Complex*   array,
+	const int 			size)
+{
+	array = (double _Complex*)calloc(size, sizeof(double _Complex));
+
+	return array;
+}
+
+
+void BB_std_free_1d_double_C(
+		double _Complex*   array,
+		const int           size)
+{
+	free(array);
+	array = NULL;
+}
+
+
+double _Complex ** BB_std_calloc_2d_double(
+		double _Complex**   array,
+		const int           size1,
+		const int           size2)
+{
+	array = (double _Complex**)calloc(size1, sizeof(double _Complex*));
+	for(int i=0; i<size1; i++) {
+		array[i] = (double _Complex*)calloc(size2, sizeof(double _Complex));
+	}
+
+	return array;
+}
+
+void BB_std_free_2d_double(
+		double _Complex **   array,
+		const int            size1,
+		const int            size2)
+{
+	for(int i=0; i<size1; i++) {
+		free(array[i]);
+		array[i] = NULL;
+	}
+
+	free(array);
+	array = NULL;
+}

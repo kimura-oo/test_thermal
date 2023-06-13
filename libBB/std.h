@@ -148,3 +148,20 @@ int BB_std_read_args_search_num(
 		char*       argv[],
 		int         start_num,
 		const char* identifier);
+
+/**********************************************************
+ complex memory allocation
+ **********************************************************/
+
+double _Complex* BB_std_calloc_1d_double_C(
+	double _Complex*   array,
+	const int 			size);
+
+void BB_std_free_1d_double_C(
+		double _Complex*   array,
+		const int           size);
+
+double _Complex ** BB_std_calloc_2d_double(
+		double _Complex**   array,
+		const int           size1,
+		const int           size2);
