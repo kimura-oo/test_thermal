@@ -43,7 +43,20 @@ void BBFE_elemmat_set_global_mat_cmass_const(
 		double      coef,
 		int         block_size);
 
+void BBFE_elemmat_set_global_mat_cmass_const_C(
+		MONOLIS*    monolis,
+		BBFE_DATA*  fe,
+		BBFE_BASIS* basis,
+		double      coef,
+		int         block_size);
+
 void BBFE_elemmat_set_global_mat_Laplacian_const(
+		MONOLIS*    monolis,
+		BBFE_DATA*  fe,
+		BBFE_BASIS* basis,
+		double      coef);
+
+void BBFE_elemmat_set_global_mat_Laplacian_const_C(
 		MONOLIS*    monolis,
 		BBFE_DATA*  fe,
 		BBFE_BASIS* basis,
