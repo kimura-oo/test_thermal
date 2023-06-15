@@ -598,10 +598,12 @@ int main (
 
 	monolis_initialize(&(sys.monolis0));
 
-	//monolis_com_set_input_top_directory_name(monolis_com, "./");
-	//monolis_com_set_input_part_directory_name(monolis_com, "./parted.0");
-	//monolis_com_set_input_file_name(monolis_com, "node.dat");
-	//monolis_com_initialize_by_parted_files(monolis_com, monolis_mpi_get_global_comm());
+	monolis_com_initialize_by_parted_files(
+			&(sys.monolis_com),
+			monolis_mpi_get_global_comm(),
+			MONOLIS_DEFAULT_TOP_DIR,
+			MONOLIS_DEFAULT_PART_DIR,
+			"node.dat");
 
 	monolis_get_nonzero_pattern_by_simple_mesh_R(
 			&(sys.monolis0),
@@ -626,8 +628,8 @@ int main (
 		step += 1;
 
 		printf("\n%s ----------------- step %d ----------------\n", CODENAME, step);
-//		monolis_copy_all(&(sys.monolis0), &(sys.monolis));
-//		monolis_clear_rhs(&(sys.monolis));
+		monolis_copy_mat_R(&(sys.monolis0), &(sys.monolis));
+		monolis_clear_mat_value_rhs_R(&(sys.monolis));
 
 		set_element_vec(
 				&(sys.monolis),
