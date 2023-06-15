@@ -12,12 +12,12 @@ void BBFE_sys_monowrap_init_monomat(
 {
 	monolis_initialize(monolis);
 
-	monolis_com_initialize_by_parted_files(monolis_com, 
+	monolis_com_initialize_by_parted_files(monolis_com,
                                       monolis_mpi_get_global_comm(),
                                       MONOLIS_DEFAULT_TOP_DIR,
                                       MONOLIS_DEFAULT_PART_DIR,
                                       "node.dat");
-	
+
 	monolis_get_nonzero_pattern_by_simple_mesh_R(
 			monolis,
 			fe->total_num_nodes,
@@ -37,12 +37,12 @@ void BBFE_sys_monowrap_init_monomat_C(
 {
 	monolis_initialize(monolis);
 
-	monolis_com_initialize_by_parted_files(monolis_com, 
+	monolis_com_initialize_by_parted_files(monolis_com,
                                       monolis_mpi_get_global_comm(),
                                       MONOLIS_DEFAULT_TOP_DIR,
                                       MONOLIS_DEFAULT_PART_DIR,
                                       "node.dat");
-	
+
 	monolis_get_nonzero_pattern_by_simple_mesh_C(
 			monolis,
 			fe->total_num_nodes,

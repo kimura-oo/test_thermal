@@ -137,7 +137,7 @@ void BBFE_elemmat_set_global_mat_cmass_const(
 						np, val_ip, basis->integ_weight, Jacobian_ip);
 
 				for(int b=0; b<block_size; b++) {
-					monolis_add_scalar_to_sparse_matrix_C(
+					monolis_add_scalar_to_sparse_matrix_R(
 							monolis,
 							fe->conn[e][i], fe->conn[e][j], b, b,
 							integ_val);

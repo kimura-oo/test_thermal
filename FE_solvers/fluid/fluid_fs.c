@@ -70,6 +70,8 @@ typedef struct
 	MONOLIS      mono_ppe;
 	MONOLIS      mono_ppe0;
 
+	MONOLIS_COM  mono_com;
+
 } FE_SYSTEM;
 
 
@@ -200,7 +202,7 @@ void output_files(
 		int file_num,
 		double t)
 {
-	int myrank = monolis_get_global_myrank();
+	int myrank = monolis_mpi_get_global_my_rank();
 	char fname_vtk[BUFFER_SIZE];
 	snprintf(fname_vtk, BUFFER_SIZE, OUTPUT_FILENAME_VTK, myrank, file_num);
 
@@ -256,12 +258,12 @@ void set_element_mat_pred(
 				double integ_val = BBFE_std_integ_calc(
 						np, val_ip, basis->integ_weight, Jacobian_ip);
 
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val, fe->conn[e][i], fe->conn[e][j], 0, 0);
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val, fe->conn[e][i], fe->conn[e][j], 1, 1);
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val, fe->conn[e][i], fe->conn[e][j], 2, 2);
+				monolis_add_scalar_to_sparse_matrix_R(
+						monolis, fe->conn[e][i], fe->conn[e][j], 0, 0, integ_val);
+				monolis_add_scalar_to_sparse_matrix_R(
+						monolis, fe->conn[e][i], fe->conn[e][j], 1, 1, integ_val);
+				monolis_add_scalar_to_sparse_matrix_R(
+						monolis, fe->conn[e][i], fe->conn[e][j], 2, 2, integ_val);
 			}
 		}
 	}
@@ -334,7 +336,7 @@ void set_element_vec_pred(
 				integ_val[d] = BBFE_std_integ_calc(
 						np, val_ip[d], basis->integ_weight, Jacobian_ip);
 
-				monolis->mat.B[ 3*fe->conn[e][i] + d ] += integ_val[d];
+				monolis->mat.R.B[ 3*fe->conn[e][i] + d ] += integ_val[d];
 			}
 		}
 	}
@@ -399,7 +401,7 @@ void set_element_vec_corr(
 				integ_val[d] = BBFE_std_integ_calc(
 						np, val_ip[d], basis->integ_weight, Jacobian_ip);
 
-				monolis->mat.B[ 3*(fe->conn[e][i]) + d ] += integ_val[d];
+				monolis->mat.R.B[ 3*(fe->conn[e][i]) + d ] += integ_val[d];
 			}
 		}
 	}
@@ -449,7 +451,7 @@ void set_element_vec_ppe(
 			double integ_val = BBFE_std_integ_calc(
 					np, val_ip, basis->integ_weight, Jacobian_ip);
 
-			monolis->mat.B[ fe->conn[e][i] ] += integ_val;
+			monolis->mat.R.B[ fe->conn[e][i] ] += integ_val;
 		}
 	}
 
@@ -481,7 +483,7 @@ int main(
 			sys.vals.num_ip_each_axis);
 
 	const char* filename;
-	filename = monolis_get_input_filename(INPUT_FILENAME_D_BC_P);
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_D_BC_P);
 	BBFE_sys_read_Dirichlet_bc(
 			&(sys.bc_p),
 			filename,
@@ -489,7 +491,7 @@ int main(
 			sys.fe.total_num_nodes,
 			1);
 
-	filename = monolis_get_input_filename(INPUT_FILENAME_D_BC_V);
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_D_BC_V);
 	BBFE_sys_read_Dirichlet_bc(
 			&(sys.bc_v),
 			filename,
@@ -504,11 +506,11 @@ int main(
 	BBFE_elemmat_set_Jacobi_mat(&(sys.fe), &(sys.basis));
 	BBFE_elemmat_set_shapefunc_derivative(&(sys.fe), &(sys.basis));
 
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_pred) , &(sys.fe), 3, sys.cond.directory);
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe)  , &(sys.fe), 1, sys.cond.directory);
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe0) , &(sys.fe), 1, sys.cond.directory);
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr) , &(sys.fe), 3, sys.cond.directory);
-	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr0), &(sys.fe), 3, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_pred) , &(sys.mono_com), &(sys.fe), 3, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe)  , &(sys.mono_com), &(sys.fe), 1, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_ppe0) , &(sys.mono_com), &(sys.fe), 1, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr) , &(sys.mono_com), &(sys.fe), 3, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono_corr0), &(sys.mono_com), &(sys.fe), 3, sys.cond.directory);
 
 	BBFE_elemmat_set_global_mat_Laplacian_const(
 			&(sys.mono_ppe0),  &(sys.fe), &(sys.basis), 1.0);
@@ -528,9 +530,9 @@ int main(
 		BBFE_sys_monowrap_copy_mat(&(sys.mono_ppe0) , &(sys.mono_ppe));
 		BBFE_sys_monowrap_copy_mat(&(sys.mono_corr0), &(sys.mono_corr));
 
-		monolis_clear(&(sys.mono_pred));
-		monolis_clear_rhs(&(sys.mono_ppe));
-		monolis_clear_rhs(&(sys.mono_corr));
+		monolis_clear_mat_value_R(&(sys.mono_pred));
+		monolis_clear_mat_value_rhs_R(&(sys.mono_ppe));
+		monolis_clear_mat_value_rhs_R(&(sys.mono_corr));
 
 		printf("%s --- prediction step ---\n", CODENAME);
 		set_element_mat_pred(
@@ -548,18 +550,19 @@ int main(
 				sys.fe.total_num_nodes,
 				3,
 				&(sys.bc_v),
-				sys.mono_pred.mat.B);
+				sys.mono_pred.mat.R.B);
 		BBFE_sys_monowrap_solve(
 				&(sys.mono_pred),
-				sys.mono_pred.mat.X,
-				monolis_iter_BiCGSTAB,
-				monolis_prec_SOR,
+				&(sys.mono_com),
+				sys.mono_pred.mat.R.X,
+				MONOLIS_ITER_BICGSTAB,
+				MONOLIS_PREC_SOR,
 				sys.vals.mat_max_iter,
 				sys.vals.mat_epsilon);
 
 		BBFE_fluid_renew_velocity(
 				sys.vals.v, 
-				sys.mono_pred.mat.X,
+				sys.mono_pred.mat.R.X,
 				sys.fe.total_num_nodes);
 
 		printf("%s --- pressure Poisson eq. ---\n", CODENAME);
@@ -573,12 +576,13 @@ int main(
 				sys.fe.total_num_nodes,
 				1,
 				&(sys.bc_p),
-				sys.mono_ppe.mat.B);
+				sys.mono_ppe.mat.R.B);
 		BBFE_sys_monowrap_solve(
 				&(sys.mono_ppe),
+				&(sys.mono_com),
 				sys.vals.p,
-				monolis_iter_CG,
-				monolis_prec_SOR,
+				MONOLIS_ITER_CG,
+				MONOLIS_PREC_SOR,
 				sys.vals.mat_max_iter,
 				sys.vals.mat_epsilon);
 
@@ -593,18 +597,19 @@ int main(
 				sys.fe.total_num_nodes,
 				3,
 				&(sys.bc_v),
-				sys.mono_corr.mat.B);
+				sys.mono_corr.mat.R.B);
 		BBFE_sys_monowrap_solve(
 				&(sys.mono_corr),
-				sys.mono_corr.mat.X,
-				monolis_iter_CG,
-				monolis_prec_SOR,
+				&(sys.mono_com),
+				sys.mono_corr.mat.R.X,
+				MONOLIS_ITER_CG,
+				MONOLIS_PREC_SOR,
 				sys.vals.mat_max_iter,
 				sys.vals.mat_epsilon);
 
 		BBFE_fluid_renew_velocity(
 				sys.vals.v, 
-				sys.mono_corr.mat.X,
+				sys.mono_corr.mat.R.X,
 				sys.fe.total_num_nodes);
 
 		/**********************************************/
@@ -626,7 +631,7 @@ int main(
 	monolis_finalize(&(sys.mono_corr0));
 
 	double t2 = monolis_get_time();
-	int myrank = monolis_get_global_myrank();
+	int myrank = monolis_mpi_get_global_my_rank();
 
 	if(myrank == 0) {
 		printf("** Total time: %f\n", t2 - t1);

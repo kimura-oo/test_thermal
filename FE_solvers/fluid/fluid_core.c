@@ -31,13 +31,13 @@ void BBFE_fluid_pre(
 	int n_axis = num_integ_points_each_axis;
 	const char* filename;
 
-	filename = monolis_get_input_filename(INPUT_FILENAME_NODE);
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_NODE);
 	BBFE_sys_read_node(
 			fe,
 			filename,
 			directory);
 
-	filename = monolis_get_input_filename(INPUT_FILENAME_ELEM);
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_ELEM);
 	BBFE_sys_read_elem(
 			fe,
 			filename,
