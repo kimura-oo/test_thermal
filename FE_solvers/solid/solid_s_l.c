@@ -57,7 +57,7 @@ typedef struct
 	VALUES       vals;
 	BBFE_BC      bc;
 	MONOLIS      mono;
-
+	MONOLIS_COM  mono_com;
 } FE_SYSTEM;
 
 
@@ -229,8 +229,8 @@ void set_element_mat(
 					for(int l=0; l<3; l++) {
 						double integ_val = BBFE_std_integ_calc(
 								np, val_ip[k][l], basis->integ_weight, Jacobian_ip);
-						monolis_add_scalar_to_sparse_matrix(
-								monolis, integ_val, fe->conn[e][i], fe->conn[e][j], k, l);
+						monolis_add_scalar_to_sparse_matrix_R(
+								monolis, fe->conn[e][i], fe->conn[e][j], k, l, integ_val);
 					}
 				}
 			}
@@ -275,7 +275,7 @@ void set_element_vec(
 				integ_val[d] = BBFE_std_integ_calc(
 						np, val_ip[d], basis->integ_weight, Jacobian_ip);
 
-				monolis->mat.B[ 3*fe->conn[e][i] + d ] += integ_val[d];
+				monolis->mat.R.B[ 3*fe->conn[e][i] + d ] += integ_val[d];
 			}
 		}
 	}
@@ -321,7 +321,7 @@ int main(
 	BBFE_elemmat_set_Jacobi_mat(&(sys.fe), &(sys.basis));
 	BBFE_elemmat_set_shapefunc_derivative(&(sys.fe), &(sys.basis));
 
-	BBFE_sys_monowrap_init_monomat(&(sys.mono) , &(sys.fe), 3, sys.cond.directory);
+	BBFE_sys_monowrap_init_monomat(&(sys.mono), &(sys.mono_com), &(sys.fe), 3, sys.cond.directory);
 
 	/****************** solver ********************/
 	set_element_mat(
@@ -332,21 +332,22 @@ int main(
 
 	BBFE_sys_monowrap_set_Dirichlet_bc(
 			&(sys.mono), sys.fe.total_num_nodes, 3,
-			&(sys.bc), sys.mono.mat.B);
+			&(sys.bc), sys.mono.mat.R.B);
 	BBFE_sys_monowrap_set_Neumann_bc(
 			sys.fe.total_num_nodes, 3,
-			&(sys.bc), sys.mono.mat.B);
+			&(sys.bc), sys.mono.mat.R.B);
 	BBFE_sys_monowrap_solve(
 			&(sys.mono),
-			sys.mono.mat.X,
-			monolis_iter_CG,
-			monolis_prec_SOR,
+			&(sys.mono_com),
+			sys.mono.mat.R.X,
+			MONOLIS_ITER_CG,
+			MONOLIS_PREC_SOR,
 			sys.vals.mat_max_iter,
 			sys.vals.mat_epsilon);
 
 	BBFE_solid_renew_vector(
 			sys.vals.u, 
-			sys.mono.mat.X,
+			sys.mono.mat.R.X,
 			sys.fe.total_num_nodes);
 	/**********************************************/
 	
