@@ -290,14 +290,14 @@ void output_files(
 {
 	const char* filename;
 
-	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, OUTPUT_FILENAME_VTK);
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", OUTPUT_FILENAME_VTK);
 	output_result_file_vtk(
 			&(sys->fe),
 			&(sys->vals),
 			filename,
 			sys->cond.directory);
 
-	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, OUTPUT_FILENAME_ASCII_TEMP);
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", OUTPUT_FILENAME_ASCII_TEMP);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			sys->vals.T,
@@ -309,7 +309,7 @@ void output_files(
 	source = BB_std_calloc_1d_double(source, sys->fe.total_num_nodes);
 	manusol_set_source(&(sys->fe), source);
 
-	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, OUTPUT_FILENAME_ASCII_SOURCE);
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", OUTPUT_FILENAME_ASCII_SOURCE);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			source,
@@ -319,17 +319,19 @@ void output_files(
 	double L2_error = BBFE_convdiff_equivval_relative_L2_error_scalar(
 			&(sys->fe),
 			&(sys->basis),
-			&(sys->monolis),
 			&(sys->monolis_com),
 			0.0,
 			sys->vals.T,
 			manusol_get_sol);
 
 	printf("%s L2 error: %e\n", CODENAME, L2_error);
-	FILE* fp;
-	fp = BBFE_sys_write_fopen(fp, "l2_error.txt", sys->cond.directory);
-	fprintf(fp, "%e\n", L2_error);
-	fclose(fp);
+
+	if(monolis_mpi_get_global_my_rank() == 0){
+		FILE* fp;
+		fp = BBFE_sys_write_fopen(fp, "l2_error.txt", sys->cond.directory);
+		fprintf(fp, "%e\n", L2_error);
+		fclose(fp);
+	}
 
 	BB_std_free_1d_double(source, sys->fe.total_num_nodes);
 	/***********************************/

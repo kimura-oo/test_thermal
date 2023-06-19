@@ -330,6 +330,7 @@ void output_files(
 		int file_num,
 		double t)
 {
+	const char* filename;
 	char fname_vtk[BUFFER_SIZE];
 	char fname_tem[BUFFER_SIZE];
 	char fname_sou[BUFFER_SIZE];
@@ -337,17 +338,19 @@ void output_files(
 	snprintf(fname_tem, BUFFER_SIZE, OUTPUT_FILENAME_ASCII_TEMP, file_num);
 	snprintf(fname_sou, BUFFER_SIZE, OUTPUT_FILENAME_ASCII_SOURCE, file_num);
 
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", fname_vtk);
 	output_result_file_vtk(
 			&(sys->fe),
 			&(sys->vals),
-			fname_vtk,
+			filename,
 			sys->cond.directory,
 			t);
 
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", fname_tem);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			sys->vals.T,
-			fname_tem,
+			filename,
 			sys->cond.directory);
 
 	/**** for manufactured solution ****/
@@ -355,22 +358,29 @@ void output_files(
 	source = BB_std_calloc_1d_double(source, sys->fe.total_num_nodes);
 	manusol_set_source(&(sys->fe), source, t);
 
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", fname_sou);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			source,
-			fname_sou,
+			filename,
 			sys->cond.directory);
+
 	double L2_error = BBFE_elemmat_equivval_relative_L2_error_scalar(
 			&(sys->fe),
 			&(sys->basis),
+			&(sys->monolis_com),
 			t,
 			sys->vals.T,
 			manusol_get_sol);
+
 	printf("%s L2 error: %e\n", CODENAME, L2_error);
-	FILE* fp;
-	fp = BBFE_sys_write_add_fopen(fp, "l2_error.txt", sys->cond.directory);
-	fprintf(fp, "%e %e\n", t, L2_error);
-	fclose(fp);
+
+	if(monolis_mpi_get_global_my_rank() == 0){
+		FILE* fp;
+		fp = BBFE_sys_write_add_fopen(fp, "l2_error.txt", sys->cond.directory);
+		fprintf(fp, "%e %e\n", t, L2_error);
+		fclose(fp);
+	}
 
 	BB_std_free_1d_double(source, sys->fe.total_num_nodes);
 	/***********************************/
