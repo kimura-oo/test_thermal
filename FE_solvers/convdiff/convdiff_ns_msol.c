@@ -54,6 +54,7 @@ typedef struct
 	BBFE_DATA    fe;
 	BBFE_BC      bc;
 	MONOLIS      monolis;
+	MONOLIS_COM  monolis_com;
 
 	CONDITIONS   cond;
 	VALUES       vals;
@@ -329,6 +330,7 @@ void output_files(
 		int file_num,
 		double t)
 {
+	const char* filename;
 	char fname_vtk[BUFFER_SIZE];
 	char fname_tem[BUFFER_SIZE];
 	char fname_sou[BUFFER_SIZE];
@@ -336,17 +338,19 @@ void output_files(
 	snprintf(fname_tem, BUFFER_SIZE, OUTPUT_FILENAME_ASCII_TEMP, file_num);
 	snprintf(fname_sou, BUFFER_SIZE, OUTPUT_FILENAME_ASCII_SOURCE, file_num);
 
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", fname_vtk);
 	output_result_file_vtk(
 			&(sys->fe),
 			&(sys->vals),
-			fname_vtk,
+			filename,
 			sys->cond.directory,
 			t);
 
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", fname_tem);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			sys->vals.T,
-			fname_tem,
+			filename,
 			sys->cond.directory);
 
 	/**** for manufactured solution ****/
@@ -354,22 +358,29 @@ void output_files(
 	source = BB_std_calloc_1d_double(source, sys->fe.total_num_nodes);
 	manusol_set_source(&(sys->fe), source, t);
 
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", fname_sou);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			source,
-			fname_sou,
+			filename,
 			sys->cond.directory);
+
 	double L2_error = BBFE_elemmat_equivval_relative_L2_error_scalar(
 			&(sys->fe),
 			&(sys->basis),
+			&(sys->monolis_com),
 			t,
 			sys->vals.T,
 			manusol_get_sol);
+
 	printf("%s L2 error: %e\n", CODENAME, L2_error);
-	FILE* fp;
-	fp = BBFE_sys_write_add_fopen(fp, "l2_error.txt", sys->cond.directory);
-	fprintf(fp, "%e %e\n", t, L2_error);
-	fclose(fp);
+
+	if(monolis_mpi_get_global_my_rank() == 0){
+		FILE* fp;
+		fp = BBFE_sys_write_add_fopen(fp, "l2_error.txt", sys->cond.directory);
+		fprintf(fp, "%e %e\n", t, L2_error);
+		fclose(fp);
+	}
 
 	BB_std_free_1d_double(source, sys->fe.total_num_nodes);
 	/***********************************/
@@ -443,9 +454,10 @@ void set_element_mat(
 				double integ_val = BBFE_std_integ_calc(
 						np, val_ip, basis->integ_weight, Jacobian_ip);
 
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 0, 0);
+				monolis_add_scalar_to_sparse_matrix_R(
+						monolis,
+						fe->conn[e][i], fe->conn[e][j], 0, 0,
+						integ_val);
 			}
 		}
 	}
@@ -538,7 +550,7 @@ void set_element_vec(
 			double integ_val = BBFE_std_integ_calc(
 					np, val_ip, basis->integ_weight, Jacobian_ip);
 
-			monolis->mat.B[ fe->conn[e][i] ] += integ_val;
+			monolis->mat.R.B[ fe->conn[e][i] ] += integ_val;
 		}
 	}
 
@@ -573,7 +585,7 @@ int main (
 	read_calc_conditions(&(sys.vals), sys.cond.directory);
 
 	BBFE_convdiff_pre(
-			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
+			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis), (&sys.monolis_com),
 			argc, argv, sys.cond.directory,
 			sys.vals.num_ip_each_axis,
 			true);
@@ -594,9 +606,16 @@ int main (
 			&(sys.fe),
 			&(sys.basis));
 
-	monolis_initialize(&(sys.monolis0),
-			sys.cond.directory);
-	monolis_get_nonzero_pattern(
+	monolis_initialize(&(sys.monolis0));
+
+	monolis_com_initialize_by_parted_files(
+			&(sys.monolis_com),
+			monolis_mpi_get_global_comm(),
+			MONOLIS_DEFAULT_TOP_DIR,
+			MONOLIS_DEFAULT_PART_DIR,
+			"node.dat");
+
+	monolis_get_nonzero_pattern_by_simple_mesh_R(
 			&(sys.monolis0),
 			sys.fe.total_num_nodes,
 			sys.fe.local_num_nodes,
@@ -619,8 +638,9 @@ int main (
 		step += 1;
 
 		printf("\n%s ----------------- step %d ----------------\n", CODENAME, step);
-		monolis_copy_all(&(sys.monolis0), &(sys.monolis));
-		monolis_clear_rhs(&(sys.monolis));
+		monolis_copy_mat_R(&(sys.monolis0), &(sys.monolis));
+		monolis_clear_mat_value_rhs_R(&(sys.monolis));
+
 		set_element_vec(
 				&(sys.monolis),
 				&(sys.fe),
@@ -640,13 +660,14 @@ int main (
 				sys.fe.total_num_nodes,
 				BLOCK_SIZE,
 				&(sys.bc),
-				sys.monolis.mat.B);
+				sys.monolis.mat.R.B);
 
 		BBFE_sys_monowrap_solve(
 				&(sys.monolis),
+				&(sys.monolis_com),
 				sys.vals.T,
-				monolis_iter_BiCGSTAB,
-				monolis_prec_DIAG,
+				MONOLIS_ITER_BICGSTAB,
+				MONOLIS_PREC_DIAG,
 				sys.vals.mat_max_iter,
 				sys.vals.mat_epsilon);
 		/**********************************************/

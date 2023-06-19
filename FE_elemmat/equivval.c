@@ -74,6 +74,7 @@ void BBFE_elemmat_equivval_volume_smooth_function(
 double BBFE_elemmat_equivval_relative_L2_error_scalar(
 		BBFE_DATA*    fe,
 		BBFE_BASIS*   basis,
+		MONOLIS_COM*  monolis_com,
 		double        t,
 		const double* comp_vec, // [total_num_nodes]
 		double        (*func)(double, double, double, double)) // scalar function(x, y, z, t)
@@ -84,9 +85,11 @@ double BBFE_elemmat_equivval_relative_L2_error_scalar(
 	double* val_ip_error;
 	double* val_ip_theo;
 	double* Jacobian_ip;
+	bool* is_internal_elem;
 	val_ip_error = BB_std_calloc_1d_double(val_ip_error, basis->num_integ_points);
 	val_ip_theo  = BB_std_calloc_1d_double(val_ip_theo , basis->num_integ_points);
 	Jacobian_ip  = BB_std_calloc_1d_double(Jacobian_ip , basis->num_integ_points);
+	is_internal_elem = BB_std_calloc_1d_bool(is_internal_elem , fe->total_num_elems);
 
 	double** local_x;
 	local_x   = BB_std_calloc_2d_double(local_x  , fe->local_num_nodes, 3);
@@ -94,9 +97,14 @@ double BBFE_elemmat_equivval_relative_L2_error_scalar(
 	double* local_val;
 	local_val = BB_std_calloc_1d_double(local_val, fe->local_num_nodes);
 
+	monolis_get_bool_list_of_internal_simple_mesh(monolis_com, fe->total_num_nodes, fe->total_num_elems,
+		fe->local_num_nodes, fe->conn, is_internal_elem);
+
 	for(int e=0; e<(fe->total_num_elems); e++) {
+		if (!is_internal_elem[e]) continue;
 
 		for(int i=0; i<(fe->local_num_nodes); i++) {
+
 			local_val[i] = comp_vec[ fe->conn[e][i] ];
 
 			local_x[i][0] = fe->x[ fe->conn[e][i] ][0];
@@ -135,6 +143,7 @@ double BBFE_elemmat_equivval_relative_L2_error_scalar(
 				val_ip_error,
 				basis->integ_weight,
 				Jacobian_ip);
+
 		double integ_val_theo  = BBFE_std_integ_calc(
 				basis->num_integ_points,
 				val_ip_theo,
@@ -151,6 +160,18 @@ double BBFE_elemmat_equivval_relative_L2_error_scalar(
 
 	BB_std_free_2d_double(local_x,   fe->local_num_nodes, 3);
 	BB_std_free_1d_double(local_val, fe->local_num_nodes);
+
+	monolis_allreduce_R(
+			1,
+			&L2_abs_error,
+			MONOLIS_MPI_SUM,
+			monolis_com->comm);
+
+	monolis_allreduce_R(
+			1,
+			&L2_abs_theo,
+			MONOLIS_MPI_SUM,
+			monolis_com->comm);
 
 	return ( sqrt(L2_abs_error)/sqrt(L2_abs_theo) );
 }

@@ -44,6 +44,7 @@ typedef struct
 	BBFE_DATA    fe;
 	BBFE_BC      bc;
 	MONOLIS      monolis;
+	MONOLIS_COM  monolis_com;
 
 	CONDITIONS   cond;
 	VALUES       vals;
@@ -286,14 +287,14 @@ void output_files(
 {
 	const char* filename;
 
-	filename = monolis_get_output_filename(OUTPUT_FILENAME_VTK);
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, OUTPUT_FILENAME_VTK);
 	output_result_file_vtk(
 			&(sys->fe),
 			&(sys->vals),
 			filename,
 			sys->cond.directory);
 
-	filename = monolis_get_output_filename(OUTPUT_FILENAME_ASCII_TEMP);
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, OUTPUT_FILENAME_ASCII_TEMP);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			sys->vals.T,
@@ -305,7 +306,7 @@ void output_files(
 	source = BB_std_calloc_1d_double(source, sys->fe.total_num_nodes);
 	manusol_set_source(&(sys->fe), source);
 
-	filename = monolis_get_output_filename(OUTPUT_FILENAME_ASCII_SOURCE);
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, OUTPUT_FILENAME_ASCII_SOURCE);
 	BBFE_write_ascii_nodal_vals_scalar(
 			&(sys->fe),
 			source,
@@ -316,6 +317,7 @@ void output_files(
 			&(sys->fe),
 			&(sys->basis),
 			&(sys->monolis),
+			&(sys->monolis_com),
 			0.0,
 			sys->vals.T,
 			manusol_get_sol);
@@ -391,9 +393,10 @@ void set_element_mat_vec(
 				double integ_val = BBFE_std_integ_calc(
 						np, val_ip, basis->integ_weight, Jacobian_ip);
 
-				monolis_add_scalar_to_sparse_matrix(
-						monolis, integ_val,
-						fe->conn[e][i], fe->conn[e][j], 0, 0);
+				monolis_add_scalar_to_sparse_matrix_R(
+						monolis,
+						fe->conn[e][i], fe->conn[e][j], 0, 0,
+						integ_val);
 			}
 		}
 
@@ -414,7 +417,7 @@ void set_element_mat_vec(
 			double integ_val = BBFE_std_integ_calc(
 					np, val_ip, basis->integ_weight, Jacobian_ip);
 
-			monolis->mat.B[ fe->conn[e][i] ] += integ_val;
+			monolis->mat.R.B[ fe->conn[e][i] ] += integ_val;
 		}
 	}
 
@@ -440,13 +443,13 @@ int main (
 	FE_SYSTEM sys;
 
 	monolis_global_initialize();
-	double t1 = monolis_get_time_sync();
+	double t1 = monolis_get_time_global_sync();
 
 	sys.cond.directory = BBFE_convdiff_get_directory_name(argc, argv, CODENAME);
 	read_calc_conditions(&(sys.vals), sys.cond.directory);
 
 	BBFE_convdiff_pre(
-			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis),
+			&(sys.fe), &(sys.basis), (&sys.bc), (&sys.monolis), (&sys.monolis_com),
 			argc, argv, sys.cond.directory,
 			sys.vals.num_ip_each_axis,
 			true);
@@ -484,26 +487,27 @@ int main (
 			sys.fe.total_num_nodes,
 			BLOCK_SIZE,
 			&(sys.bc),
-			sys.monolis.mat.B);
+			sys.monolis.mat.R.B);
 
-	double t2 = monolis_get_time_sync();
+	double t2 = monolis_get_time_global_sync();
 	printf("** Pre  time: %f\n", t2 - t1);
 
 	BBFE_sys_monowrap_solve(
 			&(sys.monolis),
+			&(sys.monolis_com),
 			sys.vals.T,
-			monolis_iter_BiCGSTAB,
-			monolis_prec_DIAG,
+			MONOLIS_ITER_BICGSTAB,
+			MONOLIS_PREC_DIAG,
 			sys.vals.mat_max_iter,
 			sys.vals.mat_epsilon);
 	/**********************************************/
 
-	double t3 = monolis_get_time_sync();
+	double t3 = monolis_get_time_global_sync();
 	output_files(&sys);
 
 	BBFE_convdiff_finalize(&(sys.fe), &(sys.basis), &(sys.bc));
 
-	double t4 = monolis_get_time_sync();
+	double t4 = monolis_get_time_global_sync();
 	printf("** Post  time: %f\n", t4 - t3);
 	printf("** Total time: %f\n", t4 - t1);
 	printf("\n");

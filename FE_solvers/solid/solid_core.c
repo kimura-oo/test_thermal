@@ -30,14 +30,18 @@ void BBFE_solid_pre(
 	BBFE_std_mapping_void();
 
 	int n_axis = num_integ_points_each_axis;
+	const char* filename;
 
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_NODE);
 	BBFE_sys_read_node(
 			fe,
-			INPUT_FILENAME_NODE,
+			filename,
 			directory);
+
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_ELEM);
 	BBFE_sys_read_elem(
 			fe,
-			INPUT_FILENAME_ELEM,
+			filename,
 			directory,
 			n_axis*n_axis*n_axis);
 
