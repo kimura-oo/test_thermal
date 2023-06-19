@@ -64,6 +64,8 @@ void BBFE_sys_monowrap_set_Neumann_bc(
 		double*       g_rhs);
 
 double BBFE_sys_monowrap_calc_error_norm(
+		MONOLIS*     monolis,
+		MONOLIS_COM* monolis_com,
 		int        num_nodes,
 		int        num_dofs_on_node,
 		double*    vec);

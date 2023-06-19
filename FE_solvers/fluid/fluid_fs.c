@@ -483,7 +483,7 @@ int main(
 			sys.vals.num_ip_each_axis);
 
 	const char* filename;
-	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_D_BC_P);
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_D_BC_P);
 	BBFE_sys_read_Dirichlet_bc(
 			&(sys.bc_p),
 			filename,
@@ -491,7 +491,7 @@ int main(
 			sys.fe.total_num_nodes,
 			1);
 
-	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_D_BC_V);
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_D_BC_V);
 	BBFE_sys_read_Dirichlet_bc(
 			&(sys.bc_v),
 			filename,

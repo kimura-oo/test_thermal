@@ -12,11 +12,12 @@ void BBFE_sys_monowrap_init_monomat(
 {
 	monolis_initialize(monolis);
 
-	monolis_com_initialize_by_parted_files(monolis_com,
-                                      monolis_mpi_get_global_comm(),
-                                      MONOLIS_DEFAULT_TOP_DIR,
-                                      MONOLIS_DEFAULT_PART_DIR,
-                                      "node.dat");
+	monolis_com_initialize_by_parted_files(
+		monolis_com,
+		monolis_mpi_get_global_comm(),
+		MONOLIS_DEFAULT_TOP_DIR,
+		MONOLIS_DEFAULT_PART_DIR,
+		"node.dat");
 
 	monolis_get_nonzero_pattern_by_simple_mesh_R(
 			monolis,
@@ -37,11 +38,12 @@ void BBFE_sys_monowrap_init_monomat_C(
 {
 	monolis_initialize(monolis);
 
-	monolis_com_initialize_by_parted_files(monolis_com,
-                                      monolis_mpi_get_global_comm(),
-                                      MONOLIS_DEFAULT_TOP_DIR,
-                                      MONOLIS_DEFAULT_PART_DIR,
-                                      "node.dat");
+	monolis_com_initialize_by_parted_files(
+		monolis_com,
+		monolis_mpi_get_global_comm(),
+		MONOLIS_DEFAULT_TOP_DIR,
+		MONOLIS_DEFAULT_PART_DIR,
+		"node.dat");
 
 	monolis_get_nonzero_pattern_by_simple_mesh_C(
 			monolis,
@@ -71,7 +73,7 @@ void BBFE_sys_monowrap_copy_mat_C(
 
 void BBFE_sys_monowrap_solve(
 		MONOLIS*      monolis,
-		MONOLIS_COM* monolis_com,
+		MONOLIS_COM*  monolis_com,
 		double*       ans_vec,
 		const int     solver_type,
 		const int     precond_type,
@@ -82,6 +84,7 @@ void BBFE_sys_monowrap_solve(
 	monolis_set_precond  (monolis, precond_type);
 	monolis_set_maxiter  (monolis, num_max_iters);
 	monolis_set_tolerance(monolis, epsilon);
+	monolis_show_iterlog (monolis, false);
 
 	monolis_solve_R(
 			monolis,
@@ -174,17 +177,21 @@ void BBFE_sys_monowrap_set_Neumann_bc(
 
 
 double BBFE_sys_monowrap_calc_error_norm(
+		MONOLIS*     monolis,
+		MONOLIS_COM* monolis_com,
 		int        num_nodes,
 		int        num_dofs_on_node,
 		double*    vec)
 {
 	double norm = 0.0;
-	
-	for(int i=0; i<num_nodes; i++) {
-		for(int k=0; k<num_dofs_on_node; k++) {
-			norm += vec[ num_dofs_on_node*i+k ]*vec[ num_dofs_on_node*i+k ];
-		}
-	}
+
+	monolis_inner_product_R(
+		monolis,
+		monolis_com,
+		3,
+		vec,
+		vec,
+		&norm);
 
 	norm = sqrt(norm);
 

@@ -203,11 +203,13 @@ void output_files(
 		double t,
 		double scale)
 {
+	const char* filename;
 	char fname_vtk[BUFFER_SIZE];
 	snprintf(fname_vtk, BUFFER_SIZE, OUTPUT_FILENAME_VTK, file_num);
 
+	filename = monolis_get_global_output_file_name(MONOLIS_DEFAULT_TOP_DIR, "./", fname_vtk);
 	output_result_file_vtk(
-			&(sys->fe), &(sys->vals), fname_vtk, sys->cond.directory, t, scale);
+			&(sys->fe), &(sys->vals), filename, sys->cond.directory, t, scale);
 }
 
 
@@ -354,6 +356,7 @@ int main(
 	printf("\n");
 
 	FE_SYSTEM sys;
+	const char* filename;
 
 	monolis_global_initialize();
 	double t1 = monolis_get_time();
@@ -366,15 +369,18 @@ int main(
 			argc, argv, sys.cond.directory,
 			sys.vals.num_ip_each_axis);
 
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_D_BC);
 	BBFE_sys_read_Dirichlet_bc(
 			&(sys.bc),
-			INPUT_FILENAME_D_BC,
+			filename,
 			sys.cond.directory,
 			sys.fe.total_num_nodes,
 			3);
+
+	filename = monolis_get_global_input_file_name(MONOLIS_DEFAULT_TOP_DIR, MONOLIS_DEFAULT_PART_DIR, INPUT_FILENAME_N_BC);
 	BBFE_sys_read_Neumann_bc(
 			&(sys.bc),
-			INPUT_FILENAME_N_BC,
+			filename,
 			sys.cond.directory,
 			sys.fe.total_num_nodes,
 			3);
@@ -423,7 +429,7 @@ int main(
 				&(sys.mono_com),
 				sys.mono.mat.R.X,
 				MONOLIS_ITER_CG,
-				MONOLIS_PREC_SOR,
+				MONOLIS_PREC_DIAG,
 				sys.vals.mat_max_iter,
 				sys.vals.mat_epsilon);
 
@@ -432,11 +438,13 @@ int main(
 				sys.mono.mat.R.X,
 				sys.fe.total_num_nodes);
 
-
 		error = 
 			BBFE_sys_monowrap_calc_error_norm(
+					&(sys.mono),
+					&(sys.mono_com),
 					sys.fe.total_num_nodes, 3, 
 					sys.mono.mat.R.B);
+
 		if( num_iter_nl == 0 ){ error0 = error; }
 		printf("%s Error norm: %e\n", CODENAME, error/error0);
 		if( error/error0 < 1.0e-08 ) { break; }
