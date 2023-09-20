@@ -161,7 +161,12 @@ void BB_std_free_1d_double_C(
 		double _Complex*   array,
 		const int           size);
 
-double _Complex ** BB_std_calloc_2d_double(
+double _Complex ** BB_std_calloc_2d_double_C(
 		double _Complex**   array,
 		const int           size1,
 		const int           size2);
+
+void BB_std_free_2d_double_C(
+		double _Complex **   array,
+		const int            size1,
+		const int            size2);
