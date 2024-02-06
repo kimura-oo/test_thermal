@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdio.h>
 
 #define TYPE_VTK_VERTEX               1
 #define TYPE_VTK_POLY_VERTEX          2

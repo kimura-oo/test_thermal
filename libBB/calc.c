@@ -1,5 +1,5 @@
-#include <math.h>
 
+#include "calc.h"
 
 void BB_calc_void(){}
 
