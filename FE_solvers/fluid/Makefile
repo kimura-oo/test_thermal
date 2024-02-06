@@ -17,7 +17,7 @@ OBJS1 = fluid_fs.o fluid_core.o
 all: $(TARGET1) 
 
 $(TARGET1): $(OBJS1)
-	$(FC) $(CFLAGS) $(INCLUDES) $(INCLUDES_BB) $(LDFLAGS) -o $@ $^ $(LIBS) $(LIBS_BB)
+	$(FC) $(CFLAGS) $(INCLUDES) $(INCLUDES_BB) $(LDFLAGS) -o $@ $^ $(LIBS_BB) $(LIBS)
 
 clean:
 		-rm -f $(OBJS1) $(TARGET1) $(OBJS2) $(TARGET2)
