@@ -69,9 +69,9 @@ static double calc_Legendre_polynominal(
 			p[i] /= (double)(i);
 		}
 
+		double result = p[n];
 		free(p);
-
-		return p[n];
+		return result;
 	}
 }
 
